@@ -9,6 +9,8 @@ from typing_extensions import Annotated
 from linear.api import LinearClient, LinearClientError
 from linear.formatters import (
     format_compact,
+    format_issue_detail,
+    format_issue_json,
     format_json,
     format_projects_compact,
     format_projects_json,
@@ -99,6 +101,44 @@ def list_issues(
             format_compact(issues)
         else:  # table
             format_table(issues)
+
+    except LinearClientError as e:
+        typer.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except Exception as e:
+        typer.echo(f"Unexpected error: {e}", err=True)
+        sys.exit(1)
+
+
+@issues_app.command("get")
+def get_issue(
+    issue_id: Annotated[str, typer.Argument(help="Issue ID or identifier (e.g., 'ENG-123')")],
+    format: Annotated[
+        str, typer.Option("--format", "-f", help="Output format: detail, json")
+    ] = "detail",
+) -> None:
+    """Get details of a specific Linear issue.
+
+    Examples:
+
+      # Get issue by identifier
+      linear issues get ENG-123
+
+      # Get issue as JSON
+      linear issues get ENG-123 --format json
+    """
+    try:
+        # Initialize client
+        client = LinearClient()
+
+        # Fetch issue
+        response = client.get_issue(issue_id)
+
+        # Format output
+        if format == "json":
+            format_issue_json(response)
+        else:  # detail
+            format_issue_detail(response)
 
     except LinearClientError as e:
         typer.echo(f"Error: {e}", err=True)

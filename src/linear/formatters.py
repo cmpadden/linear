@@ -202,3 +202,118 @@ def format_projects_compact(projects: list[Project]) -> None:
         )
 
     print(f"\nTotal: {len(projects)} project(s)")
+
+
+def format_issue_detail(issue_data: dict) -> None:
+    """Format a single issue with full details.
+
+    Args:
+        issue_data: Issue data from API response
+    """
+    console = Console()
+    issue = issue_data.get("issue", {})
+
+    if not issue:
+        console.print("[yellow]Issue not found.[/yellow]")
+        return
+
+    # Header
+    console.print(f"\n[bold bright_blue]{issue.get('identifier', 'N/A')}[/bold bright_blue]: {issue.get('title', 'Untitled')}")
+    console.print(f"[dim]{issue.get('url', '')}[/dim]\n")
+
+    # Status section
+    state = issue.get("state", {})
+    console.print(f"[bold]Status:[/bold] [green]{state.get('name', 'Unknown')}[/green]")
+    console.print(f"[bold]Priority:[/bold] [yellow]{issue.get('priorityLabel', 'No priority')}[/yellow]")
+
+    # People
+    assignee = issue.get("assignee")
+    if assignee:
+        console.print(f"[bold]Assignee:[/bold] [magenta]{assignee.get('name')}[/magenta] ({assignee.get('email')})")
+    else:
+        console.print(f"[bold]Assignee:[/bold] Unassigned")
+
+    creator = issue.get("creator")
+    if creator:
+        console.print(f"[bold]Creator:[/bold] {creator.get('name')} ({creator.get('email')})")
+
+    # Project & Team
+    project = issue.get("project")
+    if project:
+        console.print(f"[bold]Project:[/bold] {project.get('name')}")
+
+    team = issue.get("team", {})
+    console.print(f"[bold]Team:[/bold] {team.get('name')} ({team.get('key')})")
+
+    # Cycle
+    cycle = issue.get("cycle")
+    if cycle:
+        console.print(f"[bold]Cycle:[/bold] {cycle.get('name')} (#{cycle.get('number')})")
+
+    # Dates
+    console.print(f"\n[bold]Created:[/bold] {issue.get('createdAt', 'Unknown')[:10]}")
+    console.print(f"[bold]Updated:[/bold] {issue.get('updatedAt', 'Unknown')[:10]}")
+
+    if issue.get("dueDate"):
+        console.print(f"[bold]Due Date:[/bold] {issue.get('dueDate')[:10]}")
+
+    if issue.get("completedAt"):
+        console.print(f"[bold]Completed:[/bold] {issue.get('completedAt')[:10]}")
+
+    # Estimate
+    if issue.get("estimate"):
+        console.print(f"[bold]Estimate:[/bold] {issue.get('estimate')} points")
+
+    # Labels
+    labels = issue.get("labels", {}).get("nodes", [])
+    if labels:
+        label_names = [label.get("name") for label in labels]
+        console.print(f"[bold]Labels:[/bold] {', '.join(label_names)}")
+
+    # Parent issue
+    parent = issue.get("parent")
+    if parent:
+        console.print(f"[bold]Parent:[/bold] {parent.get('identifier')} - {parent.get('title')}")
+
+    # Description
+    description = issue.get("description")
+    if description:
+        console.print(f"\n[bold]Description:[/bold]")
+        console.print(description)
+
+    # Comments
+    comments_data = issue.get("comments") or {}
+    comments = comments_data.get("nodes", [])
+    if comments:
+        console.print(f"\n[bold]Comments ({len(comments)}):[/bold]")
+        for comment in comments[:5]:  # Show first 5 comments
+            if comment:
+                user = comment.get("user") or {}
+                created = comment.get("createdAt", "")[:10]
+                console.print(f"\n[cyan]{user.get('name', 'Unknown')}[/cyan] on {created}:")
+                console.print(comment.get("body", "")[:200])  # Truncate long comments
+
+    # Attachments
+    attachments_data = issue.get("attachments") or {}
+    attachments = attachments_data.get("nodes", [])
+    if attachments:
+        console.print(f"\n[bold]Attachments ({len(attachments)}):[/bold]")
+        for attachment in attachments:
+            if attachment:
+                console.print(f"  • {attachment.get('title')} - {attachment.get('url')}")
+
+    # Subscribers
+    subscribers_data = issue.get("subscribers") or {}
+    subscribers = subscribers_data.get("nodes", [])
+    if subscribers:
+        sub_names = [sub.get("name", "Unknown") for sub in subscribers if sub]
+        console.print(f"\n[bold]Subscribers:[/bold] {', '.join(sub_names)}")
+
+
+def format_issue_json(issue_data: dict) -> None:
+    """Format a single issue as JSON.
+
+    Args:
+        issue_data: Issue data from API response
+    """
+    print(json.dumps(issue_data, indent=2))

@@ -201,6 +201,106 @@ class LinearClient:
 
         return self.query(query, variables)
 
+    def get_issue(self, issue_id: str) -> dict[str, Any]:
+        """Get a single issue by ID or identifier.
+
+        Args:
+            issue_id: Issue ID (UUID) or identifier (e.g., 'ENG-123')
+
+        Returns:
+            Query response containing the issue
+
+        Raises:
+            LinearClientError: If the query fails or issue not found
+        """
+        # GraphQL query
+        query = """
+        query Issue($id: String!) {
+          issue(id: $id) {
+            id
+            identifier
+            title
+            description
+            priority
+            priorityLabel
+            url
+            createdAt
+            updatedAt
+            completedAt
+            startedAt
+            canceledAt
+            autoArchivedAt
+            dueDate
+            estimate
+            state {
+              name
+              type
+              color
+            }
+            assignee {
+              name
+              email
+              avatarUrl
+            }
+            creator {
+              name
+              email
+            }
+            project {
+              name
+              url
+            }
+            team {
+              name
+              key
+            }
+            cycle {
+              name
+              number
+            }
+            parent {
+              identifier
+              title
+            }
+            labels {
+              nodes {
+                name
+                color
+              }
+            }
+            comments {
+              nodes {
+                body
+                createdAt
+                user {
+                  name
+                }
+              }
+            }
+            attachments {
+              nodes {
+                title
+                url
+              }
+            }
+            subscribers {
+              nodes {
+                name
+              }
+            }
+          }
+        }
+        """
+
+        variables = {"id": issue_id}
+
+        response = self.query(query, variables)
+
+        if not response.get("issue"):
+            raise LinearClientError(f"Issue '{issue_id}' not found")
+
+        return response
+
     def list_projects(
         self,
         state: str | None = None,
@@ -286,3 +386,103 @@ class LinearClient:
         }
 
         return self.query(query, variables)
+
+    def get_issue(self, issue_id: str) -> dict[str, Any]:
+        """Get a single issue by ID or identifier.
+
+        Args:
+            issue_id: Issue ID (UUID) or identifier (e.g., 'ENG-123')
+
+        Returns:
+            Query response containing the issue
+
+        Raises:
+            LinearClientError: If the query fails or issue not found
+        """
+        # GraphQL query
+        query = """
+        query Issue($id: String!) {
+          issue(id: $id) {
+            id
+            identifier
+            title
+            description
+            priority
+            priorityLabel
+            url
+            createdAt
+            updatedAt
+            completedAt
+            startedAt
+            canceledAt
+            autoArchivedAt
+            dueDate
+            estimate
+            state {
+              name
+              type
+              color
+            }
+            assignee {
+              name
+              email
+              avatarUrl
+            }
+            creator {
+              name
+              email
+            }
+            project {
+              name
+              url
+            }
+            team {
+              name
+              key
+            }
+            cycle {
+              name
+              number
+            }
+            parent {
+              identifier
+              title
+            }
+            labels {
+              nodes {
+                name
+                color
+              }
+            }
+            comments {
+              nodes {
+                body
+                createdAt
+                user {
+                  name
+                }
+              }
+            }
+            attachments {
+              nodes {
+                title
+                url
+              }
+            }
+            subscribers {
+              nodes {
+                name
+              }
+            }
+          }
+        }
+        """
+
+        variables = {"id": issue_id}
+
+        response = self.query(query, variables)
+
+        if not response.get("issue"):
+            raise LinearClientError(f"Issue '{issue_id}' not found")
+
+        return response
