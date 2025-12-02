@@ -730,102 +730,167 @@ class LinearClient:
 
         return response
 
-    def get_issue(self, issue_id: str) -> dict[str, Any]:
-        """Get a single issue by ID or identifier.
+    def list_cycles(
+        self,
+        team: str | None = None,
+        active: bool = False,
+        future: bool = False,
+        past: bool = False,
+        limit: int = 50,
+        include_archived: bool = False,
+    ) -> dict[str, Any]:
+        """List cycles with optional filters.
 
         Args:
-            issue_id: Issue ID (UUID) or identifier (e.g., 'ENG-123')
+            team: Filter by team name or key
+            active: Show only active cycles
+            future: Show only future cycles
+            past: Show only past cycles
+            limit: Maximum number of cycles to return (default: 50)
+            include_archived: Include archived cycles (default: False)
 
         Returns:
-            Query response containing the issue
+            Query response containing cycles
 
         Raises:
-            LinearClientError: If the query fails or issue not found
+            LinearClientError: If the query fails
         """
-        # GraphQL query
         query = """
-        query Issue($id: String!) {
-          issue(id: $id) {
-            id
-            identifier
-            title
-            description
-            priority
-            priorityLabel
-            url
-            createdAt
-            updatedAt
-            completedAt
-            startedAt
-            canceledAt
-            autoArchivedAt
-            dueDate
-            estimate
-            state {
-              name
-              type
-              color
-            }
-            assignee {
-              name
-              email
-              avatarUrl
-            }
-            creator {
-              name
-              email
-            }
-            project {
-              name
-              url
-            }
-            team {
-              name
-              key
-            }
-            cycle {
-              name
+        query Cycles($filter: CycleFilter, $first: Int, $includeArchived: Boolean) {
+          cycles(filter: $filter, first: $first, includeArchived: $includeArchived) {
+            nodes {
+              id
               number
-            }
-            parent {
-              identifier
-              title
-            }
-            labels {
-              nodes {
+              name
+              description
+              startsAt
+              endsAt
+              completedAt
+              archivedAt
+              createdAt
+              updatedAt
+              isActive
+              isFuture
+              isPast
+              isNext
+              isPrevious
+              progress
+              team {
+                id
                 name
-                color
+                key
               }
-            }
-            comments {
-              nodes {
-                body
-                createdAt
-                user {
-                  name
+              issues {
+                nodes {
+                  id
                 }
               }
             }
-            attachments {
-              nodes {
-                title
-                url
-              }
+            pageInfo {
+              hasNextPage
+              endCursor
             }
-            subscribers {
+          }
+        }
+        """
+
+        # Build filter object
+        filters = {}
+
+        # Team filter - needs to be at top level with 'or'
+        if team:
+            # Check if it's a UUID (simple check for hyphens)
+            if "-" in team and len(team) == 36:
+                # Treat as team ID
+                filters["team"] = {"id": {"eq": team}}
+            else:
+                # Support both team key and name with OR at top level
+                filters["or"] = [
+                    {"team": {"key": {"eqIgnoreCase": team}}},
+                    {"team": {"name": {"containsIgnoreCase": team}}},
+                ]
+
+        # Status filters
+        if active:
+            filters["isActive"] = {"eq": True}
+        elif future:
+            filters["isFuture"] = {"eq": True}
+        elif past:
+            filters["isPast"] = {"eq": True}
+
+        variables = {
+            "filter": filters if filters else None,
+            "first": min(limit, 250),  # Linear API max
+            "includeArchived": include_archived,
+        }
+
+        return self.query(query, variables)
+
+    def get_cycle(self, cycle_id: str) -> dict[str, Any]:
+        """Get a single cycle by ID.
+
+        Args:
+            cycle_id: Cycle ID (UUID)
+
+        Returns:
+            Query response containing the cycle
+
+        Raises:
+            LinearClientError: If the query fails or cycle not found
+        """
+        query = """
+        query Cycle($id: String!) {
+          cycle(id: $id) {
+            id
+            number
+            name
+            description
+            startsAt
+            endsAt
+            completedAt
+            archivedAt
+            createdAt
+            updatedAt
+            isActive
+            isFuture
+            isPast
+            isNext
+            isPrevious
+            progress
+            scopeHistory
+            issueCountHistory
+            completedScopeHistory
+            team {
+              id
+              name
+              key
+            }
+            issues(first: 100) {
               nodes {
-                name
+                id
+                identifier
+                title
+                state {
+                  name
+                  type
+                }
+                priority
+                priorityLabel
+                estimate
+                assignee {
+                  name
+                }
               }
             }
           }
         }
         """
 
-        variables = {"id": issue_id}
+        variables = {"id": cycle_id}
 
         response = self.query(query, variables)
 
-        if not response.get("issue"):
-            raise LinearClientError(f"Issue '{issue_id}' not found")
+        if not response.get("cycle"):
+            raise LinearClientError(f"Cycle '{cycle_id}' not found")
 
         return response

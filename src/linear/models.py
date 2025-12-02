@@ -297,3 +297,119 @@ def parse_teams_response(response: dict[str, Any]) -> list[Team]:
     """
     teams_data = response.get("teams", {}).get("nodes", [])
     return [Team.from_api_response(team_data) for team_data in teams_data]
+
+
+@dataclass
+class Cycle:
+    """Represents a Linear cycle."""
+
+    id: str
+    number: int
+    name: str
+    description: str | None
+    starts_at: str
+    ends_at: str
+    completed_at: str | None
+    archived_at: str | None
+    created_at: str
+    updated_at: str
+    is_active: bool
+    is_future: bool
+    is_past: bool
+    is_next: bool
+    is_previous: bool
+    progress: float
+    team_id: str
+    team_name: str
+    team_key: str
+    issues_count: int
+
+    @classmethod
+    def from_api_response(cls, data: dict[str, Any]) -> "Cycle":
+        """Create a Cycle from API response data.
+
+        Args:
+            data: Cycle data from GraphQL response
+
+        Returns:
+            Cycle instance
+        """
+        team = data.get("team", {}) or {}
+        issues = data.get("issues", {}) or {}
+        issues_data = issues.get("nodes") or []
+
+        return cls(
+            id=data.get("id", ""),
+            number=data.get("number", 0),
+            name=data.get("name", ""),
+            description=data.get("description"),
+            starts_at=data.get("startsAt", ""),
+            ends_at=data.get("endsAt", ""),
+            completed_at=data.get("completedAt"),
+            archived_at=data.get("archivedAt"),
+            created_at=data.get("createdAt", ""),
+            updated_at=data.get("updatedAt", ""),
+            is_active=data.get("isActive", False),
+            is_future=data.get("isFuture", False),
+            is_past=data.get("isPast", False),
+            is_next=data.get("isNext", False),
+            is_previous=data.get("isPrevious", False),
+            progress=data.get("progress", 0.0),
+            team_id=team.get("id", ""),
+            team_name=team.get("name", ""),
+            team_key=team.get("key", ""),
+            issues_count=len(issues_data),
+        )
+
+    def format_progress(self) -> str:
+        """Get formatted progress percentage."""
+        return f"{self.progress * 100:.0f}%"
+
+    def format_date(self, date_str: str | None) -> str:
+        """Get formatted date.
+
+        Args:
+            date_str: ISO date string
+
+        Returns:
+            Formatted date string (YYYY-MM-DD) or empty string
+        """
+        if not date_str:
+            return ""
+        try:
+            dt = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+            return dt.strftime("%Y-%m-%d")
+        except (ValueError, AttributeError):
+            return date_str
+
+    def format_starts_at(self) -> str:
+        """Get formatted start date."""
+        return self.format_date(self.starts_at)
+
+    def format_ends_at(self) -> str:
+        """Get formatted end date."""
+        return self.format_date(self.ends_at)
+
+    def format_status(self) -> str:
+        """Get cycle status string."""
+        if self.is_active:
+            return "Active"
+        elif self.is_future:
+            return "Future"
+        elif self.is_past:
+            return "Past"
+        else:
+            return "Unknown"
+
+
+def parse_cycles_response(response: dict[str, Any]) -> list[Cycle]:
+    """Parse cycles from API response.
+
+    Args:
+        response: GraphQL response data
+
+    Returns:
+        List of Cycle objects
+    """
+    cycles_data = response.get("cycles", {}).get("nodes", [])
+    return [Cycle.from_api_response(cycle_data) for cycle_data in cycles_data]

@@ -8,6 +8,10 @@ from typing_extensions import Annotated
 
 from linear.api import LinearClient, LinearClientError
 from linear.formatters import (
+    format_cycle_detail,
+    format_cycle_json,
+    format_cycles_json,
+    format_cycles_table,
     format_issue_detail,
     format_issue_json,
     format_json,
@@ -21,7 +25,7 @@ from linear.formatters import (
     format_teams_json,
     format_teams_table,
 )
-from linear.models import parse_issues_response, parse_projects_response, parse_teams_response
+from linear.models import parse_cycles_response, parse_issues_response, parse_projects_response, parse_teams_response
 
 app = typer.Typer(
     help="Linear CLI - Interact with Linear from your terminal", no_args_is_help=True
@@ -29,9 +33,11 @@ app = typer.Typer(
 issues_app = typer.Typer(help="Manage Linear issues")
 projects_app = typer.Typer(help="Manage Linear projects")
 teams_app = typer.Typer(help="Manage Linear teams")
+cycles_app = typer.Typer(help="Manage Linear cycles", no_args_is_help=True)
 app.add_typer(issues_app, name="issues")
 app.add_typer(projects_app, name="projects")
 app.add_typer(teams_app, name="teams")
+app.add_typer(cycles_app, name="cycles")
 
 
 @issues_app.command("list")
@@ -417,6 +423,120 @@ def get_team(
             format_team_json(response)
         else:  # detail
             format_team_detail(response)
+
+    except LinearClientError as e:
+        typer.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except Exception as e:
+        typer.echo(f"Unexpected error: {e}", err=True)
+        sys.exit(1)
+
+
+@cycles_app.command("list")
+def list_cycles(
+    team: Annotated[
+        Optional[str], typer.Option("--team", "-t", help="Filter by team name or key")
+    ] = None,
+    active: Annotated[
+        bool, typer.Option("--active", "-a", help="Show only active cycles")
+    ] = False,
+    future: Annotated[
+        bool, typer.Option("--future", help="Show only future cycles")
+    ] = False,
+    past: Annotated[
+        bool, typer.Option("--past", help="Show only past cycles")
+    ] = False,
+    limit: Annotated[
+        int, typer.Option("--limit", "-l", help="Number of cycles to display")
+    ] = 50,
+    include_archived: Annotated[
+        bool, typer.Option("--include-archived", help="Include archived cycles")
+    ] = False,
+    format: Annotated[
+        str, typer.Option("--format", "-f", help="Output format: table, json")
+    ] = "table",
+) -> None:
+    """List Linear cycles with optional filters.
+
+    Examples:
+
+      # List all cycles
+      linear cycles list
+
+      # Filter by team
+      linear cycles list --team ENG
+
+      # Show only active cycles
+      linear cycles list --active
+
+      # Show future cycles for a specific team
+      linear cycles list --team design --future
+
+      # Output as JSON
+      linear cycles list --format json
+    """
+    try:
+        # Initialize client
+        client = LinearClient()
+
+        # Fetch cycles
+        response = client.list_cycles(
+            team=team,
+            active=active,
+            future=future,
+            past=past,
+            limit=limit,
+            include_archived=include_archived,
+        )
+
+        # Parse cycles
+        cycles = parse_cycles_response(response)
+
+        # Format output
+        if format == "json":
+            format_cycles_json(cycles)
+        else:  # table
+            format_cycles_table(cycles)
+
+    except LinearClientError as e:
+        typer.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except Exception as e:
+        typer.echo(f"Unexpected error: {e}", err=True)
+        sys.exit(1)
+
+
+@cycles_app.command("get")
+def get_cycle(
+    cycle_id: Annotated[
+        str, typer.Argument(help="Cycle ID")
+    ],
+    format: Annotated[
+        str, typer.Option("--format", "-f", help="Output format: detail, json")
+    ] = "detail",
+) -> None:
+    """Get details of a specific Linear cycle.
+
+    Examples:
+
+      # Get cycle by ID
+      linear cycles get abc123-def456
+
+      # Get cycle as JSON
+      linear cycles get abc123 --format json
+    """
+    try:
+        # Initialize client
+        client = LinearClient()
+
+        # Fetch cycle
+        response = client.get_cycle(cycle_id)
+
+        # Format output
+        if format == "json":
+            format_cycle_json(response)
+        else:  # detail
+            format_cycle_detail(response)
 
     except LinearClientError as e:
         typer.echo(f"Error: {e}", err=True)

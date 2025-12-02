@@ -6,7 +6,7 @@ from typing import Any
 from rich.console import Console
 from rich.table import Table
 
-from linear.models import Issue, Project, Team
+from linear.models import Cycle, Issue, Project, Team
 
 
 def format_table(issues: list[Issue]) -> None:
@@ -604,3 +604,252 @@ def format_issue_json(issue_data: dict) -> None:
         issue_data: Issue data from API response
     """
     print(json.dumps(issue_data, indent=2))
+
+
+def format_cycles_table(cycles: list[Cycle]) -> None:
+    """Format cycles as a rich table.
+
+    Args:
+        cycles: List of Cycle objects to display
+    """
+    console = Console()
+
+    if not cycles:
+        console.print("[yellow]No cycles found.[/yellow]")
+        return
+
+    table = Table(show_header=True, header_style="bold cyan")
+    table.add_column("Team", style="cyan", no_wrap=True)
+    table.add_column("Name", style="bright_blue")
+    table.add_column("Number", style="white", no_wrap=True)
+    table.add_column("Status", style="green")
+    table.add_column("Progress", style="yellow")
+    table.add_column("Issues", style="magenta", no_wrap=True)
+    table.add_column("Starts", style="dim")
+    table.add_column("Ends", style="dim")
+
+    for cycle in cycles:
+        # Truncate name if too long
+        name = cycle.name or "Untitled"
+        if len(name) > 30:
+            name = name[:27] + "..."
+
+        # Status with color coding
+        if cycle.is_active:
+            status = "[green]Active[/green]"
+        elif cycle.is_future:
+            status = "[blue]Future[/blue]"
+        elif cycle.is_past:
+            status = "[dim]Past[/dim]"
+        else:
+            status = "Unknown"
+
+        table.add_row(
+            cycle.team_key,
+            name,
+            f"#{cycle.number}",
+            status,
+            cycle.format_progress(),
+            str(cycle.issues_count),
+            cycle.format_starts_at(),
+            cycle.format_ends_at(),
+        )
+
+    console.print(table)
+    console.print(f"\n[dim]Total: {len(cycles)} cycle(s)[/dim]")
+
+
+def format_cycles_json(cycles: list[Cycle]) -> None:
+    """Format cycles as JSON.
+
+    Args:
+        cycles: List of Cycle objects to display
+    """
+    cycles_data = []
+    for cycle in cycles:
+        cycles_data.append(
+            {
+                "id": cycle.id,
+                "number": cycle.number,
+                "name": cycle.name,
+                "description": cycle.description,
+                "startsAt": cycle.starts_at,
+                "endsAt": cycle.ends_at,
+                "completedAt": cycle.completed_at,
+                "archivedAt": cycle.archived_at,
+                "createdAt": cycle.created_at,
+                "updatedAt": cycle.updated_at,
+                "isActive": cycle.is_active,
+                "isFuture": cycle.is_future,
+                "isPast": cycle.is_past,
+                "isNext": cycle.is_next,
+                "isPrevious": cycle.is_previous,
+                "progress": cycle.progress,
+                "team": {
+                    "id": cycle.team_id,
+                    "name": cycle.team_name,
+                    "key": cycle.team_key,
+                },
+                "issuesCount": cycle.issues_count,
+            }
+        )
+
+    print(json.dumps({"cycles": cycles_data, "count": len(cycles)}, indent=2))
+
+
+def format_cycle_detail(cycle_data: dict) -> None:
+    """Format a single cycle with full details.
+
+    Args:
+        cycle_data: Cycle data from API response
+    """
+    console = Console()
+    cycle = cycle_data.get("cycle", {})
+
+    if not cycle:
+        console.print("[yellow]Cycle not found.[/yellow]")
+        return
+
+    # Header
+    team = cycle.get("team", {})
+    console.print(
+        f"\n[bold bright_blue]{cycle.get('name', 'Untitled Cycle')}[/bold bright_blue] "
+        f"[dim](Cycle #{cycle.get('number', '?')})[/dim]"
+    )
+    console.print(f"[dim]Team: {team.get('name', '')} ({team.get('key', '')})[/dim]\n")
+
+    # Status section with visual indicator
+    if cycle.get("isActive"):
+        status_display = "[green]🟢 Active[/green]"
+    elif cycle.get("isFuture"):
+        status_display = "[blue]🔵 Future[/blue]"
+    elif cycle.get("isPast"):
+        status_display = "[dim]⚪ Past[/dim]"
+    else:
+        status_display = "Unknown"
+
+    console.print(f"[bold]Status:[/bold] {status_display}")
+
+    # Progress bar visualization
+    progress = cycle.get("progress", 0.0)
+    progress_pct = progress * 100
+    bar_width = 30
+    filled = int(bar_width * progress)
+    bar = "█" * filled + "░" * (bar_width - filled)
+    console.print(f"[bold]Progress:[/bold] [yellow]{bar}[/yellow] {progress_pct:.1f}%")
+
+    # Dates section
+    starts_at = cycle.get("startsAt", "")[:10] if cycle.get("startsAt") else "Not set"
+    ends_at = cycle.get("endsAt", "")[:10] if cycle.get("endsAt") else "Not set"
+    console.print(f"\n[bold]Start Date:[/bold] {starts_at}")
+    console.print(f"[bold]End Date:[/bold] {ends_at}")
+
+    if cycle.get("completedAt"):
+        console.print(f"[bold]Completed:[/bold] {cycle.get('completedAt')[:10]}")
+
+    # Metadata
+    console.print(f"\n[bold]Created:[/bold] {cycle.get('createdAt', 'Unknown')[:10]}")
+    console.print(f"[bold]Updated:[/bold] {cycle.get('updatedAt', 'Unknown')[:10]}")
+
+    if cycle.get("archivedAt"):
+        console.print(f"[bold]Archived:[/bold] {cycle.get('archivedAt')[:10]}")
+
+    # Special flags
+    flags = []
+    if cycle.get("isNext"):
+        flags.append("Next Cycle")
+    if cycle.get("isPrevious"):
+        flags.append("Previous Cycle")
+    if flags:
+        console.print(f"[bold]Tags:[/bold] {', '.join(flags)}")
+
+    # Description
+    description = cycle.get("description")
+    if description:
+        console.print(f"\n[bold]Description:[/bold]")
+        console.print(description)
+
+    # Issues breakdown
+    issues_data = cycle.get("issues", {}).get("nodes", [])
+    if issues_data:
+        console.print(f"\n[bold]Issues ({len(issues_data)}):[/bold]")
+
+        # Group by state type
+        backlog = [i for i in issues_data if i.get("state", {}).get("type") == "backlog"]
+        unstarted = [i for i in issues_data if i.get("state", {}).get("type") == "unstarted"]
+        started = [i for i in issues_data if i.get("state", {}).get("type") == "started"]
+        completed = [i for i in issues_data if i.get("state", {}).get("type") == "completed"]
+        canceled = [i for i in issues_data if i.get("state", {}).get("type") == "canceled"]
+
+        # Calculate total estimate
+        total_estimate = sum(issue.get("estimate", 0) or 0 for issue in issues_data)
+        completed_estimate = sum(issue.get("estimate", 0) or 0 for issue in completed)
+
+        console.print(
+            f"\n  [dim]Total Estimate:[/dim] {completed_estimate}/{total_estimate} points completed"
+        )
+
+        if unstarted:
+            console.print(f"\n  [yellow]Unstarted ({len(unstarted)}):[/yellow]")
+            for issue in unstarted[:5]:
+                assignee_data = issue.get("assignee")
+                assignee = assignee_data.get("name", "Unassigned") if assignee_data else "Unassigned"
+                priority = issue.get("priorityLabel", "No priority")
+                estimate = issue.get("estimate", 0) or 0
+                console.print(
+                    f"    • {issue.get('identifier')} - {issue.get('title', 'Untitled')[:50]} "
+                    f"({assignee}, {priority}, {estimate}pts)"
+                )
+            if len(unstarted) > 5:
+                console.print(f"    [dim]... and {len(unstarted) - 5} more[/dim]")
+
+        if started:
+            console.print(f"\n  [green]In Progress ({len(started)}):[/green]")
+            for issue in started[:5]:
+                assignee_data = issue.get("assignee")
+                assignee = assignee_data.get("name", "Unassigned") if assignee_data else "Unassigned"
+                priority = issue.get("priorityLabel", "No priority")
+                estimate = issue.get("estimate", 0) or 0
+                console.print(
+                    f"    • {issue.get('identifier')} - {issue.get('title', 'Untitled')[:50]} "
+                    f"({assignee}, {priority}, {estimate}pts)"
+                )
+            if len(started) > 5:
+                console.print(f"    [dim]... and {len(started) - 5} more[/dim]")
+
+        if completed:
+            console.print(f"\n  [blue]Completed ({len(completed)}):[/blue]")
+            for issue in completed[:3]:
+                assignee_data = issue.get("assignee")
+                assignee = assignee_data.get("name", "Unassigned") if assignee_data else "Unassigned"
+                estimate = issue.get("estimate", 0) or 0
+                console.print(
+                    f"    • {issue.get('identifier')} - {issue.get('title', 'Untitled')[:50]} "
+                    f"({assignee}, {estimate}pts)"
+                )
+            if len(completed) > 3:
+                console.print(f"    [dim]... and {len(completed) - 3} more[/dim]")
+
+        if backlog:
+            console.print(f"\n  [dim]Backlog ({len(backlog)})[/dim]")
+
+        if canceled:
+            console.print(f"\n  [dim]Canceled ({len(canceled)})[/dim]")
+
+    # Scope history (if available)
+    scope_history = cycle.get("scopeHistory")
+    if scope_history:
+        console.print(f"\n[bold]Scope History:[/bold] {len(scope_history)} data points")
+
+    issue_count_history = cycle.get("issueCountHistory")
+    if issue_count_history:
+        console.print(f"[bold]Issue Count History:[/bold] {len(issue_count_history)} data points")
+
+
+def format_cycle_json(cycle_data: dict) -> None:
+    """Format a single cycle as JSON.
+
+    Args:
+        cycle_data: Cycle data from API response
+    """
+    print(json.dumps(cycle_data, indent=2))
