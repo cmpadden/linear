@@ -1,3 +1,5 @@
+<img width="1400" height="225" alt="linear-cli-header" src="https://github.com/user-attachments/assets/ce620de7-718d-4205-b4a0-bb287dc910a4" />
+
 # Linear CLI
 
 A command-line interface for interacting with [Linear](https://linear.app) - list issues, view project details, and manage your workflow from the terminal.
