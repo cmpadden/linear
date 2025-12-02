@@ -6,7 +6,7 @@ from typing import Any
 from rich.console import Console
 from rich.table import Table
 
-from linear.models import Cycle, Issue, Project, Team
+from linear.models import Cycle, Issue, Project, Team, User
 
 
 def format_table(issues: list[Issue]) -> None:
@@ -171,7 +171,9 @@ def format_project_detail(project_data: dict) -> None:
         return
 
     # Header
-    console.print(f"\n[bold bright_blue]{project.get('name', 'Untitled Project')}[/bold bright_blue]")
+    console.print(
+        f"\n[bold bright_blue]{project.get('name', 'Untitled Project')}[/bold bright_blue]"
+    )
     console.print(f"[dim]{project.get('url', '')}[/dim]\n")
 
     # Status section
@@ -183,13 +185,17 @@ def format_project_detail(project_data: dict) -> None:
     # People
     lead = project.get("lead")
     if lead:
-        console.print(f"[bold]Lead:[/bold] [magenta]{lead.get('name')}[/magenta] ({lead.get('email')})")
+        console.print(
+            f"[bold]Lead:[/bold] [magenta]{lead.get('name')}[/magenta] ({lead.get('email')})"
+        )
     else:
         console.print(f"[bold]Lead:[/bold] No lead assigned")
 
     creator = project.get("creator")
     if creator:
-        console.print(f"[bold]Creator:[/bold] {creator.get('name')} ({creator.get('email')})")
+        console.print(
+            f"[bold]Creator:[/bold] {creator.get('name')} ({creator.get('email')})"
+        )
 
     # Teams
     teams_data = project.get("teams", {}).get("nodes", [])
@@ -234,31 +240,57 @@ def format_project_detail(project_data: dict) -> None:
         console.print(f"\n[bold]Issues ({len(issues_data)}):[/bold]")
 
         # Group by state type
-        backlog = [i for i in issues_data if i.get("state", {}).get("type") == "backlog"]
-        started = [i for i in issues_data if i.get("state", {}).get("type") == "started"]
-        completed = [i for i in issues_data if i.get("state", {}).get("type") == "completed"]
-        canceled = [i for i in issues_data if i.get("state", {}).get("type") == "canceled"]
+        backlog = [
+            i for i in issues_data if i.get("state", {}).get("type") == "backlog"
+        ]
+        started = [
+            i for i in issues_data if i.get("state", {}).get("type") == "started"
+        ]
+        completed = [
+            i for i in issues_data if i.get("state", {}).get("type") == "completed"
+        ]
+        canceled = [
+            i for i in issues_data if i.get("state", {}).get("type") == "canceled"
+        ]
 
         if backlog:
             console.print(f"\n  [dim]Backlog ({len(backlog)}):[/dim]")
             for issue in backlog[:5]:
                 assignee_data = issue.get("assignee")
-                assignee = assignee_data.get("name", "Unassigned") if assignee_data else "Unassigned"
-                console.print(f"    • {issue.get('identifier')} - {issue.get('title', 'Untitled')[:50]} ({assignee})")
+                assignee = (
+                    assignee_data.get("name", "Unassigned")
+                    if assignee_data
+                    else "Unassigned"
+                )
+                console.print(
+                    f"    • {issue.get('identifier')} - {issue.get('title', 'Untitled')[:50]} ({assignee})"
+                )
 
         if started:
             console.print(f"\n  [green]In Progress ({len(started)}):[/green]")
             for issue in started[:5]:
                 assignee_data = issue.get("assignee")
-                assignee = assignee_data.get("name", "Unassigned") if assignee_data else "Unassigned"
-                console.print(f"    • {issue.get('identifier')} - {issue.get('title', 'Untitled')[:50]} ({assignee})")
+                assignee = (
+                    assignee_data.get("name", "Unassigned")
+                    if assignee_data
+                    else "Unassigned"
+                )
+                console.print(
+                    f"    • {issue.get('identifier')} - {issue.get('title', 'Untitled')[:50]} ({assignee})"
+                )
 
         if completed:
             console.print(f"\n  [blue]Completed ({len(completed)}):[/blue]")
             for issue in completed[:3]:
                 assignee_data = issue.get("assignee")
-                assignee = assignee_data.get("name", "Unassigned") if assignee_data else "Unassigned"
-                console.print(f"    • {issue.get('identifier')} - {issue.get('title', 'Untitled')[:50]} ({assignee})")
+                assignee = (
+                    assignee_data.get("name", "Unassigned")
+                    if assignee_data
+                    else "Unassigned"
+                )
+                console.print(
+                    f"    • {issue.get('identifier')} - {issue.get('title', 'Untitled')[:50]} ({assignee})"
+                )
 
         if canceled:
             console.print(f"\n  [dim]Canceled ({len(canceled)}):[/dim]")
@@ -360,7 +392,9 @@ def format_team_detail(team_data: dict) -> None:
         return
 
     # Header
-    console.print(f"\n[bold bright_blue]{team.get('name', 'Untitled Team')} ({team.get('key', '')})[/bold bright_blue]")
+    console.print(
+        f"\n[bold bright_blue]{team.get('name', 'Untitled Team')} ({team.get('key', '')})[/bold bright_blue]"
+    )
 
     # Organization
     org = team.get("organization", {})
@@ -369,8 +403,12 @@ def format_team_detail(team_data: dict) -> None:
 
     # Basic info
     console.print(f"[bold]Team Key:[/bold] {team.get('key', '')}")
-    console.print(f"[bold]Private:[/bold] {'Yes' if team.get('private', False) else 'No'}")
-    console.print(f"[bold]Cycles Enabled:[/bold] {'Yes' if team.get('cyclesEnabled', False) else 'No'}")
+    console.print(
+        f"[bold]Private:[/bold] {'Yes' if team.get('private', False) else 'No'}"
+    )
+    console.print(
+        f"[bold]Cycles Enabled:[/bold] {'Yes' if team.get('cyclesEnabled', False) else 'No'}"
+    )
 
     timezone = team.get("timezone")
     if timezone:
@@ -396,8 +434,12 @@ def format_team_detail(team_data: dict) -> None:
         for member in members_data[:10]:
             name = member.get("displayName") or member.get("name", "Unknown")
             email = member.get("email", "")
-            active_status = "" if member.get("active", True) else " [dim](inactive)[/dim]"
-            admin_status = " [yellow](admin)[/yellow]" if member.get("admin", False) else ""
+            active_status = (
+                "" if member.get("active", True) else " [dim](inactive)[/dim]"
+            )
+            admin_status = (
+                " [yellow](admin)[/yellow]" if member.get("admin", False) else ""
+            )
             console.print(f"  • {name} ({email}){admin_status}{active_status}")
         if len(members_data) > 10:
             console.print(f"  [dim]... and {len(members_data) - 10} more[/dim]")
@@ -410,7 +452,11 @@ def format_team_detail(team_data: dict) -> None:
             state_name = issue.get("state", {}).get("name", "Unknown")
             title = issue.get("title", "Untitled")[:50]
             assignee_data = issue.get("assignee")
-            assignee = assignee_data.get("name", "Unassigned") if assignee_data else "Unassigned"
+            assignee = (
+                assignee_data.get("name", "Unassigned")
+                if assignee_data
+                else "Unassigned"
+            )
             priority = issue.get("priorityLabel", "No priority")
             console.print(f"  • {issue.get('identifier')} - {title}")
             console.print(f"    [dim]{state_name} | {priority} | {assignee}[/dim]")
@@ -775,11 +821,21 @@ def format_cycle_detail(cycle_data: dict) -> None:
         console.print(f"\n[bold]Issues ({len(issues_data)}):[/bold]")
 
         # Group by state type
-        backlog = [i for i in issues_data if i.get("state", {}).get("type") == "backlog"]
-        unstarted = [i for i in issues_data if i.get("state", {}).get("type") == "unstarted"]
-        started = [i for i in issues_data if i.get("state", {}).get("type") == "started"]
-        completed = [i for i in issues_data if i.get("state", {}).get("type") == "completed"]
-        canceled = [i for i in issues_data if i.get("state", {}).get("type") == "canceled"]
+        backlog = [
+            i for i in issues_data if i.get("state", {}).get("type") == "backlog"
+        ]
+        unstarted = [
+            i for i in issues_data if i.get("state", {}).get("type") == "unstarted"
+        ]
+        started = [
+            i for i in issues_data if i.get("state", {}).get("type") == "started"
+        ]
+        completed = [
+            i for i in issues_data if i.get("state", {}).get("type") == "completed"
+        ]
+        canceled = [
+            i for i in issues_data if i.get("state", {}).get("type") == "canceled"
+        ]
 
         # Calculate total estimate
         total_estimate = sum(issue.get("estimate", 0) or 0 for issue in issues_data)
@@ -793,7 +849,11 @@ def format_cycle_detail(cycle_data: dict) -> None:
             console.print(f"\n  [yellow]Unstarted ({len(unstarted)}):[/yellow]")
             for issue in unstarted[:5]:
                 assignee_data = issue.get("assignee")
-                assignee = assignee_data.get("name", "Unassigned") if assignee_data else "Unassigned"
+                assignee = (
+                    assignee_data.get("name", "Unassigned")
+                    if assignee_data
+                    else "Unassigned"
+                )
                 priority = issue.get("priorityLabel", "No priority")
                 estimate = issue.get("estimate", 0) or 0
                 console.print(
@@ -807,7 +867,11 @@ def format_cycle_detail(cycle_data: dict) -> None:
             console.print(f"\n  [green]In Progress ({len(started)}):[/green]")
             for issue in started[:5]:
                 assignee_data = issue.get("assignee")
-                assignee = assignee_data.get("name", "Unassigned") if assignee_data else "Unassigned"
+                assignee = (
+                    assignee_data.get("name", "Unassigned")
+                    if assignee_data
+                    else "Unassigned"
+                )
                 priority = issue.get("priorityLabel", "No priority")
                 estimate = issue.get("estimate", 0) or 0
                 console.print(
@@ -821,7 +885,11 @@ def format_cycle_detail(cycle_data: dict) -> None:
             console.print(f"\n  [blue]Completed ({len(completed)}):[/blue]")
             for issue in completed[:3]:
                 assignee_data = issue.get("assignee")
-                assignee = assignee_data.get("name", "Unassigned") if assignee_data else "Unassigned"
+                assignee = (
+                    assignee_data.get("name", "Unassigned")
+                    if assignee_data
+                    else "Unassigned"
+                )
                 estimate = issue.get("estimate", 0) or 0
                 console.print(
                     f"    • {issue.get('identifier')} - {issue.get('title', 'Untitled')[:50]} "
@@ -843,7 +911,9 @@ def format_cycle_detail(cycle_data: dict) -> None:
 
     issue_count_history = cycle.get("issueCountHistory")
     if issue_count_history:
-        console.print(f"[bold]Issue Count History:[/bold] {len(issue_count_history)} data points")
+        console.print(
+            f"[bold]Issue Count History:[/bold] {len(issue_count_history)} data points"
+        )
 
 
 def format_cycle_json(cycle_data: dict) -> None:
@@ -853,3 +923,189 @@ def format_cycle_json(cycle_data: dict) -> None:
         cycle_data: Cycle data from API response
     """
     print(json.dumps(cycle_data, indent=2))
+
+
+def format_users_table(users: list[User]) -> None:
+    """Format users as a rich table.
+
+    Args:
+        users: List of User objects to display
+    """
+    console = Console()
+
+    if not users:
+        console.print("[yellow]No users found.[/yellow]")
+        return
+
+    table = Table(show_header=True, header_style="bold cyan")
+    table.add_column("Name", style="bright_blue")
+    table.add_column("Email", style="cyan")
+    table.add_column("Role", style="yellow", no_wrap=True)
+    table.add_column("Status", style="green", no_wrap=True)
+    table.add_column("Timezone", style="dim")
+    table.add_column("Created", style="dim")
+
+    for user in users:
+        # Status with color coding
+        if user.active:
+            status = "[green]Active[/green]"
+        else:
+            status = "[dim]Inactive[/dim]"
+
+        # Role with color coding
+        if user.admin:
+            role = "[yellow]Admin[/yellow]"
+        else:
+            role = "Member"
+
+        # Truncate email if too long
+        email = user.email
+        if len(email) > 35:
+            email = email[:32] + "..."
+
+        table.add_row(
+            user.display_name,
+            email,
+            role,
+            status,
+            user.timezone or "—",
+            user.format_created_at(),
+        )
+
+    console.print(table)
+    console.print(f"\n[dim]Total: {len(users)} user(s)[/dim]")
+
+
+def format_users_json(users: list[User]) -> None:
+    """Format users as JSON.
+
+    Args:
+        users: List of User objects to display
+    """
+    users_data = []
+    for user in users:
+        users_data.append(
+            {
+                "id": user.id,
+                "name": user.name,
+                "displayName": user.display_name,
+                "email": user.email,
+                "active": user.active,
+                "admin": user.admin,
+                "createdAt": user.created_at,
+                "updatedAt": user.updated_at,
+                "avatarUrl": user.avatar_url,
+                "timezone": user.timezone,
+                "organizationId": user.organization_id,
+            }
+        )
+
+    print(json.dumps({"users": users_data, "count": len(users)}, indent=2))
+
+
+def format_user_detail(user_data: dict) -> None:
+    """Format a single user with full details.
+
+    Args:
+        user_data: User data from API response
+    """
+    console = Console()
+    user = user_data.get("user", {})
+
+    if not user:
+        console.print("[yellow]User not found.[/yellow]")
+        return
+
+    # Header
+    display_name = user.get("displayName") or user.get("name", "Unknown")
+    console.print(f"\n[bold bright_blue]{display_name}[/bold bright_blue]")
+    console.print(f"[dim]{user.get('email', '')}[/dim]\n")
+
+    # Status and role
+    is_active = user.get("active", True)
+    is_admin = user.get("admin", False)
+
+    if is_active:
+        status_display = "[green]✓ Active[/green]"
+    else:
+        status_display = "[dim]✗ Inactive[/dim]"
+
+    role_display = "[yellow]Admin[/yellow]" if is_admin else "Member"
+
+    console.print(f"[bold]Status:[/bold] {status_display}")
+    console.print(f"[bold]Role:[/bold] {role_display}")
+
+    # Organization
+    org = user.get("organization", {})
+    if org:
+        console.print(f"[bold]Organization:[/bold] {org.get('name', 'Unknown')}")
+
+    # Timezone
+    timezone = user.get("timezone")
+    if timezone:
+        console.print(f"[bold]Timezone:[/bold] {timezone}")
+
+    # Status message
+    status_label = user.get("statusLabel")
+    status_emoji = user.get("statusEmoji")
+    if status_label:
+        status_msg = f"{status_emoji} {status_label}" if status_emoji else status_label
+        console.print(f"[bold]Status Message:[/bold] {status_msg}")
+
+        status_until = user.get("statusUntilAt")
+        if status_until:
+            console.print(f"[dim]  (until {status_until[:10]})[/dim]")
+
+    # Description
+    description = user.get("description")
+    if description:
+        console.print(f"\n[bold]Bio:[/bold]")
+        console.print(description)
+
+    # Dates
+    console.print(f"\n[bold]Joined:[/bold] {user.get('createdAt', 'Unknown')[:10]}")
+    console.print(f"[bold]Last Updated:[/bold] {user.get('updatedAt', 'Unknown')[:10]}")
+
+    # Teams
+    teams_data = user.get("teams", {}).get("nodes", [])
+    if teams_data:
+        console.print(f"\n[bold]Teams ({len(teams_data)}):[/bold]")
+        for team in teams_data[:10]:
+            console.print(f"  • {team.get('name', 'Unknown')} ({team.get('key', '')})")
+        if len(teams_data) > 10:
+            console.print(f"  [dim]... and {len(teams_data) - 10} more[/dim]")
+
+    # Assigned issues
+    assigned_issues = user.get("assignedIssues", {}).get("nodes", [])
+    if assigned_issues:
+        console.print(
+            f"\n[bold]Active Assigned Issues ({len(assigned_issues)}):[/bold]"
+        )
+        for issue in assigned_issues[:10]:
+            state = issue.get("state", {})
+            state_name = state.get("name", "Unknown")
+            priority = issue.get("priorityLabel", "No priority")
+            console.print(
+                f"  • {issue.get('identifier')} - {issue.get('title', 'Untitled')[:60]} "
+                f"[{state_name}, {priority}]"
+            )
+        if len(assigned_issues) > 10:
+            console.print(f"  [dim]... and {len(assigned_issues) - 10} more[/dim]")
+
+    # Created issues (recent)
+    created_issues = user.get("createdIssues", {}).get("nodes", [])
+    if created_issues:
+        console.print(f"\n[bold]Recently Created Issues:[/bold]")
+        for issue in created_issues[:5]:
+            console.print(
+                f"  • {issue.get('identifier')} - {issue.get('title', 'Untitled')[:60]}"
+            )
+
+
+def format_user_json(user_data: dict) -> None:
+    """Format a single user as JSON.
+
+    Args:
+        user_data: User data from API response
+    """
+    print(json.dumps(user_data, indent=2))

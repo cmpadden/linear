@@ -804,9 +804,9 @@ class LinearClient:
                 # Treat as team ID
                 filters["team"] = {"id": {"eq": team}}
             else:
-                # Support both team key and name with OR at top level
+                # Support both team key (exact match) and name (substring) with OR at top level
                 filters["or"] = [
-                    {"team": {"key": {"eqIgnoreCase": team}}},
+                    {"team": {"key": {"eq": team.upper()}}},
                     {"team": {"name": {"containsIgnoreCase": team}}},
                 ]
 
@@ -892,5 +892,139 @@ class LinearClient:
 
         if not response.get("cycle"):
             raise LinearClientError(f"Cycle '{cycle_id}' not found")
+
+        return response
+
+    def list_users(
+        self,
+        active_only: bool = True,
+        limit: int = 50,
+        include_disabled: bool = False,
+    ) -> dict[str, Any]:
+        """List users in the workspace.
+
+        Args:
+            active_only: Show only active users (default: True)
+            limit: Maximum number of users to return (default: 50)
+            include_disabled: Include disabled users (default: False)
+
+        Returns:
+            Query response containing users
+
+        Raises:
+            LinearClientError: If the query fails
+        """
+        query = """
+        query Users($filter: UserFilter, $first: Int, $includeDisabled: Boolean) {
+          users(filter: $filter, first: $first, includeDisabled: $includeDisabled) {
+            nodes {
+              id
+              name
+              displayName
+              email
+              active
+              admin
+              createdAt
+              updatedAt
+              avatarUrl
+              timezone
+              organization {
+                id
+                name
+              }
+            }
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+          }
+        }
+        """
+
+        # Build filter object
+        filters = {}
+
+        if active_only:
+            filters["active"] = {"eq": True}
+
+        variables = {
+            "filter": filters if filters else None,
+            "first": min(limit, 250),  # Linear API max
+            "includeDisabled": include_disabled,
+        }
+
+        return self.query(query, variables)
+
+    def get_user(self, user_id: str) -> dict[str, Any]:
+        """Get a single user by ID or email.
+
+        Args:
+            user_id: User ID (UUID) or email
+
+        Returns:
+            Query response containing the user
+
+        Raises:
+            LinearClientError: If the query fails or user not found
+        """
+        query = """
+        query User($id: String!) {
+          user(id: $id) {
+            id
+            name
+            displayName
+            email
+            active
+            admin
+            createdAt
+            updatedAt
+            avatarUrl
+            timezone
+            description
+            statusEmoji
+            statusLabel
+            statusUntilAt
+            organization {
+              id
+              name
+              urlKey
+            }
+            teams {
+              nodes {
+                id
+                name
+                key
+              }
+            }
+            assignedIssues(first: 10, filter: { state: { type: { in: ["started", "unstarted"] } } }) {
+              nodes {
+                id
+                identifier
+                title
+                priority
+                priorityLabel
+                state {
+                  name
+                  type
+                }
+              }
+            }
+            createdIssues(first: 5) {
+              nodes {
+                id
+                identifier
+                title
+              }
+            }
+          }
+        }
+        """
+
+        variables = {"id": user_id}
+
+        response = self.query(query, variables)
+
+        if not response.get("user"):
+            raise LinearClientError(f"User '{user_id}' not found")
 
         return response

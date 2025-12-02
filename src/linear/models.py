@@ -413,3 +413,92 @@ def parse_cycles_response(response: dict[str, Any]) -> list[Cycle]:
     """
     cycles_data = response.get("cycles", {}).get("nodes", [])
     return [Cycle.from_api_response(cycle_data) for cycle_data in cycles_data]
+
+
+@dataclass
+class User:
+    """Represents a Linear user."""
+
+    id: str
+    name: str
+    display_name: str
+    email: str
+    active: bool
+    admin: bool
+    created_at: str
+    updated_at: str
+    avatar_url: str | None
+    timezone: str | None
+    organization_id: str
+
+    @classmethod
+    def from_api_response(cls, data: dict[str, Any]) -> "User":
+        """Create a User from API response data.
+
+        Args:
+            data: User data from GraphQL response
+
+        Returns:
+            User instance
+        """
+        organization = data.get("organization", {}) or {}
+
+        return cls(
+            id=data.get("id", ""),
+            name=data.get("name", ""),
+            display_name=data.get("displayName") or data.get("name", ""),
+            email=data.get("email", ""),
+            active=data.get("active", True),
+            admin=data.get("admin", False),
+            created_at=data.get("createdAt", ""),
+            updated_at=data.get("updatedAt", ""),
+            avatar_url=data.get("avatarUrl"),
+            timezone=data.get("timezone"),
+            organization_id=organization.get("id", ""),
+        )
+
+    def format_status(self) -> str:
+        """Get user status string."""
+        if not self.active:
+            return "Inactive"
+        return "Active"
+
+    def format_role(self) -> str:
+        """Get user role string."""
+        if self.admin:
+            return "Admin"
+        return "Member"
+
+    def format_date(self, date_str: str | None) -> str:
+        """Get formatted date.
+
+        Args:
+            date_str: ISO date string
+
+        Returns:
+            Formatted date string (YYYY-MM-DD) or empty string
+        """
+        if not date_str:
+            return ""
+        try:
+            dt = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+            return dt.strftime("%Y-%m-%d")
+        except (ValueError, AttributeError):
+            return date_str
+
+    def format_created_at(self) -> str:
+        """Get formatted creation date."""
+        return self.format_date(self.created_at)
+
+
+def parse_users_response(response: dict[str, Any]) -> list[User]:
+    """Parse users from API response.
+
+    Args:
+        response: GraphQL response data
+
+    Returns:
+        List of User objects
+    """
+    users_data = response.get("users", {}).get("nodes", [])
+    return [User.from_api_response(user_data) for user_data in users_data]

@@ -24,8 +24,18 @@ from linear.formatters import (
     format_team_json,
     format_teams_json,
     format_teams_table,
+    format_user_detail,
+    format_user_json,
+    format_users_json,
+    format_users_table,
 )
-from linear.models import parse_cycles_response, parse_issues_response, parse_projects_response, parse_teams_response
+from linear.models import (
+    parse_cycles_response,
+    parse_issues_response,
+    parse_projects_response,
+    parse_teams_response,
+    parse_users_response,
+)
 
 app = typer.Typer(
     help="Linear CLI - Interact with Linear from your terminal", no_args_is_help=True
@@ -34,10 +44,12 @@ issues_app = typer.Typer(help="Manage Linear issues")
 projects_app = typer.Typer(help="Manage Linear projects")
 teams_app = typer.Typer(help="Manage Linear teams")
 cycles_app = typer.Typer(help="Manage Linear cycles", no_args_is_help=True)
+users_app = typer.Typer(help="Manage Linear users", no_args_is_help=True)
 app.add_typer(issues_app, name="issues")
 app.add_typer(projects_app, name="projects")
 app.add_typer(teams_app, name="teams")
 app.add_typer(cycles_app, name="cycles")
+app.add_typer(users_app, name="users")
 
 
 @issues_app.command("list")
@@ -302,9 +314,7 @@ def list_projects(
 
 @projects_app.command("get")
 def get_project(
-    project_id: Annotated[
-        str, typer.Argument(help="Project ID or slug")
-    ],
+    project_id: Annotated[str, typer.Argument(help="Project ID or slug")],
     format: Annotated[
         str, typer.Option("--format", "-f", help="Output format: detail, json")
     ] = "detail",
@@ -394,9 +404,7 @@ def list_teams(
 
 @teams_app.command("get")
 def get_team(
-    team_id: Annotated[
-        str, typer.Argument(help="Team ID or key (e.g., 'ENG')")
-    ],
+    team_id: Annotated[str, typer.Argument(help="Team ID or key (e.g., 'ENG')")],
     format: Annotated[
         str, typer.Option("--format", "-f", help="Output format: detail, json")
     ] = "detail",
@@ -443,9 +451,7 @@ def list_cycles(
     future: Annotated[
         bool, typer.Option("--future", help="Show only future cycles")
     ] = False,
-    past: Annotated[
-        bool, typer.Option("--past", help="Show only past cycles")
-    ] = False,
+    past: Annotated[bool, typer.Option("--past", help="Show only past cycles")] = False,
     limit: Annotated[
         int, typer.Option("--limit", "-l", help="Number of cycles to display")
     ] = 50,
@@ -508,9 +514,7 @@ def list_cycles(
 
 @cycles_app.command("get")
 def get_cycle(
-    cycle_id: Annotated[
-        str, typer.Argument(help="Cycle ID")
-    ],
+    cycle_id: Annotated[str, typer.Argument(help="Cycle ID")],
     format: Annotated[
         str, typer.Option("--format", "-f", help="Output format: detail, json")
     ] = "detail",
@@ -537,6 +541,106 @@ def get_cycle(
             format_cycle_json(response)
         else:  # detail
             format_cycle_detail(response)
+
+    except LinearClientError as e:
+        typer.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except Exception as e:
+        typer.echo(f"Unexpected error: {e}", err=True)
+        sys.exit(1)
+
+
+@users_app.command("list")
+def list_users(
+    active_only: Annotated[
+        bool, typer.Option("--active-only", help="Show only active users")
+    ] = True,
+    limit: Annotated[
+        int, typer.Option("--limit", "-l", help="Number of users to display")
+    ] = 50,
+    include_disabled: Annotated[
+        bool, typer.Option("--include-disabled", help="Include disabled users")
+    ] = False,
+    format: Annotated[
+        str, typer.Option("--format", "-f", help="Output format: table, json")
+    ] = "table",
+) -> None:
+    """List Linear users in the workspace.
+
+    Examples:
+
+      # List all active users
+      linear users list
+
+      # List all users including inactive
+      linear users list --no-active-only
+
+      # List with limit
+      linear users list --limit 20
+
+      # Output as JSON
+      linear users list --format json
+    """
+    try:
+        # Initialize client
+        client = LinearClient()
+
+        # Fetch users
+        response = client.list_users(
+            active_only=active_only,
+            limit=limit,
+            include_disabled=include_disabled,
+        )
+
+        # Parse users
+        users = parse_users_response(response)
+
+        # Format output
+        if format == "json":
+            format_users_json(users)
+        else:  # table
+            format_users_table(users)
+
+    except LinearClientError as e:
+        typer.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except Exception as e:
+        typer.echo(f"Unexpected error: {e}", err=True)
+        sys.exit(1)
+
+
+@users_app.command("get")
+def get_user(
+    user_id: Annotated[str, typer.Argument(help="User ID or email")],
+    format: Annotated[
+        str, typer.Option("--format", "-f", help="Output format: detail, json")
+    ] = "detail",
+) -> None:
+    """Get details of a specific Linear user.
+
+    Examples:
+
+      # Get user by ID
+      linear users get abc123-def456
+
+      # Get user by email
+      linear users get user@example.com
+
+      # Get user as JSON
+      linear users get abc123 --format json
+    """
+    try:
+        # Initialize client
+        client = LinearClient()
+
+        # Fetch user
+        response = client.get_user(user_id)
+
+        # Format output
+        if format == "json":
+            format_user_json(response)
+        else:  # detail
+            format_user_detail(response)
 
     except LinearClientError as e:
         typer.echo(f"Error: {e}", err=True)
