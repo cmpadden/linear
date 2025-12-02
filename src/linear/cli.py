@@ -17,7 +17,9 @@ from linear.formatters import (
 )
 from linear.models import parse_issues_response, parse_projects_response
 
-app = typer.Typer(help="Linear CLI - Interact with Linear from your terminal")
+app = typer.Typer(
+    help="Linear CLI - Interact with Linear from your terminal", no_args_is_help=True
+)
 issues_app = typer.Typer(help="Manage Linear issues")
 projects_app = typer.Typer(help="Manage Linear projects")
 app.add_typer(issues_app, name="issues")
