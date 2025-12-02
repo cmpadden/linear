@@ -485,6 +485,251 @@ class LinearClient:
 
         return self.query(query, variables)
 
+    def get_project(self, project_id: str) -> dict[str, Any]:
+        """Get a single project by ID or slug.
+
+        Args:
+            project_id: Project ID (UUID) or slug
+
+        Returns:
+            Query response containing the project
+
+        Raises:
+            LinearClientError: If the query fails or project not found
+        """
+        # GraphQL query
+        query = """
+        query Project($id: String!) {
+          project(id: $id) {
+            id
+            name
+            description
+            state
+            progress
+            startDate
+            targetDate
+            completedAt
+            canceledAt
+            url
+            createdAt
+            updatedAt
+            archivedAt
+            color
+            icon
+            slugId
+            lead {
+              name
+              email
+              avatarUrl
+            }
+            creator {
+              name
+              email
+            }
+            teams {
+              nodes {
+                name
+                key
+              }
+            }
+            members {
+              nodes {
+                name
+                email
+              }
+            }
+            issues(first: 50) {
+              nodes {
+                id
+                identifier
+                title
+                state {
+                  name
+                  type
+                }
+                priority
+                priorityLabel
+                assignee {
+                  name
+                }
+              }
+            }
+          }
+        }
+        """
+
+        variables = {"id": project_id}
+
+        response = self.query(query, variables)
+
+        if not response.get("project"):
+            raise LinearClientError(f"Project '{project_id}' not found")
+
+        return response
+
+    def list_teams(
+        self,
+        limit: int = 50,
+        include_archived: bool = False,
+    ) -> dict[str, Any]:
+        """List teams in the workspace.
+
+        Args:
+            limit: Maximum number of teams to return (default: 50)
+            include_archived: Include archived teams (default: False)
+
+        Returns:
+            Query response containing teams
+
+        Raises:
+            LinearClientError: If the query fails
+        """
+        # GraphQL query
+        query = """
+        query Teams($filter: TeamFilter, $first: Int, $includeArchived: Boolean) {
+          teams(filter: $filter, first: $first, includeArchived: $includeArchived) {
+            nodes {
+              id
+              name
+              key
+              description
+              color
+              icon
+              private
+              archivedAt
+              createdAt
+              updatedAt
+              cyclesEnabled
+              members {
+                nodes {
+                  id
+                  name
+                }
+              }
+              issues {
+                nodes {
+                  id
+                }
+              }
+              projects {
+                nodes {
+                  id
+                }
+              }
+            }
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+          }
+        }
+        """
+
+        variables = {
+            "filter": None,
+            "first": min(limit, 250),  # Linear API max
+            "includeArchived": include_archived,
+        }
+
+        return self.query(query, variables)
+
+    def get_team(self, team_id: str) -> dict[str, Any]:
+        """Get a single team by ID or key.
+
+        Args:
+            team_id: Team ID (UUID) or key (e.g., 'ENG')
+
+        Returns:
+            Query response containing the team
+
+        Raises:
+            LinearClientError: If the query fails or team not found
+        """
+        # GraphQL query
+        query = """
+        query Team($id: String!) {
+          team(id: $id) {
+            id
+            name
+            key
+            description
+            color
+            icon
+            private
+            archivedAt
+            createdAt
+            updatedAt
+            cyclesEnabled
+            timezone
+            organization {
+              name
+            }
+            members {
+              nodes {
+                id
+                name
+                email
+                displayName
+                active
+                admin
+                avatarUrl
+              }
+            }
+            issues(first: 50, filter: { state: { type: { in: ["started", "unstarted"] } } }) {
+              nodes {
+                id
+                identifier
+                title
+                state {
+                  name
+                  type
+                }
+                priority
+                priorityLabel
+                assignee {
+                  name
+                }
+              }
+            }
+            projects(first: 20) {
+              nodes {
+                id
+                name
+                state
+                progress
+                lead {
+                  name
+                }
+              }
+            }
+            states {
+              nodes {
+                id
+                name
+                type
+                color
+              }
+            }
+            labels {
+              nodes {
+                id
+                name
+                color
+              }
+            }
+          }
+        }
+        """
+
+        variables = {"id": team_id}
+
+        response = self.query(query, variables)
+
+        if not response.get("team"):
+            raise LinearClientError(f"Team '{team_id}' not found")
+
+        return response
+
     def get_issue(self, issue_id: str) -> dict[str, Any]:
         """Get a single issue by ID or identifier.
 

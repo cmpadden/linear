@@ -11,19 +11,27 @@ from linear.formatters import (
     format_issue_detail,
     format_issue_json,
     format_json,
+    format_project_detail,
+    format_project_json,
     format_projects_json,
     format_projects_table,
     format_table,
+    format_team_detail,
+    format_team_json,
+    format_teams_json,
+    format_teams_table,
 )
-from linear.models import parse_issues_response, parse_projects_response
+from linear.models import parse_issues_response, parse_projects_response, parse_teams_response
 
 app = typer.Typer(
     help="Linear CLI - Interact with Linear from your terminal", no_args_is_help=True
 )
 issues_app = typer.Typer(help="Manage Linear issues")
 projects_app = typer.Typer(help="Manage Linear projects")
+teams_app = typer.Typer(help="Manage Linear teams")
 app.add_typer(issues_app, name="issues")
 app.add_typer(projects_app, name="projects")
+app.add_typer(teams_app, name="teams")
 
 
 @issues_app.command("list")
@@ -277,6 +285,138 @@ def list_projects(
             format_projects_json(projects)
         else:  # table
             format_projects_table(projects)
+
+    except LinearClientError as e:
+        typer.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except Exception as e:
+        typer.echo(f"Unexpected error: {e}", err=True)
+        sys.exit(1)
+
+
+@projects_app.command("get")
+def get_project(
+    project_id: Annotated[
+        str, typer.Argument(help="Project ID or slug")
+    ],
+    format: Annotated[
+        str, typer.Option("--format", "-f", help="Output format: detail, json")
+    ] = "detail",
+) -> None:
+    """Get details of a specific Linear project.
+
+    Examples:
+
+      # Get project by ID
+      linear projects get abc123-def456
+
+      # Get project as JSON
+      linear projects get my-project --format json
+    """
+    try:
+        # Initialize client
+        client = LinearClient()
+
+        # Fetch project
+        response = client.get_project(project_id)
+
+        # Format output
+        if format == "json":
+            format_project_json(response)
+        else:  # detail
+            format_project_detail(response)
+
+    except LinearClientError as e:
+        typer.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except Exception as e:
+        typer.echo(f"Unexpected error: {e}", err=True)
+        sys.exit(1)
+
+
+@teams_app.command("list")
+def list_teams(
+    limit: Annotated[
+        int, typer.Option("--limit", help="Number of teams to display")
+    ] = 50,
+    include_archived: Annotated[
+        bool, typer.Option("--include-archived", help="Include archived teams")
+    ] = False,
+    format: Annotated[
+        str, typer.Option("--format", "-f", help="Output format: table, json")
+    ] = "table",
+) -> None:
+    """List Linear teams.
+
+    Examples:
+
+      # List all teams
+      linear teams list
+
+      # Include archived teams
+      linear teams list --include-archived
+
+      # Output as JSON
+      linear teams list --format json
+    """
+    try:
+        # Initialize client
+        client = LinearClient()
+
+        # Fetch teams
+        response = client.list_teams(
+            limit=limit,
+            include_archived=include_archived,
+        )
+
+        # Parse response
+        teams = parse_teams_response(response)
+
+        # Format output
+        if format == "json":
+            format_teams_json(teams)
+        else:  # table
+            format_teams_table(teams)
+
+    except LinearClientError as e:
+        typer.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except Exception as e:
+        typer.echo(f"Unexpected error: {e}", err=True)
+        sys.exit(1)
+
+
+@teams_app.command("get")
+def get_team(
+    team_id: Annotated[
+        str, typer.Argument(help="Team ID or key (e.g., 'ENG')")
+    ],
+    format: Annotated[
+        str, typer.Option("--format", "-f", help="Output format: detail, json")
+    ] = "detail",
+) -> None:
+    """Get details of a specific Linear team.
+
+    Examples:
+
+      # Get team by key
+      linear teams get ENG
+
+      # Get team as JSON
+      linear teams get ENG --format json
+    """
+    try:
+        # Initialize client
+        client = LinearClient()
+
+        # Fetch team
+        response = client.get_team(team_id)
+
+        # Format output
+        if format == "json":
+            format_team_json(response)
+        else:  # detail
+            format_team_detail(response)
 
     except LinearClientError as e:
         typer.echo(f"Error: {e}", err=True)

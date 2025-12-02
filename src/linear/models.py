@@ -212,3 +212,88 @@ def parse_projects_response(response: dict[str, Any]) -> list[Project]:
     """
     projects_data = response.get("projects", {}).get("nodes", [])
     return [Project.from_api_response(project_data) for project_data in projects_data]
+
+
+@dataclass
+class Team:
+    """Represents a Linear team."""
+
+    id: str
+    name: str
+    key: str
+    description: str | None
+    color: str | None
+    icon: str | None
+    private: bool
+    archived: bool
+    created_at: str
+    updated_at: str
+    members_count: int
+    issues_count: int
+    projects_count: int
+    cycles_enabled: bool
+
+    @classmethod
+    def from_api_response(cls, data: dict[str, Any]) -> "Team":
+        """Create a Team from API response data.
+
+        Args:
+            data: Team data from GraphQL response
+
+        Returns:
+            Team instance
+        """
+        # Count members, issues, and projects
+        members_data = data.get("members", {}).get("nodes", [])
+        issues_data = data.get("issues", {}).get("nodes", [])
+        projects_data = data.get("projects", {}).get("nodes", [])
+
+        return cls(
+            id=data.get("id", ""),
+            name=data.get("name", ""),
+            key=data.get("key", ""),
+            description=data.get("description"),
+            color=data.get("color"),
+            icon=data.get("icon"),
+            private=data.get("private", False),
+            archived=data.get("archivedAt") is not None,
+            created_at=data.get("createdAt", ""),
+            updated_at=data.get("updatedAt", ""),
+            members_count=len(members_data),
+            issues_count=len(issues_data),
+            projects_count=len(projects_data),
+            cycles_enabled=data.get("cyclesEnabled", False),
+        )
+
+    def format_members_count(self) -> str:
+        """Get formatted members count."""
+        return f"{self.members_count} member{'s' if self.members_count != 1 else ''}"
+
+    def format_issues_count(self) -> str:
+        """Get formatted issues count."""
+        return f"{self.issues_count} issue{'s' if self.issues_count != 1 else ''}"
+
+    def format_projects_count(self) -> str:
+        """Get formatted projects count."""
+        return f"{self.projects_count} project{'s' if self.projects_count != 1 else ''}"
+
+    def format_updated_date(self) -> str:
+        """Get formatted updated date."""
+        try:
+            dt = datetime.fromisoformat(self.updated_at.replace("Z", "+00:00"))
+            return dt.strftime("%Y-%m-%d")
+        except (ValueError, AttributeError):
+            return self.updated_at
+
+
+def parse_teams_response(response: dict[str, Any]) -> list[Team]:
+    """Parse teams from API response.
+
+    Args:
+        response: GraphQL response data
+
+    Returns:
+        List of Team objects
+    """
+    teams_data = response.get("teams", {}).get("nodes", [])
+    return [Team.from_api_response(team_data) for team_data in teams_data]
