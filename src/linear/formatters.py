@@ -6,7 +6,7 @@ from typing import Any
 from rich.console import Console
 from rich.table import Table
 
-from linear.models import Issue
+from linear.models import Issue, Project
 
 
 def format_table(issues: list[Issue]) -> None:
@@ -105,3 +105,100 @@ def format_compact(issues: list[Issue]) -> None:
         )
 
     print(f"\nTotal: {len(issues)} issue(s)")
+
+
+def format_projects_table(projects: list[Project]) -> None:
+    """Format projects as a rich table.
+
+    Args:
+        projects: List of Project objects to display
+    """
+    console = Console()
+
+    if not projects:
+        console.print("[yellow]No projects found.[/yellow]")
+        return
+
+    table = Table(show_header=True, header_style="bold cyan")
+    table.add_column("Name", style="bright_blue")
+    table.add_column("State", style="green")
+    table.add_column("Progress", style="yellow")
+    table.add_column("Lead", style="magenta")
+    table.add_column("Team", style="cyan")
+    table.add_column("Target Date", style="dim")
+
+    for project in projects:
+        # Truncate name if too long
+        name = project.name
+        if len(name) > 40:
+            name = name[:37] + "..."
+
+        table.add_row(
+            name,
+            project.state.title(),
+            project.format_progress(),
+            project.format_lead(),
+            project.team_key,
+            project.format_target_date(),
+        )
+
+    console.print(table)
+    console.print(f"\n[dim]Total: {len(projects)} project(s)[/dim]")
+
+
+def format_projects_json(projects: list[Project]) -> None:
+    """Format projects as JSON.
+
+    Args:
+        projects: List of Project objects to display
+    """
+    projects_data = []
+    for project in projects:
+        projects_data.append(
+            {
+                "id": project.id,
+                "name": project.name,
+                "description": project.description,
+                "state": project.state,
+                "progress": project.progress,
+                "startDate": project.start_date,
+                "targetDate": project.target_date,
+                "url": project.url,
+                "createdAt": project.created_at,
+                "updatedAt": project.updated_at,
+                "archivedAt": project.archived_at,
+                "color": project.color,
+                "icon": project.icon,
+                "lead": (
+                    {"name": project.lead_name, "email": project.lead_email}
+                    if project.lead_name
+                    else None
+                ),
+                "team": {"name": project.team_name, "key": project.team_key},
+            }
+        )
+
+    print(json.dumps({"projects": projects_data, "count": len(projects)}, indent=2))
+
+
+def format_projects_compact(projects: list[Project]) -> None:
+    """Format projects in compact single-line format.
+
+    Args:
+        projects: List of Project objects to display
+    """
+    if not projects:
+        print("No projects found.")
+        return
+
+    for project in projects:
+        lead = project.format_lead()
+        target = project.format_target_date()
+
+        print(
+            f"{project.name} - {project.state.title()} | "
+            f"{project.format_progress()} | {lead} | "
+            f"Team: {project.team_key} | Target: {target}"
+        )
+
+    print(f"\nTotal: {len(projects)} project(s)")

@@ -109,3 +109,106 @@ def parse_issues_response(response: dict[str, Any]) -> list[Issue]:
     """
     issues_data = response.get("issues", {}).get("nodes", [])
     return [Issue.from_api_response(issue_data) for issue_data in issues_data]
+
+
+@dataclass
+class Project:
+    """Represents a Linear project."""
+
+    id: str
+    name: str
+    description: str | None
+    state: str
+    progress: float
+    start_date: str | None
+    target_date: str | None
+    url: str
+    created_at: str
+    updated_at: str
+    archived_at: str | None
+    color: str | None
+    icon: str | None
+    lead_name: str | None
+    lead_email: str | None
+    team_name: str
+    team_key: str
+
+    @classmethod
+    def from_api_response(cls, data: dict[str, Any]) -> "Project":
+        """Create a Project from API response data.
+
+        Args:
+            data: Project data from GraphQL response
+
+        Returns:
+            Project instance
+        """
+        lead = data.get("lead")
+        teams_data = data.get("teams", {}).get("nodes", [])
+        # Get the first team (projects can be associated with multiple teams)
+        team = teams_data[0] if teams_data else {}
+
+        return cls(
+            id=data.get("id", ""),
+            name=data.get("name", ""),
+            description=data.get("description"),
+            state=data.get("state", ""),
+            progress=data.get("progress", 0.0),
+            start_date=data.get("startDate"),
+            target_date=data.get("targetDate"),
+            url=data.get("url", ""),
+            created_at=data.get("createdAt", ""),
+            updated_at=data.get("updatedAt", ""),
+            archived_at=data.get("archivedAt"),
+            color=data.get("color"),
+            icon=data.get("icon"),
+            lead_name=lead.get("name") if lead else None,
+            lead_email=lead.get("email") if lead else None,
+            team_name=team.get("name", ""),
+            team_key=team.get("key", ""),
+        )
+
+    def format_lead(self) -> str:
+        """Get formatted lead string."""
+        if self.lead_name:
+            return self.lead_name
+        return "No lead"
+
+    def format_progress(self) -> str:
+        """Get formatted progress percentage."""
+        return f"{self.progress * 100:.0f}%"
+
+    def format_date(self, date_str: str | None) -> str:
+        """Get formatted date."""
+        if not date_str:
+            return ""
+        try:
+            dt = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+            return dt.strftime("%Y-%m-%d")
+        except (ValueError, AttributeError):
+            return date_str
+
+    def format_start_date(self) -> str:
+        """Get formatted start date."""
+        return self.format_date(self.start_date) if self.start_date else "Not set"
+
+    def format_target_date(self) -> str:
+        """Get formatted target date."""
+        return self.format_date(self.target_date) if self.target_date else "Not set"
+
+    def format_updated_date(self) -> str:
+        """Get formatted updated date."""
+        return self.format_date(self.updated_at)
+
+
+def parse_projects_response(response: dict[str, Any]) -> list[Project]:
+    """Parse projects from API response.
+
+    Args:
+        response: GraphQL response data
+
+    Returns:
+        List of Project objects
+    """
+    projects_data = response.get("projects", {}).get("nodes", [])
+    return [Project.from_api_response(project_data) for project_data in projects_data]

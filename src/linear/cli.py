@@ -7,12 +7,21 @@ import typer
 from typing_extensions import Annotated
 
 from linear.api import LinearClient, LinearClientError
-from linear.formatters import format_compact, format_json, format_table
-from linear.models import parse_issues_response
+from linear.formatters import (
+    format_compact,
+    format_json,
+    format_projects_compact,
+    format_projects_json,
+    format_projects_table,
+    format_table,
+)
+from linear.models import parse_issues_response, parse_projects_response
 
 app = typer.Typer(help="Linear CLI - Interact with Linear from your terminal")
 issues_app = typer.Typer(help="Manage Linear issues")
+projects_app = typer.Typer(help="Manage Linear projects")
 app.add_typer(issues_app, name="issues")
+app.add_typer(projects_app, name="projects")
 
 
 @issues_app.command("list")
@@ -90,6 +99,73 @@ def list_issues(
             format_compact(issues)
         else:  # table
             format_table(issues)
+
+    except LinearClientError as e:
+        typer.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except Exception as e:
+        typer.echo(f"Unexpected error: {e}", err=True)
+        sys.exit(1)
+
+
+@projects_app.command("list")
+def list_projects(
+    state: Annotated[
+        Optional[str],
+        typer.Option("--state", "-s", help="Filter by state (planned, started, paused, completed, canceled)"),
+    ] = None,
+    team: Annotated[Optional[str], typer.Option("--team", "-t", help="Filter by team name")] = None,
+    limit: Annotated[int, typer.Option("--limit", help="Number of projects to display")] = 50,
+    include_archived: Annotated[
+        bool, typer.Option("--include-archived", help="Include archived projects")
+    ] = False,
+    format: Annotated[
+        str, typer.Option("--format", "-f", help="Output format: table, json, compact")
+    ] = "table",
+    sort: Annotated[str, typer.Option("--sort", help="Sort by: created, updated")] = "updated",
+) -> None:
+    """List Linear projects with optional filters.
+
+    Examples:
+
+      # List all projects
+      linear projects list
+
+      # Filter by state
+      linear projects list --state started
+
+      # Filter by team
+      linear projects list --team engineering
+
+      # Output as JSON
+      linear projects list --format json
+
+      # Limit results
+      linear projects list --limit 10
+    """
+    try:
+        # Initialize client
+        client = LinearClient()
+
+        # Fetch projects
+        response = client.list_projects(
+            state=state,
+            team=team,
+            limit=limit,
+            include_archived=include_archived,
+            sort=sort,
+        )
+
+        # Parse response
+        projects = parse_projects_response(response)
+
+        # Format output
+        if format == "json":
+            format_projects_json(projects)
+        elif format == "compact":
+            format_projects_compact(projects)
+        else:  # table
+            format_projects_table(projects)
 
     except LinearClientError as e:
         typer.echo(f"Error: {e}", err=True)

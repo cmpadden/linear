@@ -200,3 +200,89 @@ class LinearClient:
         }
 
         return self.query(query, variables)
+
+    def list_projects(
+        self,
+        state: str | None = None,
+        team: str | None = None,
+        limit: int = 50,
+        include_archived: bool = False,
+        sort: str = "updated",
+    ) -> dict[str, Any]:
+        """List projects with optional filters.
+
+        Args:
+            state: Filter by project state (planned, started, paused, completed, canceled)
+            team: Filter by team name or key
+            limit: Maximum number of projects to return (default: 50)
+            include_archived: Include archived projects (default: False)
+            sort: Sort field: created, updated (default: updated)
+
+        Returns:
+            Query response containing projects
+
+        Raises:
+            LinearClientError: If the query fails
+        """
+        # Build filter object
+        filters = {}
+
+        if state:
+            filters["state"] = {"eqIgnoreCase": state}
+
+        if team:
+            # Support both team key and name
+            filters["or"] = [
+                {"teams": {"some": {"key": {"eqIgnoreCase": team}}}},
+                {"teams": {"some": {"name": {"containsIgnoreCase": team}}}},
+            ]
+
+        # Determine order by
+        order_by_map = {"created": "createdAt", "updated": "updatedAt"}
+        order_by = order_by_map.get(sort, "updatedAt")
+
+        # GraphQL query
+        query = """
+        query Projects($filter: ProjectFilter, $first: Int, $includeArchived: Boolean, $orderBy: PaginationOrderBy) {
+          projects(filter: $filter, first: $first, includeArchived: $includeArchived, orderBy: $orderBy) {
+            nodes {
+              id
+              name
+              description
+              state
+              progress
+              startDate
+              targetDate
+              url
+              createdAt
+              updatedAt
+              archivedAt
+              color
+              icon
+              lead {
+                name
+                email
+              }
+              teams {
+                nodes {
+                  name
+                  key
+                }
+              }
+            }
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+          }
+        }
+        """
+
+        variables = {
+            "filter": filters if filters else None,
+            "first": min(limit, 250),  # Linear API max
+            "includeArchived": include_archived,
+            "orderBy": order_by,
+        }
+
+        return self.query(query, variables)
