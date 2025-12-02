@@ -39,7 +39,9 @@ class LinearClient:
             "Content-Type": "application/json",
         }
 
-    def query(self, query: str, variables: dict[str, Any] | None = None) -> dict[str, Any]:
+    def query(
+        self, query: str, variables: dict[str, Any] | None = None
+    ) -> dict[str, Any]:
         """Execute a GraphQL query.
 
         Args:
@@ -65,7 +67,9 @@ class LinearClient:
                 if "errors" in data:
                     errors = data["errors"]
                     error_messages = [e.get("message", str(e)) for e in errors]
-                    raise LinearClientError(f"GraphQL errors: {', '.join(error_messages)}")
+                    raise LinearClientError(
+                        f"GraphQL errors: {', '.join(error_messages)}"
+                    )
 
                 return data.get("data", {})
 
@@ -81,7 +85,9 @@ class LinearClient:
                     "Please wait before making more requests."
                 )
             else:
-                raise LinearClientError(f"HTTP error: {e.response.status_code} - {e.response.text}")
+                raise LinearClientError(
+                    f"HTTP error: {e.response.status_code} - {e.response.text}"
+                )
         except httpx.RequestError as e:
             raise LinearClientError(f"Network error: {str(e)}")
 
@@ -135,7 +141,10 @@ class LinearClient:
         if team:
             # Support both team key and name
             filters["team"] = {
-                "or": [{"key": {"eqIgnoreCase": team}}, {"name": {"containsIgnoreCase": team}}]
+                "or": [
+                    {"key": {"eqIgnoreCase": team}},
+                    {"name": {"containsIgnoreCase": team}},
+                ]
             }
 
         if priority is not None:
@@ -145,7 +154,11 @@ class LinearClient:
             filters["labels"] = {"name": {"in": labels}}
 
         # Determine order by
-        order_by_map = {"created": "createdAt", "updated": "updatedAt", "priority": "priority"}
+        order_by_map = {
+            "created": "createdAt",
+            "updated": "updatedAt",
+            "priority": "priority",
+        }
         order_by = order_by_map.get(sort, "updatedAt")
 
         # GraphQL query
@@ -200,6 +213,91 @@ class LinearClient:
         }
 
         return self.query(query, variables)
+
+    def search_issues(
+        self,
+        query: str,
+        limit: int = 50,
+        include_archived: bool = False,
+        sort: str = "updated",
+    ) -> dict[str, Any]:
+        """Search issues by title.
+
+        Args:
+            query: Search query (searches issue titles, case-insensitive)
+            limit: Maximum number of issues to return (default: 50)
+            include_archived: Include archived issues (default: False)
+            sort: Sort field: created, updated, priority (default: updated)
+
+        Returns:
+            Query response containing matching issues
+
+        Raises:
+            LinearClientError: If the query fails
+        """
+        # Build filter with title search
+        filters = {"title": {"containsIgnoreCase": query}}
+
+        # Determine order by
+        order_by_map = {
+            "created": "createdAt",
+            "updated": "updatedAt",
+            "priority": "priority",
+        }
+        order_by = order_by_map.get(sort, "updatedAt")
+
+        # GraphQL query (same as list_issues)
+        query_str = """
+        query Issues($filter: IssueFilter, $first: Int, $includeArchived: Boolean, $orderBy: PaginationOrderBy) {
+          issues(filter: $filter, first: $first, includeArchived: $includeArchived, orderBy: $orderBy) {
+            nodes {
+              id
+              identifier
+              title
+              description
+              priority
+              priorityLabel
+              url
+              createdAt
+              updatedAt
+              completedAt
+              state {
+                name
+                type
+              }
+              assignee {
+                name
+                email
+              }
+              project {
+                name
+              }
+              team {
+                name
+                key
+              }
+              labels {
+                nodes {
+                  name
+                }
+              }
+            }
+            pageInfo {
+              hasNextPage
+              endCursor
+            }
+          }
+        }
+        """
+
+        variables = {
+            "filter": filters,
+            "first": min(limit, 250),  # Linear API max
+            "includeArchived": include_archived,
+            "orderBy": order_by,
+        }
+
+        return self.query(query_str, variables)
 
     def get_issue(self, issue_id: str) -> dict[str, Any]:
         """Get a single issue by ID or identifier.

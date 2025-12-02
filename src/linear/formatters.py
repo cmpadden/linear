@@ -171,24 +171,32 @@ def format_issue_detail(issue_data: dict) -> None:
         return
 
     # Header
-    console.print(f"\n[bold bright_blue]{issue.get('identifier', 'N/A')}[/bold bright_blue]: {issue.get('title', 'Untitled')}")
+    console.print(
+        f"\n[bold bright_blue]{issue.get('identifier', 'N/A')}[/bold bright_blue]: {issue.get('title', 'Untitled')}"
+    )
     console.print(f"[dim]{issue.get('url', '')}[/dim]\n")
 
     # Status section
     state = issue.get("state", {})
     console.print(f"[bold]Status:[/bold] [green]{state.get('name', 'Unknown')}[/green]")
-    console.print(f"[bold]Priority:[/bold] [yellow]{issue.get('priorityLabel', 'No priority')}[/yellow]")
+    console.print(
+        f"[bold]Priority:[/bold] [yellow]{issue.get('priorityLabel', 'No priority')}[/yellow]"
+    )
 
     # People
     assignee = issue.get("assignee")
     if assignee:
-        console.print(f"[bold]Assignee:[/bold] [magenta]{assignee.get('name')}[/magenta] ({assignee.get('email')})")
+        console.print(
+            f"[bold]Assignee:[/bold] [magenta]{assignee.get('name')}[/magenta] ({assignee.get('email')})"
+        )
     else:
         console.print(f"[bold]Assignee:[/bold] Unassigned")
 
     creator = issue.get("creator")
     if creator:
-        console.print(f"[bold]Creator:[/bold] {creator.get('name')} ({creator.get('email')})")
+        console.print(
+            f"[bold]Creator:[/bold] {creator.get('name')} ({creator.get('email')})"
+        )
 
     # Project & Team
     project = issue.get("project")
@@ -201,7 +209,9 @@ def format_issue_detail(issue_data: dict) -> None:
     # Cycle
     cycle = issue.get("cycle")
     if cycle:
-        console.print(f"[bold]Cycle:[/bold] {cycle.get('name')} (#{cycle.get('number')})")
+        console.print(
+            f"[bold]Cycle:[/bold] {cycle.get('name')} (#{cycle.get('number')})"
+        )
 
     # Dates
     console.print(f"\n[bold]Created:[/bold] {issue.get('createdAt', 'Unknown')[:10]}")
@@ -226,7 +236,9 @@ def format_issue_detail(issue_data: dict) -> None:
     # Parent issue
     parent = issue.get("parent")
     if parent:
-        console.print(f"[bold]Parent:[/bold] {parent.get('identifier')} - {parent.get('title')}")
+        console.print(
+            f"[bold]Parent:[/bold] {parent.get('identifier')} - {parent.get('title')}"
+        )
 
     # Description
     description = issue.get("description")
@@ -243,7 +255,9 @@ def format_issue_detail(issue_data: dict) -> None:
             if comment:
                 user = comment.get("user") or {}
                 created = comment.get("createdAt", "")[:10]
-                console.print(f"\n[cyan]{user.get('name', 'Unknown')}[/cyan] on {created}:")
+                console.print(
+                    f"\n[cyan]{user.get('name', 'Unknown')}[/cyan] on {created}:"
+                )
                 console.print(comment.get("body", "")[:200])  # Truncate long comments
 
     # Attachments
@@ -253,7 +267,9 @@ def format_issue_detail(issue_data: dict) -> None:
         console.print(f"\n[bold]Attachments ({len(attachments)}):[/bold]")
         for attachment in attachments:
             if attachment:
-                console.print(f"  • {attachment.get('title')} - {attachment.get('url')}")
+                console.print(
+                    f"  • {attachment.get('title')} - {attachment.get('url')}"
+                )
 
     # Subscribers
     subscribers_data = issue.get("subscribers") or {}

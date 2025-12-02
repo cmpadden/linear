@@ -35,14 +35,19 @@ def list_issues(
     status: Annotated[
         Optional[str], typer.Option("--status", "-s", help="Filter by status")
     ] = None,
-    team: Annotated[Optional[str], typer.Option("--team", "-t", help="Filter by team name")] = None,
+    team: Annotated[
+        Optional[str], typer.Option("--team", "-t", help="Filter by team name")
+    ] = None,
     priority: Annotated[
         Optional[int], typer.Option("--priority", help="Filter by priority (0-4)")
     ] = None,
     label: Annotated[
-        Optional[list[str]], typer.Option("--label", "-l", help="Filter by label (repeatable)")
+        Optional[list[str]],
+        typer.Option("--label", "-l", help="Filter by label (repeatable)"),
     ] = None,
-    limit: Annotated[int, typer.Option("--limit", help="Number of issues to display")] = 50,
+    limit: Annotated[
+        int, typer.Option("--limit", help="Number of issues to display")
+    ] = 50,
     include_archived: Annotated[
         bool, typer.Option("--include-archived", help="Include archived issues")
     ] = False,
@@ -108,7 +113,9 @@ def list_issues(
 
 @issues_app.command("get")
 def get_issue(
-    issue_id: Annotated[str, typer.Argument(help="Issue ID or identifier (e.g., 'ENG-123')")],
+    issue_id: Annotated[
+        str, typer.Argument(help="Issue ID or identifier (e.g., 'ENG-123')")
+    ],
     format: Annotated[
         str, typer.Option("--format", "-f", help="Output format: detail, json")
     ] = "detail",
@@ -144,21 +151,89 @@ def get_issue(
         sys.exit(1)
 
 
+@issues_app.command("search")
+def search_issues(
+    query: Annotated[str, typer.Argument(help="Search query (searches issue titles)")],
+    limit: Annotated[
+        int, typer.Option("--limit", help="Number of issues to display")
+    ] = 50,
+    include_archived: Annotated[
+        bool, typer.Option("--include-archived", help="Include archived issues")
+    ] = False,
+    format: Annotated[
+        str, typer.Option("--format", "-f", help="Output format: table, json")
+    ] = "table",
+    sort: Annotated[
+        str, typer.Option("--sort", help="Sort by: created, updated, priority")
+    ] = "updated",
+) -> None:
+    """Search Linear issues by title.
+
+    Examples:
+
+      # Search for issues with "authentication" in title
+      linear issues search authentication
+
+      # Search with output as JSON
+      linear issues search "bug fix" --format json
+
+      # Limit results
+      linear issues search refactor --limit 10
+    """
+    try:
+        # Initialize client
+        client = LinearClient()
+
+        # Search issues
+        response = client.search_issues(
+            query=query,
+            limit=limit,
+            include_archived=include_archived,
+            sort=sort,
+        )
+
+        # Parse response
+        issues = parse_issues_response(response)
+
+        # Format output
+        if format == "json":
+            format_json(issues)
+        else:  # table
+            format_table(issues)
+
+    except LinearClientError as e:
+        typer.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except Exception as e:
+        typer.echo(f"Unexpected error: {e}", err=True)
+        sys.exit(1)
+
+
 @projects_app.command("list")
 def list_projects(
     state: Annotated[
         Optional[str],
-        typer.Option("--state", "-s", help="Filter by state (planned, started, paused, completed, canceled)"),
+        typer.Option(
+            "--state",
+            "-s",
+            help="Filter by state (planned, started, paused, completed, canceled)",
+        ),
     ] = None,
-    team: Annotated[Optional[str], typer.Option("--team", "-t", help="Filter by team name")] = None,
-    limit: Annotated[int, typer.Option("--limit", help="Number of projects to display")] = 50,
+    team: Annotated[
+        Optional[str], typer.Option("--team", "-t", help="Filter by team name")
+    ] = None,
+    limit: Annotated[
+        int, typer.Option("--limit", help="Number of projects to display")
+    ] = 50,
     include_archived: Annotated[
         bool, typer.Option("--include-archived", help="Include archived projects")
     ] = False,
     format: Annotated[
         str, typer.Option("--format", "-f", help="Output format: table, json")
     ] = "table",
-    sort: Annotated[str, typer.Option("--sort", help="Sort by: created, updated")] = "updated",
+    sort: Annotated[
+        str, typer.Option("--sort", help="Sort by: created, updated")
+    ] = "updated",
 ) -> None:
     """List Linear projects with optional filters.
 
