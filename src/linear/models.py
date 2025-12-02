@@ -502,3 +502,103 @@ def parse_users_response(response: dict[str, Any]) -> list[User]:
     """
     users_data = response.get("users", {}).get("nodes", [])
     return [User.from_api_response(user_data) for user_data in users_data]
+
+
+@dataclass
+class Label:
+    """Represents a Linear issue label."""
+
+    id: str
+    name: str
+    description: str | None
+    color: str
+    created_at: str
+    updated_at: str
+    archived_at: str | None
+    team_id: str | None
+    team_name: str | None
+    team_key: str | None
+    parent_id: str | None
+    parent_name: str | None
+    children_count: int
+    issues_count: int
+
+    @classmethod
+    def from_api_response(cls, data: dict[str, Any]) -> "Label":
+        """Create a Label from API response data.
+
+        Args:
+            data: Label data from GraphQL response
+
+        Returns:
+            Label instance
+        """
+        team = data.get("team") or {}
+        parent = data.get("parent")
+        children_data = data.get("children", {}) or {}
+        children_nodes = children_data.get("nodes") or []
+        issues_data = data.get("issues", {}) or {}
+        issues_nodes = issues_data.get("nodes") or []
+
+        return cls(
+            id=data.get("id", ""),
+            name=data.get("name", ""),
+            description=data.get("description"),
+            color=data.get("color", ""),
+            created_at=data.get("createdAt", ""),
+            updated_at=data.get("updatedAt", ""),
+            archived_at=data.get("archivedAt"),
+            team_id=team.get("id") if team else None,
+            team_name=team.get("name") if team else None,
+            team_key=team.get("key") if team else None,
+            parent_id=parent.get("id") if parent else None,
+            parent_name=parent.get("name") if parent else None,
+            children_count=len(children_nodes),
+            issues_count=len(issues_nodes),
+        )
+
+    def format_team(self) -> str:
+        """Get formatted team string."""
+        if self.team_key:
+            return self.team_key
+        elif self.team_name:
+            return self.team_name
+        return "All teams"
+
+    def format_issues_count(self) -> str:
+        """Get formatted issues count."""
+        return f"{self.issues_count} issue{'s' if self.issues_count != 1 else ''}"
+
+    def format_date(self, date_str: str | None) -> str:
+        """Get formatted date.
+
+        Args:
+            date_str: ISO date string
+
+        Returns:
+            Formatted date string (YYYY-MM-DD) or empty string
+        """
+        if not date_str:
+            return ""
+        try:
+            dt = datetime.fromisoformat(date_str.replace("Z", "+00:00"))
+            return dt.strftime("%Y-%m-%d")
+        except (ValueError, AttributeError):
+            return date_str
+
+    def format_created_at(self) -> str:
+        """Get formatted creation date."""
+        return self.format_date(self.created_at)
+
+
+def parse_labels_response(response: dict[str, Any]) -> list[Label]:
+    """Parse labels from API response.
+
+    Args:
+        response: GraphQL response data
+
+    Returns:
+        List of Label objects
+    """
+    labels_data = response.get("issueLabels", {}).get("nodes", [])
+    return [Label.from_api_response(label_data) for label_data in labels_data]

@@ -15,6 +15,8 @@ from linear.formatters import (
     format_issue_detail,
     format_issue_json,
     format_json,
+    format_labels_json,
+    format_labels_table,
     format_project_detail,
     format_project_json,
     format_projects_json,
@@ -32,6 +34,7 @@ from linear.formatters import (
 from linear.models import (
     parse_cycles_response,
     parse_issues_response,
+    parse_labels_response,
     parse_projects_response,
     parse_teams_response,
     parse_users_response,
@@ -45,11 +48,13 @@ projects_app = typer.Typer(help="Manage Linear projects")
 teams_app = typer.Typer(help="Manage Linear teams")
 cycles_app = typer.Typer(help="Manage Linear cycles", no_args_is_help=True)
 users_app = typer.Typer(help="Manage Linear users", no_args_is_help=True)
+labels_app = typer.Typer(help="Manage Linear labels", no_args_is_help=True)
 app.add_typer(issues_app, name="issues")
 app.add_typer(projects_app, name="projects")
 app.add_typer(teams_app, name="teams")
 app.add_typer(cycles_app, name="cycles")
 app.add_typer(users_app, name="users")
+app.add_typer(labels_app, name="labels")
 
 
 @issues_app.command("list")
@@ -641,6 +646,61 @@ def get_user(
             format_user_json(response)
         else:  # detail
             format_user_detail(response)
+
+    except LinearClientError as e:
+        typer.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except Exception as e:
+        typer.echo(f"Unexpected error: {e}", err=True)
+        sys.exit(1)
+
+
+@labels_app.command("list")
+def list_labels(
+    limit: Annotated[
+        int, typer.Option("--limit", "-l", help="Maximum number of labels to return")
+    ] = 50,
+    team: Annotated[
+        Optional[str],
+        typer.Option(
+            "--team", "-t", help="Filter by team ID or key (e.g., 'ENG', 'DESIGN')"
+        ),
+    ] = None,
+    include_archived: Annotated[
+        bool, typer.Option("--include-archived", help="Include archived labels")
+    ] = False,
+    format: Annotated[
+        str,
+        typer.Option("--format", "-f", help="Output format: table (default) or json"),
+    ] = "table",
+) -> None:
+    """List issue labels.
+
+    Examples:
+        linear labels list
+        linear labels list --team ENG
+        linear labels list --limit 20 --format json
+        linear labels list --include-archived
+    """
+    try:
+        # Initialize client
+        client = LinearClient()
+
+        # Fetch labels
+        response = client.list_labels(
+            limit=limit,
+            team=team,
+            include_archived=include_archived,
+        )
+
+        # Parse response
+        labels = parse_labels_response(response)
+
+        # Format output
+        if format == "json":
+            format_labels_json(labels)
+        else:  # table
+            format_labels_table(labels)
 
     except LinearClientError as e:
         typer.echo(f"Error: {e}", err=True)
