@@ -83,30 +83,6 @@ def format_json(issues: list[Issue]) -> None:
     print(json.dumps({"issues": issues_data, "count": len(issues)}, indent=2))
 
 
-def format_compact(issues: list[Issue]) -> None:
-    """Format issues in compact single-line format.
-
-    Args:
-        issues: List of Issue objects to display
-    """
-    if not issues:
-        print("No issues found.")
-        return
-
-    for issue in issues:
-        assignee = issue.format_assignee()
-        labels_str = f" [{issue.format_labels()}]" if issue.labels else ""
-        project_str = f" ({issue.project_name})" if issue.project_name else ""
-
-        print(
-            f"{issue.format_short_id()}: {issue.title} - "
-            f"{issue.state_name} | {issue.priority_label} | "
-            f"{assignee}{project_str}{labels_str}"
-        )
-
-    print(f"\nTotal: {len(issues)} issue(s)")
-
-
 def format_projects_table(projects: list[Project]) -> None:
     """Format projects as a rich table.
 
@@ -179,29 +155,6 @@ def format_projects_json(projects: list[Project]) -> None:
         )
 
     print(json.dumps({"projects": projects_data, "count": len(projects)}, indent=2))
-
-
-def format_projects_compact(projects: list[Project]) -> None:
-    """Format projects in compact single-line format.
-
-    Args:
-        projects: List of Project objects to display
-    """
-    if not projects:
-        print("No projects found.")
-        return
-
-    for project in projects:
-        lead = project.format_lead()
-        target = project.format_target_date()
-
-        print(
-            f"{project.name} - {project.state.title()} | "
-            f"{project.format_progress()} | {lead} | "
-            f"Team: {project.team_key} | Target: {target}"
-        )
-
-    print(f"\nTotal: {len(projects)} project(s)")
 
 
 def format_issue_detail(issue_data: dict) -> None:

@@ -8,11 +8,9 @@ from typing_extensions import Annotated
 
 from linear.api import LinearClient, LinearClientError
 from linear.formatters import (
-    format_compact,
     format_issue_detail,
     format_issue_json,
     format_json,
-    format_projects_compact,
     format_projects_json,
     format_projects_table,
     format_table,
@@ -49,7 +47,7 @@ def list_issues(
         bool, typer.Option("--include-archived", help="Include archived issues")
     ] = False,
     format: Annotated[
-        str, typer.Option("--format", "-f", help="Output format: table, json, compact")
+        str, typer.Option("--format", "-f", help="Output format: table, json")
     ] = "table",
     sort: Annotated[
         str, typer.Option("--sort", help="Sort by: created, updated, priority")
@@ -97,8 +95,6 @@ def list_issues(
         # Format output
         if format == "json":
             format_json(issues)
-        elif format == "compact":
-            format_compact(issues)
         else:  # table
             format_table(issues)
 
@@ -160,7 +156,7 @@ def list_projects(
         bool, typer.Option("--include-archived", help="Include archived projects")
     ] = False,
     format: Annotated[
-        str, typer.Option("--format", "-f", help="Output format: table, json, compact")
+        str, typer.Option("--format", "-f", help="Output format: table, json")
     ] = "table",
     sort: Annotated[str, typer.Option("--sort", help="Sort by: created, updated")] = "updated",
 ) -> None:
@@ -202,8 +198,6 @@ def list_projects(
         # Format output
         if format == "json":
             format_projects_json(projects)
-        elif format == "compact":
-            format_projects_compact(projects)
         else:  # table
             format_projects_table(projects)
 
