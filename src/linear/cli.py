@@ -10,6 +10,7 @@ from typing_extensions import Annotated
 from rich.console import Console
 from rich.prompt import Confirm, IntPrompt, Prompt
 
+from linear import __version__
 from linear.api import LinearClient, LinearClientError
 from linear.formatters import (
     format_cycle_detail,
@@ -44,9 +45,36 @@ from linear.models import (
     parse_users_response,
 )
 
+
+def version_callback(value: bool) -> None:
+    """Callback for --version flag."""
+    if value:
+        typer.echo(f"Linear CLI version {__version__}")
+        raise typer.Exit()
+
+
 app = typer.Typer(
     help="Linear CLI - Interact with Linear from your terminal", no_args_is_help=True
 )
+
+
+@app.callback()
+def main_callback(
+    version: Annotated[
+        Optional[bool],
+        typer.Option(
+            "--version",
+            "-v",
+            callback=version_callback,
+            is_eager=True,
+            help="Show version and exit",
+        ),
+    ] = None,
+) -> None:
+    """Linear CLI - Interact with Linear from your terminal."""
+    pass
+
+
 issues_app = typer.Typer(help="Manage Linear issues")
 projects_app = typer.Typer(help="Manage Linear projects")
 teams_app = typer.Typer(help="Manage Linear teams")
