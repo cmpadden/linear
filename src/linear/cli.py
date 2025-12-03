@@ -1,10 +1,13 @@
 """Linear CLI - Command line interface for Linear."""
 
+import json
 import sys
 from typing import Optional
 
 import typer
 from typing_extensions import Annotated
+from rich.console import Console
+from rich.prompt import Confirm, IntPrompt, Prompt
 
 from linear.api import LinearClient, LinearClientError
 from linear.formatters import (
@@ -239,6 +242,311 @@ def search_issues(
             format_json(issues)
         else:  # table
             format_table(issues)
+
+    except LinearClientError as e:
+        typer.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except Exception as e:
+        typer.echo(f"Unexpected error: {e}", err=True)
+        sys.exit(1)
+
+
+@issues_app.command("create")
+def create_issue(
+    title: Annotated[Optional[str], typer.Argument(help="Issue title")] = None,
+    team: Annotated[
+        Optional[str], typer.Option("--team", "-t", help="Team ID or key")
+    ] = None,
+    description: Annotated[
+        Optional[str], typer.Option("--description", "-d", help="Issue description")
+    ] = None,
+    assignee: Annotated[
+        Optional[str],
+        typer.Option("--assignee", "-a", help="Assignee email (defaults to you)"),
+    ] = None,
+    priority: Annotated[
+        Optional[int],
+        typer.Option(
+            "--priority",
+            "-p",
+            help="Priority: 0=None, 1=Urgent, 2=High, 3=Medium, 4=Low",
+        ),
+    ] = None,
+    project: Annotated[
+        Optional[str], typer.Option("--project", help="Project ID or name")
+    ] = None,
+    labels: Annotated[
+        Optional[list[str]],
+        typer.Option("--label", "-l", help="Label name (repeatable)"),
+    ] = None,
+    state: Annotated[
+        Optional[str], typer.Option("--state", "-s", help="Workflow state name")
+    ] = None,
+    estimate: Annotated[
+        Optional[int], typer.Option("--estimate", "-e", help="Story points estimate")
+    ] = None,
+    format: Annotated[
+        str, typer.Option("--format", "-f", help="Output format: detail, json")
+    ] = "detail",
+) -> None:
+    """Create a new Linear issue.
+
+    Examples:
+
+      # Interactive mode (prompts for required fields)
+      linear issues create
+
+      # Non-interactive with required fields
+      linear issues create "Fix login bug" --team ENG
+
+      # With all options
+      linear issues create "Add dark mode" --team ENG --description "Support dark theme" \\
+        --priority 2 --label feature --label ui
+    """
+    try:
+        console = Console()
+        client = LinearClient()
+
+        viewer_response = client.get_viewer()
+        viewer = viewer_response.get("viewer", {})
+        viewer_id = viewer.get("id")
+        viewer_email = viewer.get("email")
+        viewer_teams = viewer.get("teams", {}).get("nodes", [])
+
+        if not title:
+            title = Prompt.ask("Issue title")
+
+        if not description:
+            description_input = Prompt.ask("Description")
+            description = description_input if description_input else None
+
+        assignee_id = None
+        assignee_email = None
+        if assignee:
+            # Look up user by email
+            user_response = client.get_user(assignee)
+            user_data = user_response.get("user")
+            if not user_data:
+                typer.echo(f"Error: User '{assignee}' not found", err=True)
+                sys.exit(1)
+            assignee_id = user_data["id"]
+            assignee_email = assignee
+        else:
+            # Prompt for assignee with current user as default
+            assignee_email = Prompt.ask(
+                "Assignee email", default=viewer_email if viewer_email else ""
+            )
+
+            # If user just pressed enter or entered the same email, use viewer
+            if assignee_email == viewer_email or not assignee_email:
+                assignee_id = viewer_id
+                assignee_email = viewer_email
+            else:
+                # Look up the specified user
+                user_response = client.get_user(assignee_email)
+                user_data = user_response.get("user")
+                if not user_data:
+                    typer.echo(f"Error: User '{assignee_email}' not found", err=True)
+                    sys.exit(1)
+                assignee_id = user_data["id"]
+
+        team_id = None
+        team_name = None
+        if not team:
+            # Use viewer's teams only
+            teams_data = viewer_teams
+
+            if not teams_data:
+                typer.echo("Error: You are not a member of any teams", err=True)
+                sys.exit(1)
+            elif len(teams_data) == 1:
+                # Only one team, use it automatically
+                team_id = teams_data[0]["id"]
+                team_key = teams_data[0]["key"]
+                team_name = f"{team_key} - {teams_data[0]['name']}"
+                console.print(f"Using team: [cyan]{team_key}[/cyan]")
+            else:
+                # Multiple teams, prompt user
+                console.print("\n[bold]Your teams:[/bold]")
+                for i, t in enumerate(teams_data, 1):
+                    console.print(f"  {i}. [cyan]{t['key']}[/cyan] - {t['name']}")
+
+                team_choice = IntPrompt.ask(
+                    "Select team number",
+                    default=1,
+                )
+
+                if team_choice < 1 or team_choice > len(teams_data):
+                    typer.echo("Error: Invalid team selection", err=True)
+                    sys.exit(1)
+
+                selected_team = teams_data[team_choice - 1]
+                team_id = selected_team["id"]
+                team_name = f"{selected_team['key']} - {selected_team['name']}"
+        else:
+            # Resolve team key/name to ID
+            team_response = client.get_team(team)
+            team_data = team_response.get("team")
+            if not team_data:
+                typer.echo(f"Error: Team '{team}' not found", err=True)
+                sys.exit(1)
+            team_id = team_data["id"]
+            team_name = f"{team_data['key']} - {team_data['name']}"
+
+        if not priority:
+            console.print("\n[bold]Priority:[/bold]")
+            console.print(" 1. Urgent")
+            console.print(" 2. High")
+            console.print(" 3. Medium")
+            console.print(" 4. Low")
+
+            priority_input = Prompt.ask("Priority")
+
+            try:
+                priority = int(priority_input)
+                if priority < 1 or priority > 4:
+                    typer.echo("Error: Priority must be between 1 and 4", err=True)
+                    sys.exit(1)
+            except ValueError:
+                priority = None
+
+        label_ids = None
+        if labels:
+            labels_response = client.list_labels(team=team_id, limit=250)
+            labels_data = labels_response.get("issueLabels", {}).get("nodes", [])
+            label_map = {l["name"].lower(): l["id"] for l in labels_data}
+
+            label_ids = []
+            for label_name in labels:
+                label_id = label_map.get(label_name.lower())
+                if not label_id:
+                    typer.echo(
+                        f"Warning: Label '{label_name}' not found, skipping", err=True
+                    )
+                else:
+                    label_ids.append(label_id)
+
+            if not label_ids:
+                label_ids = None
+
+        # Resolve project name to ID
+        project_id = None
+        if project:
+            # Check if it's already a UUID
+            if "-" in project and len(project) == 36:
+                project_id = project
+            else:
+                # Look up by name
+                projects_response = client.list_projects(team=team_id, limit=250)
+                projects_data = projects_response.get("projects", {}).get("nodes", [])
+                for p in projects_data:
+                    if p["name"].lower() == project.lower():
+                        project_id = p["id"]
+                        break
+
+                if not project_id:
+                    typer.echo(
+                        f"Warning: Project '{project}' not found, skipping", err=True
+                    )
+
+        # Resolve state name to ID
+        state_id = None
+        if state:
+            # Get team states
+            team_response = client.get_team(team_id)
+            states_data = (
+                team_response.get("team", {}).get("states", {}).get("nodes", [])
+            )
+            for s in states_data:
+                if s["name"].lower() == state.lower():
+                    state_id = s["id"]
+                    break
+
+            if not state_id:
+                typer.echo(f"Warning: State '{state}' not found, skipping", err=True)
+
+        # Show summary and ask for confirmation
+        console.print("\n[bold]Issue Summary:[/bold]")
+        console.print(f"  [bold]Title:[/bold] {title}")
+
+        # Always show description (even if empty)
+        if description:
+            # Truncate long descriptions
+            desc_preview = (
+                description[:50] + "..." if len(description) > 50 else description
+            )
+            console.print(f"  [bold]Description:[/bold] {desc_preview}")
+        else:
+            console.print(f"  [bold]Description:[/bold] [dim](none)[/dim]")
+
+        console.print(f"  [bold]Assignee:[/bold] {assignee_email}")
+        console.print(f"  [bold]Team:[/bold] {team_name}")
+
+        # Always show priority
+        if priority is not None:
+            priority_labels = {
+                1: "Urgent",
+                2: "High",
+                3: "Medium",
+                4: "Low",
+            }
+            console.print(
+                f"  [bold]Priority:[/bold] {priority_labels.get(priority, 'None')}"
+            )
+        else:
+            console.print(f"  [bold]Priority:[/bold] [dim](none)[/dim]")
+        if labels:
+            console.print(f"  [bold]Labels:[/bold] {', '.join(labels)}")
+        if project:
+            console.print(f"  [bold]Project:[/bold] {project}")
+        if state:
+            console.print(f"  [bold]State:[/bold] {state}")
+        if estimate:
+            console.print(f"  [bold]Estimate:[/bold] {estimate} points")
+
+        # Ask for confirmation
+        if not Confirm.ask("\nCreate this issue?", default=True):
+            console.print("[yellow]Issue creation cancelled.[/yellow]")
+            sys.exit(0)
+
+        # Create the issue
+        response = client.create_issue(
+            title=title,
+            team_id=team_id,
+            description=description,
+            assignee_id=assignee_id,
+            priority=priority,
+            label_ids=label_ids,
+            project_id=project_id,
+            state_id=state_id,
+            estimate=estimate,
+        )
+
+        # Format output
+        issue_data = response.get("issueCreate", {}).get("issue", {})
+
+        if format == "json":
+            typer.echo(json.dumps(issue_data, indent=2))
+        else:
+            # Detail format - success message with key info
+            console.print(f"\n[green]✓[/green] Issue created successfully!")
+            console.print(f"[bold]Identifier:[/bold] {issue_data.get('identifier')}")
+            console.print(f"[bold]Title:[/bold] {issue_data.get('title')}")
+            console.print(f"[bold]URL:[/bold] {issue_data.get('url')}")
+
+            assignee_data = issue_data.get("assignee")
+            if assignee_data:
+                console.print(f"[bold]Assignee:[/bold] {assignee_data.get('name')}")
+
+            console.print(f"[bold]Priority:[/bold] {issue_data.get('priorityLabel')}")
+            console.print(
+                f"[bold]State:[/bold] {issue_data.get('state', {}).get('name')}"
+            )
+
+            labels_data = issue_data.get("labels", {}).get("nodes", [])
+            if labels_data:
+                label_names = ", ".join([l["name"] for l in labels_data])
+                console.print(f"[bold]Labels:[/bold] {label_names}")
 
     except LinearClientError as e:
         typer.echo(f"Error: {e}", err=True)

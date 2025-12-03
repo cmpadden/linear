@@ -1111,3 +1111,140 @@ class LinearClient:
             variables["filter"] = filters
 
         return self.query(query, variables)
+
+    def get_viewer(self) -> dict[str, Any]:
+        """Get the current authenticated user.
+
+        Returns:
+            Query response containing viewer (current user) data
+
+        Raises:
+            LinearClientError: If the query fails
+        """
+        query = """
+        query {
+          viewer {
+            id
+            name
+            email
+            teams {
+              nodes {
+                id
+                key
+                name
+              }
+            }
+          }
+        }
+        """
+        return self.query(query)
+
+    def create_issue(
+        self,
+        title: str,
+        team_id: str,
+        description: str | None = None,
+        assignee_id: str | None = None,
+        priority: int | None = None,
+        label_ids: list[str] | None = None,
+        project_id: str | None = None,
+        state_id: str | None = None,
+        estimate: int | None = None,
+        due_date: str | None = None,
+        parent_id: str | None = None,
+        cycle_id: str | None = None,
+    ) -> dict[str, Any]:
+        """Create a new issue.
+
+        Args:
+            title: Issue title (required)
+            team_id: Team UUID (required)
+            description: Issue description
+            assignee_id: Assignee user UUID
+            priority: Priority 0=None, 1=Urgent, 2=High, 3=Medium, 4=Low
+            label_ids: List of label UUIDs
+            project_id: Project UUID
+            state_id: Workflow state UUID
+            estimate: Story points
+            due_date: Due date (ISO format)
+            parent_id: Parent issue UUID (for sub-issues)
+            cycle_id: Cycle UUID
+
+        Returns:
+            Mutation response containing created issue data
+
+        Raises:
+            LinearClientError: If the mutation fails
+        """
+        mutation = """
+        mutation IssueCreate($input: IssueCreateInput!) {
+          issueCreate(input: $input) {
+            success
+            issue {
+              id
+              identifier
+              title
+              description
+              url
+              priority
+              priorityLabel
+              createdAt
+              state {
+                name
+                type
+              }
+              assignee {
+                name
+                email
+              }
+              team {
+                name
+                key
+              }
+              labels {
+                nodes {
+                  name
+                }
+              }
+            }
+          }
+        }
+        """
+
+        # Build input object
+        input_data = {
+            "title": title,
+            "teamId": team_id,
+        }
+
+        # Add optional fields if provided
+        if description:
+            input_data["description"] = description
+        if assignee_id:
+            input_data["assigneeId"] = assignee_id
+        if priority is not None:
+            input_data["priority"] = priority
+        if label_ids:
+            input_data["labelIds"] = label_ids
+        if project_id:
+            input_data["projectId"] = project_id
+        if state_id:
+            input_data["stateId"] = state_id
+        if estimate is not None:
+            input_data["estimate"] = estimate
+        if due_date:
+            input_data["dueDate"] = due_date
+        if parent_id:
+            input_data["parentId"] = parent_id
+        if cycle_id:
+            input_data["cycleId"] = cycle_id
+
+        variables = {"input": input_data}
+        response = self.query(mutation, variables)
+
+        # Check if mutation was successful
+        issue_create = response.get("issueCreate", {})
+        if not issue_create.get("success"):
+            raise LinearClientError("Failed to create issue")
+
+        return response
