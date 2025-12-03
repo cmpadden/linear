@@ -109,7 +109,7 @@ class LinearClient:
             assignee: Filter by assignee email
             project: Filter by project name
             status: Filter by issue status/state
-            team: Filter by team name or key
+            team: Filter by team key (e.g., ENG, DESIGN)
             priority: Filter by priority (0-4)
             labels: Filter by label names
             limit: Maximum number of issues to return (default: 50)
@@ -139,13 +139,8 @@ class LinearClient:
             filters["state"] = {"name": {"eqIgnoreCase": status}}
 
         if team:
-            # Support both team key and name
-            filters["team"] = {
-                "or": [
-                    {"key": {"eqIgnoreCase": team}},
-                    {"name": {"containsIgnoreCase": team}},
-                ]
-            }
+            # Filter by team key only (keys are unique identifiers)
+            filters["team"] = {"key": {"eqIgnoreCase": team}}
 
         if priority is not None:
             filters["priority"] = {"eq": priority}

@@ -84,7 +84,8 @@ def list_issues(
         Optional[str], typer.Option("--status", "-s", help="Filter by status")
     ] = None,
     team: Annotated[
-        Optional[str], typer.Option("--team", "-t", help="Filter by team name")
+        Optional[str],
+        typer.Option("--team", "-t", help="Filter by team key (e.g., ENG, DESIGN)"),
     ] = None,
     priority: Annotated[
         Optional[int], typer.Option("--priority", help="Filter by priority (0-4)")
@@ -599,7 +600,8 @@ def list_projects(
         ),
     ] = None,
     team: Annotated[
-        Optional[str], typer.Option("--team", "-t", help="Filter by team name")
+        Optional[str],
+        typer.Option("--team", "-t", help="Filter by team key (e.g., ENG, DESIGN)"),
     ] = None,
     limit: Annotated[
         int, typer.Option("--limit", help="Number of projects to display")
