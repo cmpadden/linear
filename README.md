@@ -4,12 +4,36 @@
 
 A command-line interface for interacting with [Linear](https://linear.app) - list issues, view project details, and manage your workflow from the terminal.
 
-## Authentication
+## Getting started
 
 Set your Linear API key as an environment variable:
 
 ```bash
 export LINEAR_API_KEY="<linear-api-key>"
+```
+
+Use `uvx`, or set an alias:
+
+```bash
+ $ uvx --from linear-app linear
+
+ Usage: linear [OPTIONS] COMMAND [ARGS]...
+
+ Linear CLI - Interact with Linear from your terminal
+
+╭─ Options ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ --install-completion          Install completion for the current shell.                                                       │
+│ --show-completion             Show completion for the current shell, to copy it or customize the installation.                │
+│ --help                        Show this message and exit.                                                                     │
+╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Commands ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ issues     Manage Linear issues                                                                                               │
+│ projects   Manage Linear projects                                                                                             │
+│ teams      Manage Linear teams                                                                                                │
+│ cycles     Manage Linear cycles                                                                                               │
+│ users      Manage Linear users                                                                                                │
+│ labels     Manage Linear labels                                                                                               │
+╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
 
 Get your API key at: https://linear.app/settings/api
