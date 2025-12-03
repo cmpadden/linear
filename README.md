@@ -22,8 +22,8 @@ Get your API key at: https://linear.app/settings/api
 # List issues with filters
 linear issues list [OPTIONS]
 
-# Get details of a specific issue
-linear issues get <issue-id>
+# View details of a specific issue
+linear issues view <issue-id>
 ```
 
 **Common options:**

@@ -168,8 +168,8 @@ def list_issues(
         sys.exit(1)
 
 
-@issues_app.command("get")
-def get_issue(
+@issues_app.command("view")
+def view_issue(
     issue_id: Annotated[
         str, typer.Argument(help="Issue ID or identifier (e.g., 'ENG-123')")
     ],
@@ -184,14 +184,14 @@ def get_issue(
 
     Examples:
 
-      # Get issue by identifier
-      linear issues get ENG-123
+      # View issue by identifier
+      linear issues view ENG-123
 
       # Open issue in browser
-      linear issues get ENG-123 --web
+      linear issues view ENG-123 --web
 
-      # Get issue as JSON
-      linear issues get ENG-123 --format json
+      # View issue as JSON
+      linear issues view ENG-123 --format json
     """
     try:
         # Initialize client
@@ -663,8 +663,8 @@ def list_projects(
         sys.exit(1)
 
 
-@projects_app.command("get")
-def get_project(
+@projects_app.command("view")
+def view_project(
     project_id: Annotated[str, typer.Argument(help="Project ID or slug")],
     format: Annotated[
         str, typer.Option("--format", "-f", help="Output format: detail, json")
@@ -674,11 +674,11 @@ def get_project(
 
     Examples:
 
-      # Get project by ID
-      linear projects get abc123-def456
+      # View project by ID
+      linear projects view abc123-def456
 
-      # Get project as JSON
-      linear projects get my-project --format json
+      # View project as JSON
+      linear projects view my-project --format json
     """
     try:
         # Initialize client
@@ -753,8 +753,8 @@ def list_teams(
         sys.exit(1)
 
 
-@teams_app.command("get")
-def get_team(
+@teams_app.command("view")
+def view_team(
     team_id: Annotated[str, typer.Argument(help="Team ID or key (e.g., 'ENG')")],
     format: Annotated[
         str, typer.Option("--format", "-f", help="Output format: detail, json")
@@ -764,11 +764,11 @@ def get_team(
 
     Examples:
 
-      # Get team by key
-      linear teams get ENG
+      # View team by key
+      linear teams view ENG
 
-      # Get team as JSON
-      linear teams get ENG --format json
+      # View team as JSON
+      linear teams view ENG --format json
     """
     try:
         # Initialize client
@@ -863,8 +863,8 @@ def list_cycles(
         sys.exit(1)
 
 
-@cycles_app.command("get")
-def get_cycle(
+@cycles_app.command("view")
+def view_cycle(
     cycle_id: Annotated[str, typer.Argument(help="Cycle ID")],
     format: Annotated[
         str, typer.Option("--format", "-f", help="Output format: detail, json")
@@ -874,11 +874,11 @@ def get_cycle(
 
     Examples:
 
-      # Get cycle by ID
-      linear cycles get abc123-def456
+      # View cycle by ID
+      linear cycles view abc123-def456
 
-      # Get cycle as JSON
-      linear cycles get abc123 --format json
+      # View cycle as JSON
+      linear cycles view abc123 --format json
     """
     try:
         # Initialize client
@@ -960,8 +960,8 @@ def list_users(
         sys.exit(1)
 
 
-@users_app.command("get")
-def get_user(
+@users_app.command("view")
+def view_user(
     user_id: Annotated[str, typer.Argument(help="User ID or email")],
     format: Annotated[
         str, typer.Option("--format", "-f", help="Output format: detail, json")
@@ -971,14 +971,14 @@ def get_user(
 
     Examples:
 
-      # Get user by ID
-      linear users get abc123-def456
+      # View user by ID
+      linear users view abc123-def456
 
-      # Get user by email
-      linear users get user@example.com
+      # View user by email
+      linear users view user@example.com
 
-      # Get user as JSON
-      linear users get abc123 --format json
+      # View user as JSON
+      linear users view abc123 --format json
     """
     try:
         # Initialize client
