@@ -2,6 +2,7 @@
 
 import json
 import sys
+import webbrowser
 from typing import Optional
 
 import typer
@@ -69,7 +70,12 @@ app.add_typer(labels_app, name="l", hidden=True)
 @issues_app.command("list")
 def list_issues(
     assignee: Annotated[
-        Optional[str], typer.Option("--assignee", "-a", help="Filter by assignee email")
+        Optional[str],
+        typer.Option(
+            "--assignee",
+            "-a",
+            help="Filter by assignee email (use 'me' or 'self' for yourself)",
+        ),
     ] = None,
     project: Annotated[
         Optional[str], typer.Option("--project", "-p", help="Filter by project name")
@@ -107,6 +113,9 @@ def list_issues(
       # List all issues
       linear issues list
 
+      # List your own issues
+      linear issues list --assignee me
+
       # Filter by assignee
       linear issues list --assignee user@example.com
 
@@ -122,6 +131,12 @@ def list_issues(
     try:
         # Initialize client
         client = LinearClient()
+
+        # Resolve 'me' or 'self' to current user's email
+        if assignee and assignee.lower() in ("me", "self"):
+            viewer_response = client.get_viewer()
+            viewer = viewer_response.get("viewer", {})
+            assignee = viewer.get("email")
 
         # Fetch issues
         response = client.list_issues(
@@ -161,6 +176,9 @@ def get_issue(
     format: Annotated[
         str, typer.Option("--format", "-f", help="Output format: detail, json")
     ] = "detail",
+    web: Annotated[
+        bool, typer.Option("--web", "-w", help="Open issue in web browser")
+    ] = False,
 ) -> None:
     """Get details of a specific Linear issue.
 
@@ -168,6 +186,9 @@ def get_issue(
 
       # Get issue by identifier
       linear issues get ENG-123
+
+      # Open issue in browser
+      linear issues get ENG-123 --web
 
       # Get issue as JSON
       linear issues get ENG-123 --format json
@@ -179,7 +200,18 @@ def get_issue(
         # Fetch issue
         response = client.get_issue(issue_id)
 
-        # Format output
+        # Open in browser if requested
+        if web:
+            issue_url = response.get("issue", {}).get("url")
+            if issue_url:
+                webbrowser.open(issue_url)
+                console = Console()
+                console.print(f"[green]✓[/green] Opened {issue_id} in browser")
+            else:
+                typer.echo("Error: Issue URL not found", err=True)
+                sys.exit(1)
+
+        # Format output (still show details even with --web)
         if format == "json":
             format_issue_json(response)
         else:  # detail
