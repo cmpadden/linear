@@ -235,13 +235,18 @@ The hooks will automatically run when you commit changes. If any issues are foun
 
 ## Releases
 
+This project uses GitHub Actions for automated PyPI publishing. When you create a GitHub release, the workflow automatically validates, builds, and publishes to PyPI.
+
 ### Setup
 
-1. Generate PyPI API token at https://pypi.org/manage/account/token/
-2. Set the environment variable:
-   ```bash
-   export UV_PUBLISH_TOKEN="pypi-..."
-   ```
+**For Repository Maintainers:**
+
+1. Generate a PyPI API token at https://pypi.org/manage/account/token/
+   - Scope: Project (`linear-app`)
+   - Token name: `linear-app-github-actions`
+2. Add the token to GitHub repository secrets:
+   - Go to: Settings →  Secrets and variables →  Actions
+   - Create new secret: `PYPI_API_TOKEN`
 
 ### Release Process
 
@@ -250,14 +255,26 @@ The hooks will automatically run when you commit changes. If any issues are foun
    vim pyproject.toml  # Change version = "X.Y.Z"
    ```
 
-2. **Commit version bump**
+2. **Commit and push version bump**
    ```bash
    git add pyproject.toml
    git commit -m "Bump version to X.Y.Z"
    git push origin main
    ```
 
-3. **Publish to PyPI**
+3. **Create GitHub release**
+
+   **Option A: Using GitHub CLI (recommended)**
    ```bash
-   make publish
+   gh release create release-X.Y.Z --generate-notes
    ```
+
+### Tag Format
+
+Releases use the `release-X.Y.Z` tag format (e.g., `release-0.0.1`).
+
+### CI/CD
+
+- **Pull Requests & Main Branch**: CI workflow runs quality checks on all PRs and pushes to main
+- **GitHub Releases**: Publish workflow automatically deploys to PyPI
+- **Status Checks**: CI checks are required to pass before merging PRs

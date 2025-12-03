@@ -10,7 +10,7 @@ help:
 	@echo "  ty            Run ty type checker"
 	@echo "  check         Run all checks (format, lint, ty)"
 	@echo "  build         Build distributions (wheel + sdist)"
-	@echo "  publish       Complete release: check, build, publish, tag"
+	@echo "  publish       Prepare release and guide GitHub release creation"
 	@echo "  test          Run tests (placeholder)"
 	@echo "  clean         Remove cache and build artifacts"
 	@echo "  pre-commit    Install pre-commit hooks"
@@ -56,38 +56,32 @@ build:
 publish: check
 	@echo ""
 	@echo "========================================"
-	@echo "Publishing Linear CLI to PyPI"
+	@echo "Preparing Release"
 	@echo "========================================"
 	@VERSION=$$(grep '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/'); \
 	echo "Version: $$VERSION"; \
 	echo ""; \
 	echo "Checking git status..."; \
 	if [ -n "$$(git status --porcelain)" ]; then \
-		echo "Error: Working directory has uncommitted changes"; \
+		echo "❌ Error: Working directory has uncommitted changes"; \
 		exit 1; \
 	fi; \
 	echo "✓ Git working directory is clean"; \
+	echo "✓ All quality checks passed"; \
 	echo ""; \
-	echo "Building distributions..."; \
-	rm -rf dist/; \
-	uv build; \
+	echo "To publish version $$VERSION to PyPI, create a GitHub release:"; \
 	echo ""; \
-	echo "Built distributions:"; \
-	ls -lh dist/; \
+	echo "Using GitHub CLI:"; \
+	echo "  gh release create release-$$VERSION --generate-notes"; \
 	echo ""; \
-	read -p "Publish version $$VERSION to PyPI? (y/n) " -n 1 -r; \
+	echo "Or using the web interface:"; \
+	echo "  https://github.com/cmpadden/linear/releases/new?tag=release-$$VERSION"; \
 	echo ""; \
-	if [ "$$REPLY" = "y" ] || [ "$$REPLY" = "Y" ]; then \
-		echo "Publishing to PyPI..."; \
-		uv publish; \
-		echo ""; \
-		echo "Creating and pushing git tag..."; \
-		git tag "release-$$VERSION"; \
-		git push origin "release-$$VERSION"; \
-		echo ""; \
-		echo "✓ Release $$VERSION completed successfully!"; \
-		echo "View at: https://pypi.org/project/linear-app/$$VERSION/"; \
-	else \
-		echo "Publish cancelled"; \
-		exit 1; \
-	fi
+	echo "The GitHub Actions workflow will automatically:"; \
+	echo "  1. Validate version matches the release tag"; \
+	echo "  2. Run all quality checks"; \
+	echo "  3. Build distributions"; \
+	echo "  4. Publish to PyPI"; \
+	echo ""; \
+	echo "After publishing, view at:"; \
+	echo "  https://pypi.org/project/linear-app/$$VERSION/"
