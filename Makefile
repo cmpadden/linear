@@ -86,7 +86,7 @@ publish: check
 		git push origin "release-$$VERSION"; \
 		echo ""; \
 		echo "✓ Release $$VERSION completed successfully!"; \
-		echo "View at: https://pypi.org/project/linear/$$VERSION/"; \
+		echo "View at: https://pypi.org/project/linear-app/$$VERSION/"; \
 	else \
 		echo "Publish cancelled"; \
 		exit 1; \
