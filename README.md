@@ -18,12 +18,15 @@ Get your API key at: https://linear.app/settings/api
 
 ### Pre-commit Hooks
 
-This project uses [pre-commit](https://pre-commit.com/) to run code quality checks before commits. The hooks automatically run `ruff` for linting and formatting.
+This project uses [pre-commit](https://pre-commit.com/) to run code quality checks before commits. All hooks use `uv run` to execute tools from the project's virtual environment:
+- `ruff check --fix` for linting
+- `ruff format` for code formatting
+- `ty check` for type checking
 
 **Setup:**
 
 ```bash
-# Install dev dependencies (includes pre-commit)
+# Install dev dependencies (includes pre-commit, ruff, and ty)
 uv sync --dev
 
 # Install the pre-commit hooks

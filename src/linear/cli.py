@@ -359,11 +359,12 @@ def create_issue(
             # Look up user by email
             user_response = client.get_user(assignee)
             user_data = user_response.get("user")
-            if not user_data:
+            if user_data:
+                assignee_id = user_data["id"]
+                assignee_email = assignee
+            else:
                 typer.echo(f"Error: User '{assignee}' not found", err=True)
                 sys.exit(1)
-            assignee_id = user_data["id"]
-            assignee_email = assignee
         else:
             # Prompt for assignee with current user as default
             assignee_email = Prompt.ask(
@@ -378,10 +379,11 @@ def create_issue(
                 # Look up the specified user
                 user_response = client.get_user(assignee_email)
                 user_data = user_response.get("user")
-                if not user_data:
+                if user_data:
+                    assignee_id = user_data["id"]
+                else:
                     typer.echo(f"Error: User '{assignee_email}' not found", err=True)
                     sys.exit(1)
-                assignee_id = user_data["id"]
 
         team_id = None
         team_name = None
@@ -420,11 +422,12 @@ def create_issue(
             # Resolve team key/name to ID
             team_response = client.get_team(team)
             team_data = team_response.get("team")
-            if not team_data:
+            if team_data:
+                team_id = team_data["id"]
+                team_name = f"{team_data['key']} - {team_data['name']}"
+            else:
                 typer.echo(f"Error: Team '{team}' not found", err=True)
                 sys.exit(1)
-            team_id = team_data["id"]
-            team_name = f"{team_data['key']} - {team_data['name']}"
 
         if not priority:
             console.print("\n[bold]Priority:[/bold]")
