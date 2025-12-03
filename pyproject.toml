@@ -23,6 +23,7 @@ packages = ["src/linear"]
 [dependency-groups]
 dev = [
     "ruff>=0.14.7",
+    "pre-commit>=4.0.0",
 ]
 
 [tool.ruff]

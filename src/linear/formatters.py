@@ -1,7 +1,6 @@
 """Output formatters for Linear CLI."""
 
 import json
-from typing import Any
 
 from rich.console import Console
 from rich.table import Table
@@ -189,7 +188,7 @@ def format_project_detail(project_data: dict) -> None:
             f"[bold]Lead:[/bold] [magenta]{lead.get('name')}[/magenta] ({lead.get('email')})"
         )
     else:
-        console.print(f"[bold]Lead:[/bold] No lead assigned")
+        console.print("[bold]Lead:[/bold] No lead assigned")
 
     creator = project.get("creator")
     if creator:
@@ -231,7 +230,7 @@ def format_project_detail(project_data: dict) -> None:
     # Description
     description = project.get("description")
     if description:
-        console.print(f"\n[bold]Description:[/bold]")
+        console.print("\n[bold]Description:[/bold]")
         console.print(description)
 
     # Issues
@@ -424,7 +423,7 @@ def format_team_detail(team_data: dict) -> None:
     # Description
     description = team.get("description")
     if description:
-        console.print(f"\n[bold]Description:[/bold]")
+        console.print("\n[bold]Description:[/bold]")
         console.print(description)
 
     # Members
@@ -554,7 +553,7 @@ def format_issue_detail(issue_data: dict) -> None:
             f"[bold]Assignee:[/bold] [magenta]{assignee.get('name')}[/magenta] ({assignee.get('email')})"
         )
     else:
-        console.print(f"[bold]Assignee:[/bold] Unassigned")
+        console.print("[bold]Assignee:[/bold] Unassigned")
 
     creator = issue.get("creator")
     if creator:
@@ -607,7 +606,7 @@ def format_issue_detail(issue_data: dict) -> None:
     # Description
     description = issue.get("description")
     if description:
-        console.print(f"\n[bold]Description:[/bold]")
+        console.print("\n[bold]Description:[/bold]")
         console.print(description)
 
     # Comments
@@ -812,7 +811,7 @@ def format_cycle_detail(cycle_data: dict) -> None:
     # Description
     description = cycle.get("description")
     if description:
-        console.print(f"\n[bold]Description:[/bold]")
+        console.print("\n[bold]Description:[/bold]")
         console.print(description)
 
     # Issues breakdown
@@ -1059,7 +1058,7 @@ def format_user_detail(user_data: dict) -> None:
     # Description
     description = user.get("description")
     if description:
-        console.print(f"\n[bold]Bio:[/bold]")
+        console.print("\n[bold]Bio:[/bold]")
         console.print(description)
 
     # Dates
@@ -1095,7 +1094,7 @@ def format_user_detail(user_data: dict) -> None:
     # Created issues (recent)
     created_issues = user.get("createdIssues", {}).get("nodes", [])
     if created_issues:
-        console.print(f"\n[bold]Recently Created Issues:[/bold]")
+        console.print("\n[bold]Recently Created Issues:[/bold]")
         for issue in created_issues[:5]:
             console.print(
                 f"  • {issue.get('identifier')} - {issue.get('title', 'Untitled')[:60]}"

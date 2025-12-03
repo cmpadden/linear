@@ -14,6 +14,34 @@ export LINEAR_API_KEY="<linear-api-key>"
 
 Get your API key at: https://linear.app/settings/api
 
+## Development
+
+### Pre-commit Hooks
+
+This project uses [pre-commit](https://pre-commit.com/) to run code quality checks before commits. The hooks automatically run `ruff` for linting and formatting.
+
+**Setup:**
+
+```bash
+# Install dev dependencies (includes pre-commit)
+uv sync --dev
+
+# Install the pre-commit hooks
+uv run pre-commit install
+```
+
+**Manual run:**
+
+```bash
+# Run on all files
+uv run pre-commit run --all-files
+
+# Run on staged files only
+uv run pre-commit run
+```
+
+The hooks will automatically run when you commit changes. If any issues are found and auto-fixed, you'll need to stage the fixes and commit again.
+
 ## Available Commands
 
 ### Issues

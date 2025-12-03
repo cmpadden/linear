@@ -447,7 +447,7 @@ def create_issue(
         if labels:
             labels_response = client.list_labels(team=team_id, limit=250)
             labels_data = labels_response.get("issueLabels", {}).get("nodes", [])
-            label_map = {l["name"].lower(): l["id"] for l in labels_data}
+            label_map = {label["name"].lower(): label["id"] for label in labels_data}
 
             label_ids = []
             for label_name in labels:
@@ -510,7 +510,7 @@ def create_issue(
             )
             console.print(f"  [bold]Description:[/bold] {desc_preview}")
         else:
-            console.print(f"  [bold]Description:[/bold] [dim](none)[/dim]")
+            console.print("  [bold]Description:[/bold] [dim](none)[/dim]")
 
         console.print(f"  [bold]Assignee:[/bold] {assignee_email}")
         console.print(f"  [bold]Team:[/bold] {team_name}")
@@ -527,7 +527,7 @@ def create_issue(
                 f"  [bold]Priority:[/bold] {priority_labels.get(priority, 'None')}"
             )
         else:
-            console.print(f"  [bold]Priority:[/bold] [dim](none)[/dim]")
+            console.print("  [bold]Priority:[/bold] [dim](none)[/dim]")
         if labels:
             console.print(f"  [bold]Labels:[/bold] {', '.join(labels)}")
         if project:
@@ -562,7 +562,7 @@ def create_issue(
             typer.echo(json.dumps(issue_data, indent=2))
         else:
             # Detail format - success message with key info
-            console.print(f"\n[green]✓[/green] Issue created successfully!")
+            console.print("\n[green]✓[/green] Issue created successfully!")
             console.print(f"[bold]Identifier:[/bold] {issue_data.get('identifier')}")
             console.print(f"[bold]Title:[/bold] {issue_data.get('title')}")
             console.print(f"[bold]URL:[/bold] {issue_data.get('url')}")
@@ -578,7 +578,7 @@ def create_issue(
 
             labels_data = issue_data.get("labels", {}).get("nodes", [])
             if labels_data:
-                label_names = ", ".join([l["name"] for l in labels_data])
+                label_names = ", ".join([label["name"] for label in labels_data])
                 console.print(f"[bold]Labels:[/bold] {label_names}")
 
     except LinearClientError as e:
