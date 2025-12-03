@@ -72,10 +72,10 @@ publish: check
 	echo "To publish version $$VERSION to PyPI, create a GitHub release:"; \
 	echo ""; \
 	echo "Using GitHub CLI:"; \
-	echo "  gh release create release-$$VERSION --generate-notes"; \
+	echo "  gh release create v$$VERSION --generate-notes"; \
 	echo ""; \
 	echo "Or using the web interface:"; \
-	echo "  https://github.com/cmpadden/linear/releases/new?tag=release-$$VERSION"; \
+	echo "  https://github.com/cmpadden/linear/releases/new?tag=v$$VERSION"; \
 	echo ""; \
 	echo "The GitHub Actions workflow will automatically:"; \
 	echo "  1. Validate version matches the release tag"; \

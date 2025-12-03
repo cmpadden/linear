@@ -27,7 +27,7 @@ jobs:
       - name: Validate version matches release tag
         run: |
           RELEASE_TAG=${GITHUB_REF#refs/tags/}
-          RELEASE_VERSION=${RELEASE_TAG#release-}
+          RELEASE_VERSION=${RELEASE_TAG#v}
 
           echo "pyproject.toml version: ${{ steps.get-version.outputs.version }}"
           echo "Release tag: $RELEASE_TAG"

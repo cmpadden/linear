@@ -266,12 +266,12 @@ This project uses GitHub Actions for automated PyPI publishing. When you create 
 
    **Option A: Using GitHub CLI (recommended)**
    ```bash
-   gh release create release-X.Y.Z --generate-notes
+   gh release create vX.Y.Z --generate-notes
    ```
 
 ### Tag Format
 
-Releases use the `release-X.Y.Z` tag format (e.g., `release-0.0.1`).
+Releases use the `vX.Y.Z` tag format (e.g., `v0.0.1`).
 
 ### CI/CD
 
