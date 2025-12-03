@@ -1,4 +1,4 @@
-.PHONY: help install format lint ty check test clean pre-commit ruff
+.PHONY: help install format lint ty check build publish test clean pre-commit ruff
 
 help:
 	@echo "Linear CLI - Development Commands"
@@ -9,6 +9,8 @@ help:
 	@echo "  lint          Run ruff linter with auto-fix"
 	@echo "  ty            Run ty type checker"
 	@echo "  check         Run all checks (format, lint, ty)"
+	@echo "  build         Build distributions (wheel + sdist)"
+	@echo "  publish       Complete release: check, build, publish, tag"
 	@echo "  test          Run tests (placeholder)"
 	@echo "  clean         Remove cache and build artifacts"
 	@echo "  pre-commit    Install pre-commit hooks"
@@ -43,3 +45,49 @@ pre-commit:
 	@echo "✓ Pre-commit hooks installed"
 
 ruff: format
+
+build:
+	@echo "Building distributions..."
+	@rm -rf dist/
+	@uv build
+	@echo "Built distributions:"
+	@ls -lh dist/
+
+publish: check
+	@echo ""
+	@echo "========================================"
+	@echo "Publishing Linear CLI to PyPI"
+	@echo "========================================"
+	@VERSION=$$(grep '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/'); \
+	echo "Version: $$VERSION"; \
+	echo ""; \
+	echo "Checking git status..."; \
+	if [ -n "$$(git status --porcelain)" ]; then \
+		echo "Error: Working directory has uncommitted changes"; \
+		exit 1; \
+	fi; \
+	echo "✓ Git working directory is clean"; \
+	echo ""; \
+	echo "Building distributions..."; \
+	rm -rf dist/; \
+	uv build; \
+	echo ""; \
+	echo "Built distributions:"; \
+	ls -lh dist/; \
+	echo ""; \
+	read -p "Publish version $$VERSION to PyPI? (y/n) " -n 1 -r; \
+	echo ""; \
+	if [ "$$REPLY" = "y" ] || [ "$$REPLY" = "Y" ]; then \
+		echo "Publishing to PyPI..."; \
+		uv publish; \
+		echo ""; \
+		echo "Creating and pushing git tag..."; \
+		git tag "release-$$VERSION"; \
+		git push origin "release-$$VERSION"; \
+		echo ""; \
+		echo "✓ Release $$VERSION completed successfully!"; \
+		echo "View at: https://pypi.org/project/linear/$$VERSION/"; \
+	else \
+		echo "Publish cancelled"; \
+		exit 1; \
+	fi

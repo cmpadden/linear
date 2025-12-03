@@ -208,3 +208,32 @@ uv run pre-commit run
 ```
 
 The hooks will automatically run when you commit changes. If any issues are found and auto-fixed, you'll need to stage the fixes and commit again.
+
+## Releases
+
+### Setup
+
+1. Generate PyPI API token at https://pypi.org/manage/account/token/
+2. Set the environment variable:
+   ```bash
+   export UV_PUBLISH_TOKEN="pypi-..."
+   ```
+
+### Release Process
+
+1. **Update version in pyproject.toml**
+   ```bash
+   vim pyproject.toml  # Change version = "X.Y.Z"
+   ```
+
+2. **Commit version bump**
+   ```bash
+   git add pyproject.toml
+   git commit -m "Bump version to X.Y.Z"
+   git push origin main
+   ```
+
+3. **Publish to PyPI**
+   ```bash
+   make publish
+   ```
