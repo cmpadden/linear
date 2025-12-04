@@ -17,19 +17,19 @@ Set your Linear API key as an environment variable:
 
  Linear CLI - Interact with Linear from your terminal
 
-╭─ Options ─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --install-completion          Install completion for the current shell.                                                       │
-│ --show-completion             Show completion for the current shell, to copy it or customize the installation.                │
-│ --help                        Show this message and exit.                                                                     │
-╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ Commands ────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ issues     Manage Linear issues                                                                                               │
-│ projects   Manage Linear projects                                                                                             │
-│ teams      Manage Linear teams                                                                                                │
-│ cycles     Manage Linear cycles                                                                                               │
-│ users      Manage Linear users                                                                                                │
-│ labels     Manage Linear labels                                                                                               │
-╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Options ───────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ --install-completion          Install completion for the current shell.                                             │
+│ --show-completion             Show completion for the current shell, to copy it or customize the installation.      │
+│ --help                        Show this message and exit.                                                           │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─ Commands ──────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│ issues     Manage Linear issues                                                                                     │
+│ projects   Manage Linear projects                                                                                   │
+│ teams      Manage Linear teams                                                                                      │
+│ cycles     Manage Linear cycles                                                                                     │
+│ users      Manage Linear users                                                                                      │
+│ labels     Manage Linear labels                                                                                     │
+╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ```
 
 Get your API key at: https://linear.app/settings/api
