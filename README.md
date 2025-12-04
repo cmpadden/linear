@@ -45,8 +45,8 @@ linear issues view <issue-id> [OPTIONS]
 # Search issues by title
 linear issues search <query> [OPTIONS]
 
-# Create a new issue (interactive if no title provided)
-linear issues create [title] [OPTIONS]
+# Create a new issue (natural language prompt or interactive)
+linear issues create [prompt] [OPTIONS]
 ```
 
 **List options:**
@@ -70,6 +70,7 @@ linear issues create [title] [OPTIONS]
 - `--format/-f <format>` - Output format: `table` (default), `json`
 
 **Create options:**
+- `--title <text>` - Issue title (skips AI parsing, required for structured mode)
 - `--team/-t <team>` - Team key (e.g., "ENG")
 - `--description/-d <text>` - Issue description
 - `--assignee/-a <email>` - Assign to user

@@ -8,10 +8,15 @@ from typing import Optional
 import typer
 from typing_extensions import Annotated
 from rich.console import Console
-from rich.prompt import Confirm, IntPrompt, Prompt
+from rich.prompt import Confirm
+# Removed: IntPrompt, Prompt - using defaults instead of interactive field prompts
 
 from linear import __version__
 from linear.api import LinearClient, LinearClientError
+from linear.claude_integration import (
+    extract_with_claude,
+    should_use_claude_parsing,
+)
 from linear.formatters import (
     format_cycle_detail,
     format_cycle_json,
@@ -340,7 +345,13 @@ def search_issues(
 
 @issues_app.command("create")
 def create_issue(
-    title: Annotated[Optional[str], typer.Argument(help="Issue title")] = None,
+    prompt: Annotated[
+        Optional[str],
+        typer.Argument(help="Natural language prompt describing the issue"),
+    ] = None,
+    title: Annotated[
+        Optional[str], typer.Option("--title", help="Issue title (skips AI parsing)")
+    ] = None,
     team: Annotated[
         Optional[str], typer.Option("--team", "-t", help="Team ID or key")
     ] = None,
@@ -378,21 +389,56 @@ def create_issue(
 ) -> None:
     """Create a new Linear issue.
 
-    Examples:
-
-      # Interactive mode (prompts for required fields)
-      linear issues create
-
-      # Non-interactive with required fields
-      linear issues create "Fix login bug" --team ENG
-
-      # With all options
-      linear issues create "Add dark mode" --team ENG --description "Support dark theme" \\
-        --priority 2 --label feature --label ui
+    \b
+    # Natural language with AI parsing (requires claude CLI)
+    linear issues create "High priority bug to fix login for john@example.com in ENG team"
+    \b
+    # Structured mode with explicit --title (skips AI)
+    linear issues create --title "Fix login bug" --team ENG
+    \b
+    # Structured mode with all options
+    linear issues create --title "Add dark mode" --team ENG --description "Support dark theme" --priority 2 --label feature --label ui
+    \b
+    # Defaults: assignee=current user, team=auto-selected if only 1, priority=none
     """
     try:
         console = Console()
         client = LinearClient()
+
+        if should_use_claude_parsing(
+            prompt,
+            title,
+            team,
+            description,
+            assignee,
+            priority,
+            project,
+            labels,
+            state,
+            estimate,
+        ):
+            console.print("[dim]Parsing with Claude...[/dim]")
+            # Type narrowing: should_use_claude_parsing ensures prompt is not None
+            assert prompt is not None
+            extracted = extract_with_claude(prompt)
+
+            # Override parameters with extracted values
+            title = extracted.get("title", prompt)
+            description = description or extracted.get("description")
+            team = team or extracted.get("team")
+
+            # Handle "me" as special assignee indicator
+            extracted_assignee = extracted.get("assignee")
+            if extracted_assignee and extracted_assignee.lower() != "me":
+                assignee = assignee or extracted_assignee
+
+            priority = priority if priority is not None else extracted.get("priority")
+            project = project or extracted.get("project")
+            labels = labels or extracted.get("labels")
+            state = state or extracted.get("state")
+            estimate = estimate if estimate is not None else extracted.get("estimate")
+
+            console.print("[green]✓[/green] Parsed input with Claude")
 
         viewer_response = client.get_viewer()
         viewer = viewer_response.get("viewer", {})
@@ -400,13 +446,18 @@ def create_issue(
         viewer_email = viewer.get("email")
         viewer_teams = viewer.get("teams", {}).get("nodes", [])
 
+        # Title is required
         if not title:
-            title = Prompt.ask("Issue title")
+            console.print("[red]Error: --title is required[/red]")
+            console.print(
+                '[dim]Use: linear issues create "Your issue description"[/dim]'
+            )
+            console.print('[dim]Or:  linear issues create --title "Your title"[/dim]')
+            raise typer.Exit(1)
 
-        if not description:
-            description_input = Prompt.ask("Description")
-            description = description_input if description_input else None
+        # Description defaults to None if not provided (no prompt)
 
+        # Handle assignee: default to viewer if not provided
         assignee_id = None
         assignee_email = None
         if assignee:
@@ -417,61 +468,42 @@ def create_issue(
                 assignee_id = user_data["id"]
                 assignee_email = assignee
             else:
-                typer.echo(f"Error: User '{assignee}' not found", err=True)
-                sys.exit(1)
+                console.print(f"[red]Error: User '{assignee}' not found[/red]")
+                raise typer.Exit(1)
         else:
-            # Prompt for assignee with current user as default
-            assignee_email = Prompt.ask(
-                "Assignee email", default=viewer_email if viewer_email else ""
-            )
+            # Default to viewer (current user)
+            assignee_id = viewer_id
+            assignee_email = viewer_email
+            console.print(f"[dim]Assigning to: {viewer_email}[/dim]")
 
-            # If user just pressed enter or entered the same email, use viewer
-            if assignee_email == viewer_email or not assignee_email:
-                assignee_id = viewer_id
-                assignee_email = viewer_email
-            else:
-                # Look up the specified user
-                user_response = client.get_user(assignee_email)
-                user_data = user_response.get("user")
-                if user_data:
-                    assignee_id = user_data["id"]
-                else:
-                    typer.echo(f"Error: User '{assignee_email}' not found", err=True)
-                    sys.exit(1)
-
+        # Handle team: auto-select if 1 team, error if multiple
         team_id = None
         team_name = None
         if not team:
-            # Use viewer's teams only
+            # Use viewer's teams
             teams_data = viewer_teams
 
-            if not teams_data:
-                typer.echo("Error: You are not a member of any teams", err=True)
-                sys.exit(1)
+            if len(teams_data) == 0:
+                console.print("[red]Error: No teams available[/red]")
+                raise typer.Exit(1)
             elif len(teams_data) == 1:
                 # Only one team, use it automatically
                 team_id = teams_data[0]["id"]
                 team_key = teams_data[0]["key"]
                 team_name = f"{team_key} - {teams_data[0]['name']}"
-                console.print(f"Using team: [cyan]{team_key}[/cyan]")
+                console.print(f"[dim]Using team: {team_key}[/dim]")
             else:
-                # Multiple teams, prompt user
-                console.print("\n[bold]Your teams:[/bold]")
-                for i, t in enumerate(teams_data, 1):
-                    console.print(f"  {i}. [cyan]{t['key']}[/cyan] - {t['name']}")
-
-                team_choice = IntPrompt.ask(
-                    "Select team number",
-                    default=1,
+                # Multiple teams - error, require --team flag
+                console.print(
+                    "[red]Error: --team required (you belong to multiple teams)[/red]"
                 )
-
-                if team_choice < 1 or team_choice > len(teams_data):
-                    typer.echo("Error: Invalid team selection", err=True)
-                    sys.exit(1)
-
-                selected_team = teams_data[team_choice - 1]
-                team_id = selected_team["id"]
-                team_name = f"{selected_team['key']} - {selected_team['name']}"
+                console.print("\n[bold]Available teams:[/bold]")
+                for t in teams_data:
+                    console.print(f"  {t['key']} - {t['name']}")
+                console.print(
+                    f"\n[dim]Use: linear issues create --team {teams_data[0]['key']} ...[/dim]"
+                )
+                raise typer.Exit(1)
         else:
             # Resolve team key/name to ID
             team_response = client.get_team(team)
@@ -480,25 +512,12 @@ def create_issue(
                 team_id = team_data["id"]
                 team_name = f"{team_data['key']} - {team_data['name']}"
             else:
-                typer.echo(f"Error: Team '{team}' not found", err=True)
-                sys.exit(1)
+                console.print(f"[red]Error: Team '{team}' not found[/red]")
+                raise typer.Exit(1)
 
-        if not priority:
-            console.print("\n[bold]Priority:[/bold]")
-            console.print(" 1. Urgent")
-            console.print(" 2. High")
-            console.print(" 3. Medium")
-            console.print(" 4. Low")
-
-            priority_input = Prompt.ask("Priority")
-
-            try:
-                priority = int(priority_input)
-                if priority < 1 or priority > 4:
-                    typer.echo("Error: Priority must be between 1 and 4", err=True)
-                    sys.exit(1)
-            except ValueError:
-                priority = None
+        # Priority defaults to 0 (None) if not provided
+        if priority is None:
+            priority = 0
 
         label_ids = None
         if labels:
