@@ -1,4 +1,4 @@
-<img width="1400" height="225" alt="linear-cli-header" src="https://github.com/user-attachments/assets/ce620de7-718d-4205-b4a0-bb287dc910a4" />
+<img width="1400" height="225" src="https://github.com/user-attachments/assets/ce620de7-718d-4205-b4a0-bb287dc910a4" />
 
 # Linear CLI
 
@@ -9,12 +9,8 @@ A command-line interface for interacting with [Linear](https://linear.app) - lis
 Set your Linear API key as an environment variable:
 
 ```bash
-export LINEAR_API_KEY="<linear-api-key>"
-```
+ $ export LINEAR_API_KEY="<linear-api-key>"
 
-Use `uvx`, or set an alias:
-
-```bash
  $ uvx --from linear-app linear
 
  Usage: linear [OPTIONS] COMMAND [ARGS]...
