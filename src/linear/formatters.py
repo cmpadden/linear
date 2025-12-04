@@ -89,8 +89,21 @@ def format_table_grouped(
     max_priority_width = max(len(issue.priority_label) for issue in issues)
     max_assignee_width = max(len(issue.format_assignee()) for issue in issues)
     max_updated_width = max(len(issue.format_updated_date()) for issue in issues)
-    # Calculate max title width across all issues, but cap at reasonable limit
-    max_title_width = min(max(len(issue.title) for issue in issues), 70)
+
+    # Calculate title width based on terminal size
+    # Account for fixed column widths + padding (2 per column * 6 columns = 12)
+    terminal_width = console.width
+    fixed_width = (
+        max_id_width
+        + max_status_width
+        + max_priority_width
+        + max_assignee_width
+        + max_updated_width
+        + 12
+    )
+    available_for_title = terminal_width - fixed_width
+    # Cap title between reasonable min/max
+    max_title_width = max(20, min(available_for_title, 70))
 
     # Display each group
     for group_name, group_issues in sorted_groups:
@@ -109,43 +122,38 @@ def format_table_grouped(
             "ID",
             style="bright_blue",
             no_wrap=True,
-            min_width=max_id_width,
-            max_width=max_id_width,
+            width=max_id_width,
         )
         table.add_column(
             "Title",
             style="white",
-            width=max_title_width,
             no_wrap=True,
             overflow="ellipsis",
+            width=max_title_width,
         )
         table.add_column(
             "Status",
             style="green",
             no_wrap=True,
-            min_width=max_status_width,
-            max_width=max_status_width,
+            width=max_status_width,
         )
         table.add_column(
             "Priority",
             style="yellow",
             no_wrap=True,
-            min_width=max_priority_width,
-            max_width=max_priority_width,
+            width=max_priority_width,
         )
         table.add_column(
             "Assignee",
             style="magenta",
             no_wrap=True,
-            min_width=max_assignee_width,
-            max_width=max_assignee_width,
+            width=max_assignee_width,
         )
         table.add_column(
             "Updated",
             style="dim",
             no_wrap=True,
-            min_width=max_updated_width,
-            max_width=max_updated_width,
+            width=max_updated_width,
         )
 
         for issue in group_issues:
