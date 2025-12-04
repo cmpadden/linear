@@ -6,21 +6,18 @@ A command-line interface for interacting with [Linear](https://linear.app) - lis
 
 ## Getting started
 
-Set your Linear API key as an environment variable:
-
 ```bash
- $ export LINEAR_API_KEY="<linear-api-key>"
-
- $ uvx --from linear-app linear
+ $ LINEAR_API_KEY="<linear-api-key>" uvx --from linear-app linear
 
  Usage: linear [OPTIONS] COMMAND [ARGS]...
 
  Linear CLI - Interact with Linear from your terminal
 
 ╭─ Options ───────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --install-completion          Install completion for the current shell.                                             │
-│ --show-completion             Show completion for the current shell, to copy it or customize the installation.      │
-│ --help                        Show this message and exit.                                                           │
+│ --version             -v        Show version and exit                                                               │
+│ --install-completion            Install completion for the current shell.                                           │
+│ --show-completion               Show completion for the current shell, to copy it or customize the installation.    │
+│ --help                          Show this message and exit.                                                         │
 ╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─ Commands ──────────────────────────────────────────────────────────────────────────────────────────────────────────╮
 │ issues     Manage Linear issues                                                                                     │
