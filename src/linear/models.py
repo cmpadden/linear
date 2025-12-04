@@ -26,6 +26,9 @@ class Issue:
     project_name: str | None
     team_name: str
     team_key: str
+    cycle_id: str | None
+    cycle_name: str | None
+    cycle_number: int | None
     labels: list[str]
 
     @classmethod
@@ -41,6 +44,7 @@ class Issue:
         assignee = data.get("assignee")
         project = data.get("project")
         team = data.get("team", {})
+        cycle = data.get("cycle")
         labels_data = data.get("labels", {}).get("nodes", [])
         state = data.get("state", {})
 
@@ -62,6 +66,9 @@ class Issue:
             project_name=project.get("name") if project else None,
             team_name=team.get("name", ""),
             team_key=team.get("key", ""),
+            cycle_id=cycle.get("id") if cycle else None,
+            cycle_name=cycle.get("name") if cycle else None,
+            cycle_number=cycle.get("number") if cycle else None,
             labels=[label.get("name", "") for label in labels_data],
         )
 

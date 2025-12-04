@@ -131,9 +131,15 @@ def list_issues(
     format: Annotated[
         str, typer.Option("--format", "-f", help="Output format: table, json")
     ] = "table",
-    sort: Annotated[
-        str, typer.Option("--sort", help="Sort by: created, updated, priority")
+    order_by: Annotated[
+        str, typer.Option("--order-by", help="Sort by: created, updated, priority")
     ] = "updated",
+    group_by: Annotated[
+        Optional[str],
+        typer.Option(
+            "--group-by", help="Group by: cycle, project, team (default: cycle)"
+        ),
+    ] = "cycle",
 ) -> None:
     """List Linear issues with optional filters.
 
@@ -177,7 +183,7 @@ def list_issues(
             labels=label,
             limit=limit,
             include_archived=include_archived,
-            sort=sort,
+            sort=order_by,
         )
 
         # Parse response
@@ -187,7 +193,15 @@ def list_issues(
         if format == "json":
             format_json(issues)
         else:  # table
-            format_table(issues)
+            if group_by in ["cycle", "project", "team"]:
+                from typing import cast, Literal
+                from linear.formatters import format_table_grouped
+
+                format_table_grouped(
+                    issues, cast(Literal["cycle", "project", "team"], group_by)
+                )
+            else:
+                format_table(issues)
 
     except LinearClientError as e:
         typer.echo(f"Error: {e}", err=True)
@@ -266,9 +280,13 @@ def search_issues(
     format: Annotated[
         str, typer.Option("--format", "-f", help="Output format: table, json")
     ] = "table",
-    sort: Annotated[
-        str, typer.Option("--sort", help="Sort by: created, updated, priority")
+    order_by: Annotated[
+        str, typer.Option("--order-by", help="Sort by: created, updated, priority")
     ] = "updated",
+    group_by: Annotated[
+        Optional[str],
+        typer.Option("--group-by", help="Group by: cycle, project, team"),
+    ] = None,
 ) -> None:
     """Search Linear issues by title.
 
@@ -292,7 +310,7 @@ def search_issues(
             query=query,
             limit=limit,
             include_archived=include_archived,
-            sort=sort,
+            sort=order_by,
         )
 
         # Parse response
@@ -302,7 +320,15 @@ def search_issues(
         if format == "json":
             format_json(issues)
         else:  # table
-            format_table(issues)
+            if group_by in ["cycle", "project", "team"]:
+                from typing import cast, Literal
+                from linear.formatters import format_table_grouped
+
+                format_table_grouped(
+                    issues, cast(Literal["cycle", "project", "team"], group_by)
+                )
+            else:
+                format_table(issues)
 
     except LinearClientError as e:
         typer.echo(f"Error: {e}", err=True)
@@ -643,8 +669,8 @@ def list_projects(
     format: Annotated[
         str, typer.Option("--format", "-f", help="Output format: table, json")
     ] = "table",
-    sort: Annotated[
-        str, typer.Option("--sort", help="Sort by: created, updated")
+    order_by: Annotated[
+        str, typer.Option("--order-by", help="Sort by: created, updated")
     ] = "updated",
 ) -> None:
     """List Linear projects with optional filters.
@@ -676,7 +702,7 @@ def list_projects(
             team=team,
             limit=limit,
             include_archived=include_archived,
-            sort=sort,
+            sort=order_by,
         )
 
         # Parse response

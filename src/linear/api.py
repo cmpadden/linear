@@ -186,6 +186,11 @@ class LinearClient:
                 name
                 key
               }
+              cycle {
+                id
+                name
+                number
+              }
               labels {
                 nodes {
                   name
@@ -270,6 +275,11 @@ class LinearClient:
               team {
                 name
                 key
+              }
+              cycle {
+                id
+                name
+                number
               }
               labels {
                 nodes {

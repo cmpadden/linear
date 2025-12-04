@@ -1,6 +1,8 @@
 """Output formatters for Linear CLI."""
 
 import json
+from collections import defaultdict
+from typing import Literal
 
 from rich.console import Console
 from rich.table import Table
@@ -20,7 +22,7 @@ def format_table(issues: list[Issue]) -> None:
         console.print("[yellow]No issues found.[/yellow]")
         return
 
-    table = Table(show_header=True, header_style="bold cyan")
+    table = Table(show_header=True, header_style="bold cyan", box=None, padding=(0, 1))
     table.add_column("ID", style="bright_blue", no_wrap=True)
     table.add_column("Title", style="white")
     table.add_column("Status", style="green")
@@ -45,6 +47,121 @@ def format_table(issues: list[Issue]) -> None:
 
     console.print(table)
     console.print(f"\n[dim]Total: {len(issues)} issue(s)[/dim]")
+
+
+def format_table_grouped(
+    issues: list[Issue], group_by: Literal["cycle", "project", "team"]
+) -> None:
+    """Format issues as a rich table grouped by a specific field.
+
+    Args:
+        issues: List of Issue objects to display
+        group_by: Field to group by (cycle, project, or team)
+    """
+    console = Console()
+
+    if not issues:
+        console.print("[yellow]No issues found.[/yellow]")
+        return
+
+    # Group issues
+    groups: dict[str, list[Issue]] = defaultdict(list)
+    for issue in issues:
+        if group_by == "cycle":
+            key = issue.cycle_name if issue.cycle_name else "No cycle"
+        elif group_by == "project":
+            key = issue.project_name if issue.project_name else "No project"
+        elif group_by == "team":
+            key = (
+                f"{issue.team_key} - {issue.team_name}" if issue.team_key else "No team"
+            )
+        else:
+            key = "Unknown"
+        groups[key].append(issue)
+
+    # Sort groups: "No cycle/project/team" goes last, then alphabetical
+    sorted_groups = sorted(groups.items(), key=lambda x: (x[0].startswith("No "), x[0]))
+
+    # Pre-calculate max widths for ALL columns across all issues
+    max_id_width = max(len(issue.format_short_id()) for issue in issues)
+    max_status_width = max(len(issue.state_name) for issue in issues)
+    max_priority_width = max(len(issue.priority_label) for issue in issues)
+    max_assignee_width = max(len(issue.format_assignee()) for issue in issues)
+    max_updated_width = max(len(issue.format_updated_date()) for issue in issues)
+    # Calculate max title width across all issues, but cap at reasonable limit
+    max_title_width = min(max(len(issue.title) for issue in issues), 70)
+
+    # Display each group
+    for group_name, group_issues in sorted_groups:
+        console.print(
+            f"\n[bold cyan]{group_name}[/bold cyan] [dim]({len(group_issues)} issue{'s' if len(group_issues) != 1 else ''})[/dim]"
+        )
+
+        table = Table(
+            show_header=True,
+            header_style="bold cyan",
+            box=None,
+            padding=(0, 1),
+            expand=False,
+        )
+        table.add_column(
+            "ID",
+            style="bright_blue",
+            no_wrap=True,
+            min_width=max_id_width,
+            max_width=max_id_width,
+        )
+        table.add_column(
+            "Title",
+            style="white",
+            width=max_title_width,
+            no_wrap=True,
+            overflow="ellipsis",
+        )
+        table.add_column(
+            "Status",
+            style="green",
+            no_wrap=True,
+            min_width=max_status_width,
+            max_width=max_status_width,
+        )
+        table.add_column(
+            "Priority",
+            style="yellow",
+            no_wrap=True,
+            min_width=max_priority_width,
+            max_width=max_priority_width,
+        )
+        table.add_column(
+            "Assignee",
+            style="magenta",
+            no_wrap=True,
+            min_width=max_assignee_width,
+            max_width=max_assignee_width,
+        )
+        table.add_column(
+            "Updated",
+            style="dim",
+            no_wrap=True,
+            min_width=max_updated_width,
+            max_width=max_updated_width,
+        )
+
+        for issue in group_issues:
+            table.add_row(
+                issue.format_short_id(),
+                issue.title,
+                issue.state_name,
+                issue.priority_label,
+                issue.format_assignee(),
+                issue.format_updated_date(),
+            )
+
+        console.print(table)
+
+    console.print(
+        f"\n[dim]Total: {len(issues)} issue(s) across {len(groups)} group(s)[/dim]"
+    )
 
 
 def format_json(issues: list[Issue]) -> None:
@@ -75,6 +192,15 @@ def format_json(issues: list[Issue]) -> None:
                 ),
                 "project": {"name": issue.project_name} if issue.project_name else None,
                 "team": {"name": issue.team_name, "key": issue.team_key},
+                "cycle": (
+                    {
+                        "id": issue.cycle_id,
+                        "name": issue.cycle_name,
+                        "number": issue.cycle_number,
+                    }
+                    if issue.cycle_id
+                    else None
+                ),
                 "labels": issue.labels,
             }
         )
@@ -94,7 +220,7 @@ def format_projects_table(projects: list[Project]) -> None:
         console.print("[yellow]No projects found.[/yellow]")
         return
 
-    table = Table(show_header=True, header_style="bold cyan")
+    table = Table(show_header=True, header_style="bold cyan", box=None, padding=(0, 1))
     table.add_column("Name", style="bright_blue")
     table.add_column("State", style="green")
     table.add_column("Progress", style="yellow")
@@ -316,7 +442,7 @@ def format_teams_table(teams: list[Team]) -> None:
         console.print("[yellow]No teams found.[/yellow]")
         return
 
-    table = Table(show_header=True, header_style="bold cyan")
+    table = Table(show_header=True, header_style="bold cyan", box=None, padding=(0, 1))
     table.add_column("Key", style="bright_blue", no_wrap=True)
     table.add_column("Name", style="white")
     table.add_column("Members", style="magenta")
@@ -663,7 +789,7 @@ def format_cycles_table(cycles: list[Cycle]) -> None:
         console.print("[yellow]No cycles found.[/yellow]")
         return
 
-    table = Table(show_header=True, header_style="bold cyan")
+    table = Table(show_header=True, header_style="bold cyan", box=None, padding=(0, 1))
     table.add_column("Team", style="cyan", no_wrap=True)
     table.add_column("Name", style="bright_blue")
     table.add_column("Number", style="white", no_wrap=True)
@@ -936,7 +1062,7 @@ def format_users_table(users: list[User]) -> None:
         console.print("[yellow]No users found.[/yellow]")
         return
 
-    table = Table(show_header=True, header_style="bold cyan")
+    table = Table(show_header=True, header_style="bold cyan", box=None, padding=(0, 1))
     table.add_column("Name", style="bright_blue")
     table.add_column("Email", style="cyan")
     table.add_column("Role", style="yellow", no_wrap=True)
@@ -1117,7 +1243,9 @@ def format_labels_table(labels: list[Label]) -> None:
         labels: List of Label objects
     """
     console = Console()
-    table = Table(show_header=True, header_style="bold magenta")
+    table = Table(
+        show_header=True, header_style="bold magenta", box=None, padding=(0, 1)
+    )
 
     table.add_column("Name", style="cyan", min_width=20)
     table.add_column("Team", style="yellow", min_width=10)
