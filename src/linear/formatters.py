@@ -23,7 +23,13 @@ def format_table(issues: list[Issue]) -> None:
         console.print("[yellow]No issues found.[/yellow]")
         return
 
-    table = Table(show_header=True, header_style="bold cyan", box=None, padding=(0, 1))
+    table = Table(
+        show_header=True,
+        header_style="bold cyan",
+        box=None,
+        padding=(0, 1),
+        pad_edge=False,
+    )
     table.add_column("ID", style="bright_blue", no_wrap=True)
     table.add_column("Title", style="white")
     table.add_column("Status", style="green")
@@ -91,7 +97,7 @@ def format_table_grouped(
     max_updated_width = max(len(issue.format_updated_date()) for issue in issues)
 
     # Calculate title width based on terminal size
-    # Account for fixed column widths + padding (2 per column * 6 columns = 12)
+    # Account for fixed column widths + padding (2 per column * 5 = 10, excluding edges)
     terminal_width = console.width
     fixed_width = (
         max_id_width
@@ -99,7 +105,7 @@ def format_table_grouped(
         + max_priority_width
         + max_assignee_width
         + max_updated_width
-        + 12
+        + 10
     )
     available_for_title = terminal_width - fixed_width
     # Cap title between reasonable min/max
@@ -116,6 +122,7 @@ def format_table_grouped(
             header_style="bold cyan",
             box=None,
             padding=(0, 1),
+            pad_edge=False,
             expand=False,
         )
         table.add_column(
@@ -229,7 +236,13 @@ def format_projects_table(projects: list[Project]) -> None:
         console.print("[yellow]No projects found.[/yellow]")
         return
 
-    table = Table(show_header=True, header_style="bold cyan", box=None, padding=(0, 1))
+    table = Table(
+        show_header=True,
+        header_style="bold cyan",
+        box=None,
+        padding=(0, 1),
+        pad_edge=False,
+    )
     table.add_column("Name", style="bright_blue")
     table.add_column("State", style="green")
     table.add_column("Progress", style="yellow")
@@ -451,7 +464,13 @@ def format_teams_table(teams: list[Team]) -> None:
         console.print("[yellow]No teams found.[/yellow]")
         return
 
-    table = Table(show_header=True, header_style="bold cyan", box=None, padding=(0, 1))
+    table = Table(
+        show_header=True,
+        header_style="bold cyan",
+        box=None,
+        padding=(0, 1),
+        pad_edge=False,
+    )
     table.add_column("Key", style="bright_blue", no_wrap=True)
     table.add_column("Name", style="white")
     table.add_column("Members", style="magenta")
@@ -798,7 +817,13 @@ def format_cycles_table(cycles: list[Cycle]) -> None:
         console.print("[yellow]No cycles found.[/yellow]")
         return
 
-    table = Table(show_header=True, header_style="bold cyan", box=None, padding=(0, 1))
+    table = Table(
+        show_header=True,
+        header_style="bold cyan",
+        box=None,
+        padding=(0, 1),
+        pad_edge=False,
+    )
     table.add_column("Team", style="cyan", no_wrap=True)
     table.add_column("Name", style="bright_blue")
     table.add_column("Number", style="white", no_wrap=True)
@@ -1071,7 +1096,13 @@ def format_users_table(users: list[User]) -> None:
         console.print("[yellow]No users found.[/yellow]")
         return
 
-    table = Table(show_header=True, header_style="bold cyan", box=None, padding=(0, 1))
+    table = Table(
+        show_header=True,
+        header_style="bold cyan",
+        box=None,
+        padding=(0, 1),
+        pad_edge=False,
+    )
     table.add_column("Name", style="bright_blue")
     table.add_column("Email", style="cyan")
     table.add_column("Role", style="yellow", no_wrap=True)
@@ -1253,7 +1284,11 @@ def format_labels_table(labels: list[Label]) -> None:
     """
     console = Console()
     table = Table(
-        show_header=True, header_style="bold magenta", box=None, padding=(0, 1)
+        show_header=True,
+        header_style="bold magenta",
+        box=None,
+        padding=(0, 1),
+        pad_edge=False,
     )
 
     table.add_column("Name", style="cyan", min_width=20)
