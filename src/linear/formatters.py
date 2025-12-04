@@ -5,6 +5,7 @@ from collections import defaultdict
 from typing import Literal
 
 from rich.console import Console
+from rich.markup import escape
 from rich.table import Table
 
 from linear.models import Cycle, Issue, Label, Project, Team, User
@@ -38,7 +39,7 @@ def format_table(issues: list[Issue]) -> None:
 
         table.add_row(
             issue.format_short_id(),
-            title,
+            escape(title),
             issue.state_name,
             issue.priority_label,
             issue.format_assignee(),
@@ -150,7 +151,7 @@ def format_table_grouped(
         for issue in group_issues:
             table.add_row(
                 issue.format_short_id(),
-                issue.title,
+                escape(issue.title),
                 issue.state_name,
                 issue.priority_label,
                 issue.format_assignee(),
@@ -661,7 +662,7 @@ def format_issue_detail(issue_data: dict) -> None:
 
     # Header
     console.print(
-        f"\n[bold bright_blue]{issue.get('identifier', 'N/A')}[/bold bright_blue]: {issue.get('title', 'Untitled')}"
+        f"\n[bold bright_blue]{issue.get('identifier', 'N/A')}[/bold bright_blue]: {escape(issue.get('title', 'Untitled'))}"
     )
     console.print(f"[dim]{issue.get('url', '')}[/dim]\n")
 
