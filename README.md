@@ -7,29 +7,21 @@ A command-line interface for interacting with [Linear](https://linear.app) - lis
 ## Getting started
 
 ```bash
- $ LINEAR_API_KEY="<linear-api-key>" uvx --from linear-app linear
+ $ export LINEAR_API_KEY="<linear-api-key>"  # https://linear.app/settings/api
 
- Usage: linear [OPTIONS] COMMAND [ARGS]...
+ $ alias linear="uvx --from linear-app linear"
 
- Linear CLI - Interact with Linear from your terminal
+ $ linear issues create "Implement a views sub-command, assign to me on ENG team"
 
-╭─ Options ───────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ --version             -v        Show version and exit                                                               │
-│ --install-completion            Install completion for the current shell.                                           │
-│ --show-completion               Show completion for the current shell, to copy it or customize the installation.    │
-│ --help                          Show this message and exit.                                                         │
-╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─ Commands ──────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│ issues     Manage Linear issues                                                                                     │
-│ projects   Manage Linear projects                                                                                   │
-│ teams      Manage Linear teams                                                                                      │
-│ cycles     Manage Linear cycles                                                                                     │
-│ users      Manage Linear users                                                                                      │
-│ labels     Manage Linear labels                                                                                     │
-╰─────────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+   Issue Summary:
+     Title: Implement a views sub-command
+     Description: Implement a views sub-command for the linear CLI
+     Assignee: colton@acme.com
+     Team: ENG
+     Priority: None
+
+   Create this issue? [y/n] (y):
 ```
-
-Get your API key at: https://linear.app/settings/api
 
 ## Available Commands
 

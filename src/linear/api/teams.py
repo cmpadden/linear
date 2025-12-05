@@ -120,6 +120,7 @@ def get_team(self: "LinearClient", team_id: str) -> Team:
         cyclesEnabled
         timezone
         organization {
+          id
           name
         }
         members {

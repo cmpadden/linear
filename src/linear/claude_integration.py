@@ -120,6 +120,7 @@ def extract_with_claude(input_text: str) -> dict:
             [
                 "claude",
                 "-p",
+                "--dangerously-skip-permissions",
                 "--output-format",
                 "json",
                 "--json-schema",
@@ -135,13 +136,33 @@ def extract_with_claude(input_text: str) -> dict:
         parsed = parse_claude_output(result.stdout)
         return parsed
 
-    except subprocess.TimeoutExpired:
-        raise ClaudeExtractionError("Claude CLI timed out after 30 seconds")
+    except subprocess.TimeoutExpired as e:
+        raise ClaudeExtractionError(
+            f"Claude CLI timed out after 30 seconds. Command: {e.cmd}"
+        )
     except subprocess.CalledProcessError as e:
-        error_msg = e.stderr.strip() if e.stderr else "Unknown error"
+        # Try to parse stdout for error message (e.g., credit balance errors)
+        if e.stdout:
+            try:
+                response = json.loads(e.stdout)
+                if response.get("is_error") and response.get("result"):
+                    raise ClaudeExtractionError(
+                        f"Claude CLI error: {response['result']}"
+                    )
+            except json.JSONDecodeError:
+                pass
+
+        # Fallback to detailed error message
+        error_details = []
+        error_details.append(f"Return code: {e.returncode}")
+        if e.stderr:
+            error_details.append(f"stderr: {e.stderr.strip()}")
+        if e.stdout:
+            error_details.append(f"stdout: {e.stdout.strip()}")
+        error_msg = " | ".join(error_details) if error_details else "Unknown error"
         raise ClaudeExtractionError(f"Claude CLI failed: {error_msg}")
     except Exception as e:
-        raise ClaudeExtractionError(f"Unexpected error: {e}")
+        raise ClaudeExtractionError(f"Unexpected error: {type(e).__name__}: {e}")
 
 
 def parse_claude_output(output: str) -> dict:

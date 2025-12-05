@@ -343,10 +343,10 @@ def create_issue(
             state,
             estimate,
         ):
-            console.print("[dim]Parsing with Claude...[/dim]")
             # Type narrowing: should_use_claude_parsing ensures prompt is not None
             assert prompt is not None
-            extracted = extract_with_claude(prompt)
+            with console.status("[dim]Parsing with Claude...[/dim]", spinner="dots"):
+                extracted = extract_with_claude(prompt)
 
             # Override parameters with extracted values
             title = extracted.get("title", prompt)
@@ -363,8 +363,6 @@ def create_issue(
             labels = labels or extracted.get("labels")
             state = state or extracted.get("state")
             estimate = estimate if estimate is not None else extracted.get("estimate")
-
-            console.print("[green][/green] Parsed input with Claude")
 
         viewer_response = client.get_viewer()
         viewer = viewer_response.get("viewer", {})
@@ -399,7 +397,6 @@ def create_issue(
             # Default to viewer (current user)
             assignee_id = viewer_id
             assignee_email = viewer_email
-            console.print(f"[dim]Assigning to: {viewer_email}[/dim]")
 
         # Handle team: auto-select if 1 team, error if multiple
         team_id: str | None = None
