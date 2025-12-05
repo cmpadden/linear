@@ -492,7 +492,7 @@ def create_issue(
 
         # Show summary and ask for confirmation (with edit loop)
         while True:
-            console.print("\n[bold]Issue Summary:[/bold]")
+            console.print("\n[bold]Issue details:[/bold]")
             console.print(f"  [bold]Title:[/bold] {title}")
 
             # Always show description (even if empty)
@@ -532,7 +532,7 @@ def create_issue(
 
             # Ask for confirmation with edit option
             response = Prompt.ask(
-                "\nCreate this issue?",
+                "\nCreate issue?",
                 choices=["y", "yes", "n", "no", "e", "edit"],
                 default="y",
                 show_choices=True,
@@ -548,27 +548,112 @@ def create_issue(
             elif choice == "e":
                 # Edit in $EDITOR
                 try:
-                    # Prepare IssueData
+                    # Prepare IssueData with current values
                     issue_data = IssueData(
                         title=title,
                         description=description,
                         priority=priority if priority is not None else 0,
                         estimate=estimate,
-                        team_name=team_name,
-                        assignee_email=assignee_email,
-                        project_name=project,
+                        team=team
+                        if team
+                        else (team_name.split(" - ")[0] if team_name else None),
+                        assignee=assignee_email,
+                        project=project,
                         labels=labels,
-                        state_name=state,
+                        state=state,
                     )
 
                     # Open editor and get edited data
                     edited_data = edit_issue_in_editor(issue_data)
 
-                    # Update variables
+                    # Update basic fields
                     title = edited_data.title
                     description = edited_data.description
                     priority = edited_data.priority
                     estimate = edited_data.estimate
+
+                    # Update metadata fields and re-resolve IDs if changed
+                    if edited_data.team and edited_data.team != (
+                        team
+                        if team
+                        else (team_name.split(" - ")[0] if team_name else None)
+                    ):
+                        team = edited_data.team
+                        # Re-resolve team ID
+                        try:
+                            team_obj = client.get_team(team)
+                            team_id = team_obj.id
+                            team_name = f"{team_obj.key} - {team_obj.name}"
+                        except LinearClientError:
+                            console.print(f"[red]Error: Team '{team}' not found[/red]")
+                            console.print(
+                                "[yellow]Keeping original team. Please try again or cancel.[/yellow]"
+                            )
+
+                    if edited_data.assignee and edited_data.assignee != assignee_email:
+                        assignee = edited_data.assignee
+                        # Re-resolve assignee ID
+                        try:
+                            user = client.get_user(assignee)
+                            assignee_id = user.id
+                            assignee_email = assignee
+                        except LinearClientError:
+                            console.print(
+                                f"[red]Error: User '{assignee}' not found[/red]"
+                            )
+                            console.print(
+                                "[yellow]Keeping original assignee. Please try again or cancel.[/yellow]"
+                            )
+
+                    if edited_data.project != project:
+                        project = edited_data.project
+                        # Re-resolve project ID
+                        if project:
+                            project_id = None
+                            projects_list = client.list_projects(
+                                team=team_id, limit=250
+                            )
+                            for p in projects_list:
+                                if p.name.lower() == project.lower():
+                                    project_id = p.id
+                                    break
+                            if not project_id:
+                                console.print(
+                                    f"[red]Error: Project '{project}' not found[/red]"
+                                )
+                                console.print(
+                                    "[yellow]Keeping original project. Please try again or cancel.[/yellow]"
+                                )
+                        else:
+                            project_id = None
+
+                    if edited_data.labels != labels:
+                        labels = edited_data.labels
+                        # Re-resolve label IDs
+                        if labels:
+                            labels_list = client.list_labels(team=team_id, limit=250)
+                            label_map = {
+                                label.name.lower(): label.id for label in labels_list
+                            }
+                            label_ids = []
+                            for label_name in labels:
+                                label_id = label_map.get(label_name.lower())
+                                if not label_id:
+                                    console.print(
+                                        f"[yellow]Warning: Label '{label_name}' not found, skipping[/yellow]"
+                                    )
+                                else:
+                                    label_ids.append(label_id)
+                            if not label_ids:
+                                label_ids = None
+                        else:
+                            label_ids = None
+
+                    if edited_data.state != state:
+                        state = edited_data.state
+                        # Note: State resolution by name not currently supported
+                        # User must provide state ID or use API default
+                        state_id = None
 
                     console.print("[green]Changes saved. Review updated issue:[/green]")
                     # Loop continues, will show updated summary

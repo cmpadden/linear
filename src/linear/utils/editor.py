@@ -19,12 +19,12 @@ class IssueData:
     priority: int = 0
     estimate: Optional[int] = None
 
-    # Read-only metadata (for display in comments)
-    team_name: Optional[str] = None
-    assignee_email: Optional[str] = None
-    project_name: Optional[str] = None
+    # Metadata fields (now editable)
+    team: Optional[str] = None
+    assignee: Optional[str] = None
+    project: Optional[str] = None
     labels: Optional[list[str]] = None
-    state_name: Optional[str] = None
+    state: Optional[str] = None
 
 
 def edit_issue_in_editor(issue_data: IssueData) -> IssueData:
@@ -83,12 +83,7 @@ def _serialize_to_yaml(issue_data: IssueData) -> str:
 
     yaml_lines = yaml_output.split("\n")
 
-    # Build final output with header comments
-    lines = [
-        "# Linear Issue - Edit as needed",
-        "# When done, save and close your editor",
-        "",
-    ]
+    lines = []
 
     # Add title first
     for line in yaml_lines:
@@ -113,30 +108,36 @@ def _serialize_to_yaml(issue_data: IssueData) -> str:
             lines.append("# Estimate: Story points (numeric) or null")
             lines.append(line)
 
-    lines.append("")
+    # Team
+    if issue_data.team:
+        lines.append(f"team: {issue_data.team}")
+    else:
+        lines.append("team: null")
 
-    # Read-only metadata section
-    lines.extend(
-        [
-            "# " + "-" * 77,
-            "# The following fields are read-only (informational only)",
-            "# To change these, cancel and use CLI flags (--team, --assignee, etc.)",
-            "# " + "-" * 77,
-            "",
-        ]
-    )
+    # Assignee
+    if issue_data.assignee:
+        lines.append(f"assignee: {issue_data.assignee}")
+    else:
+        lines.append("assignee: null")
 
-    if issue_data.team_name:
-        lines.append(f"# team: {issue_data.team_name}")
-    if issue_data.assignee_email:
-        lines.append(f"# assignee: {issue_data.assignee_email}")
-    if issue_data.project_name:
-        lines.append(f"# project: {issue_data.project_name}")
+    # Project
+    if issue_data.project:
+        lines.append(f"project: {issue_data.project}")
+    else:
+        lines.append("project: null")
+
+    # Labels
     if issue_data.labels:
         labels_str = ", ".join(issue_data.labels)
-        lines.append(f"# labels: [{labels_str}]")
-    if issue_data.state_name:
-        lines.append(f"# state: {issue_data.state_name}")
+        lines.append(f"labels: {labels_str}")
+    else:
+        lines.append("labels: null")
+
+    # State
+    if issue_data.state:
+        lines.append(f"state: {issue_data.state}")
+    else:
+        lines.append("state: null")
 
     return "\n".join(lines)
 
@@ -235,16 +236,53 @@ def _validate_and_merge(original: IssueData, edited: dict) -> IssueData:
         if estimate < 0:
             raise ValueError("Estimate must be non-negative")
 
-    # Return new IssueData with edited values but preserve metadata
+    # Parse metadata fields
+    team = edited.get("team")
+    if team is not None and str(team).lower() != "null":
+        team = str(team).strip() or None
+    else:
+        team = None
+
+    assignee = edited.get("assignee")
+    if assignee is not None and str(assignee).lower() != "null":
+        assignee = str(assignee).strip() or None
+    else:
+        assignee = None
+
+    project = edited.get("project")
+    if project is not None and str(project).lower() != "null":
+        project = str(project).strip() or None
+    else:
+        project = None
+
+    # Parse labels (comma-separated string)
+    labels = edited.get("labels")
+    if labels is not None and str(labels).lower() != "null":
+        if isinstance(labels, str):
+            # Parse comma-separated string
+            labels = [label.strip() for label in labels.split(",") if label.strip()]
+        elif isinstance(labels, list):
+            labels = [str(label).strip() for label in labels if str(label).strip()]
+        else:
+            labels = None
+    else:
+        labels = None
+
+    state = edited.get("state")
+    if state is not None and str(state).lower() != "null":
+        state = str(state).strip() or None
+    else:
+        state = None
+
+    # Return new IssueData with all edited values
     return IssueData(
         title=str(title).strip(),
         description=description,
         priority=priority,
         estimate=estimate,
-        # Preserve original metadata
-        team_name=original.team_name,
-        assignee_email=original.assignee_email,
-        project_name=original.project_name,
-        labels=original.labels,
-        state_name=original.state_name,
+        team=team,
+        assignee=assignee,
+        project=project,
+        labels=labels,
+        state=state,
     )
