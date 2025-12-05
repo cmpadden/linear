@@ -8,4 +8,18 @@ except PackageNotFoundError:
     # Package is not installed, fallback for development
     __version__ = "dev"
 
-__all__ = ["__version__"]
+# Re-export commonly used items
+from linear.api import LinearClient, LinearClientError
+from linear.models import Issue, Project, Team, Cycle, User, Label
+
+__all__ = [
+    "__version__",
+    "LinearClient",
+    "LinearClientError",
+    "Issue",
+    "Project",
+    "Team",
+    "Cycle",
+    "User",
+    "Label",
+]
