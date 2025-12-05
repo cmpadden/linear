@@ -1,17 +1,5 @@
 # Contributing to Linear CLI
 
-Thank you for your interest in contributing to the Linear CLI! This document provides guidelines and information about the project structure to help you get started.
-
-## Table of Contents
-
-- [Project Structure](#project-structure)
-- [Development Setup](#development-setup)
-- [Code Organization](#code-organization)
-- [Adding New Features](#adding-new-features)
-- [Code Style and Standards](#code-style-and-standards)
-- [Testing](#testing)
-- [Pull Request Process](#pull-request-process)
-
 ## Project Structure
 
 The Linear CLI follows an entity-based architecture where code is organized by domain entities (issues, projects, teams, cycles, users, labels). This structure improves maintainability and makes it easy to find and modify code.
@@ -60,6 +48,8 @@ src/linear/
 
 ## Development Setup
 
+### Installation
+
 1. **Clone the repository**:
    ```bash
    git clone https://github.com/yourusername/linear-cli.git
@@ -81,6 +71,35 @@ src/linear/
    ```bash
    uv run linear --help
    ```
+
+### Pre-commit Hooks
+
+This project uses [pre-commit](https://pre-commit.com/) to run code quality checks before commits. All hooks use `uv run` to execute tools from the project's virtual environment:
+- `ruff check --fix` for linting
+- `ruff format` for code formatting
+- `ty check` for type checking
+
+**Setup:**
+
+```bash
+# Install dev dependencies (includes pre-commit, ruff, and ty)
+uv sync --dev
+
+# Install the pre-commit hooks
+uv run pre-commit install
+```
+
+**Manual run:**
+
+```bash
+# Run on all files
+uv run pre-commit run --all-files
+
+# Run on staged files only
+uv run pre-commit run
+```
+
+The hooks will automatically run when you commit changes. If any issues are found and auto-fixed, you'll need to stage the fixes and commit again.
 
 ## Code Organization
 
@@ -415,3 +434,49 @@ uv run python -m py_compile src/linear/**/*.py
    - Reference any related issues
    - Describe what was changed and why
    - Include testing steps
+
+## Releases
+
+This project uses GitHub Actions for automated PyPI publishing. When you create a GitHub release, the workflow automatically validates, builds, and publishes to PyPI.
+
+### Setup
+
+**For Repository Maintainers:**
+
+1. Generate a PyPI API token at https://pypi.org/manage/account/token/
+   - Scope: Project (`linear-app`)
+   - Token name: `linear-app-github-actions`
+2. Add the token to GitHub repository secrets:
+   - Go to: Settings →  Secrets and variables →  Actions
+   - Create new secret: `PYPI_API_TOKEN`
+
+### Release Process
+
+1. **Update version in pyproject.toml**
+   ```bash
+   vim pyproject.toml  # Change version = "X.Y.Z"
+   ```
+
+2. **Commit and push version bump**
+   ```bash
+   git add pyproject.toml
+   git commit -m "Bump version to X.Y.Z"
+   git push origin main
+   ```
+
+3. **Create GitHub release**
+
+   **Option A: Using GitHub CLI (recommended)**
+   ```bash
+   gh release create vX.Y.Z --generate-notes
+   ```
+
+### Tag Format
+
+Releases use the `vX.Y.Z` tag format (e.g., `v0.0.1`).
+
+### CI/CD
+
+- **Pull Requests & Main Branch**: CI workflow runs quality checks on all PRs and pushes to main
+- **GitHub Releases**: Publish workflow automatically deploys to PyPI
+- **Status Checks**: CI checks are required to pass before merging PRs
