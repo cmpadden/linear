@@ -4,6 +4,22 @@ import os
 from typing import Any
 
 import httpx
+from pydantic import ValidationError
+
+from linear.models import (
+    Cycle,
+    CycleConnection,
+    Issue,
+    IssueConnection,
+    Label,
+    LabelConnection,
+    Project,
+    ProjectConnection,
+    Team,
+    TeamConnection,
+    User,
+    UserConnection,
+)
 
 
 class LinearClientError(Exception):
@@ -102,7 +118,7 @@ class LinearClient:
         limit: int = 50,
         include_archived: bool = False,
         sort: str = "updated",
-    ) -> dict[str, Any]:
+    ) -> list[Issue]:
         """List issues with optional filters.
 
         Args:
@@ -117,10 +133,10 @@ class LinearClient:
             sort: Sort field: created, updated, priority (default: updated)
 
         Returns:
-            Query response containing issues
+            List of Issue objects
 
         Raises:
-            LinearClientError: If the query fails
+            LinearClientError: If the query fails or data validation fails
         """
         # Build filter object
         filters = {}
@@ -172,28 +188,70 @@ class LinearClient:
               updatedAt
               completedAt
               state {
+                id
                 name
                 type
+                color
               }
               assignee {
+                id
                 name
+                displayName
                 email
+                active
+                admin
+                createdAt
+                updatedAt
               }
               project {
+                id
                 name
+                state
+                progress
+                url
+                createdAt
+                updatedAt
               }
               team {
+                id
                 name
                 key
+                createdAt
+                updatedAt
+                cyclesEnabled
+                private
               }
               cycle {
                 id
                 name
                 number
+                startsAt
+                endsAt
+                progress
+                isActive
+                isFuture
+                isPast
+                isNext
+                isPrevious
+                createdAt
+                updatedAt
+                team {
+                  id
+                  name
+                  key
+                  createdAt
+                  updatedAt
+                  cyclesEnabled
+                  private
+                }
               }
               labels {
                 nodes {
+                  id
                   name
+                  color
+                  createdAt
+                  updatedAt
                 }
               }
             }
@@ -212,7 +270,17 @@ class LinearClient:
             "orderBy": order_by,
         }
 
-        return self.query(query, variables)
+        response = self.query(query, variables)
+
+        try:
+            connection = IssueConnection.model_validate(response.get("issues", {}))
+            return connection.nodes
+        except ValidationError as e:
+            error_details = e.errors()[0]
+            field_path = " -> ".join(str(loc) for loc in error_details["loc"])
+            raise LinearClientError(
+                f"Failed to parse issues from API response: {error_details['msg']} at {field_path}"
+            )
 
     def search_issues(
         self,
@@ -220,7 +288,7 @@ class LinearClient:
         limit: int = 50,
         include_archived: bool = False,
         sort: str = "updated",
-    ) -> dict[str, Any]:
+    ) -> list[Issue]:
         """Search issues by title.
 
         Args:
@@ -230,10 +298,10 @@ class LinearClient:
             sort: Sort field: created, updated, priority (default: updated)
 
         Returns:
-            Query response containing matching issues
+            List of matching Issue objects
 
         Raises:
-            LinearClientError: If the query fails
+            LinearClientError: If the query fails or data validation fails
         """
         # Build filter with title search
         filters = {"title": {"containsIgnoreCase": query}}
@@ -262,28 +330,70 @@ class LinearClient:
               updatedAt
               completedAt
               state {
+                id
                 name
                 type
+                color
               }
               assignee {
+                id
                 name
+                displayName
                 email
+                active
+                admin
+                createdAt
+                updatedAt
               }
               project {
+                id
                 name
+                state
+                progress
+                url
+                createdAt
+                updatedAt
               }
               team {
+                id
                 name
                 key
+                createdAt
+                updatedAt
+                cyclesEnabled
+                private
               }
               cycle {
                 id
                 name
                 number
+                startsAt
+                endsAt
+                progress
+                isActive
+                isFuture
+                isPast
+                isNext
+                isPrevious
+                createdAt
+                updatedAt
+                team {
+                  id
+                  name
+                  key
+                  createdAt
+                  updatedAt
+                  cyclesEnabled
+                  private
+                }
               }
               labels {
                 nodes {
+                  id
                   name
+                  color
+                  createdAt
+                  updatedAt
                 }
               }
             }
@@ -302,19 +412,27 @@ class LinearClient:
             "orderBy": order_by,
         }
 
-        return self.query(query_str, variables)
+        response = self.query(query_str, variables)
 
-    def get_issue(self, issue_id: str) -> dict[str, Any]:
+        try:
+            connection = IssueConnection.model_validate(response.get("issues", {}))
+            return connection.nodes
+        except ValidationError as e:
+            raise LinearClientError(
+                f"Failed to parse issues from API response: {e.errors()[0]['msg']}"
+            )
+
+    def get_issue(self, issue_id: str) -> Issue:
         """Get a single issue by ID or identifier.
 
         Args:
             issue_id: Issue ID (UUID) or identifier (e.g., 'ENG-123')
 
         Returns:
-            Query response containing the issue
+            Issue object
 
         Raises:
-            LinearClientError: If the query fails or issue not found
+            LinearClientError: If the query fails, issue not found, or data validation fails
         """
         # GraphQL query
         query = """
@@ -336,34 +454,97 @@ class LinearClient:
             dueDate
             estimate
             state {
+              id
               name
               type
               color
             }
             assignee {
+              id
               name
+              displayName
               email
-              avatarUrl
+              active
+              admin
+              createdAt
+              updatedAt
             }
             creator {
+              id
               name
+              displayName
               email
+              active
+              admin
+              createdAt
+              updatedAt
             }
             project {
+              id
               name
+              state
+              progress
               url
+              createdAt
+              updatedAt
             }
             team {
+              id
               name
               key
+              createdAt
+              updatedAt
+              cyclesEnabled
+              private
             }
             cycle {
+              id
               name
               number
+              startsAt
+              endsAt
+              progress
+              isActive
+              isFuture
+              isPast
+              isNext
+              isPrevious
+              createdAt
+              updatedAt
+              team {
+                id
+                name
+                key
+                createdAt
+                updatedAt
+                cyclesEnabled
+                private
+              }
             }
             parent {
+              id
               identifier
               title
+              priority
+              priorityLabel
+              url
+              createdAt
+              updatedAt
+              state {
+                id
+                name
+                type
+                color
+              }
+              team {
+                id
+                name
+                key
+                createdAt
+                updatedAt
+                cyclesEnabled
+                private
+              }
             }
             labels {
               nodes {
@@ -373,22 +554,40 @@ class LinearClient:
             }
             comments {
               nodes {
+                id
                 body
                 createdAt
+                updatedAt
                 user {
+                  id
                   name
+                  displayName
+                  email
+                  active
+                  admin
+                  createdAt
+                  updatedAt
                 }
               }
             }
             attachments {
               nodes {
+                id
                 title
                 url
+                createdAt
               }
             }
             subscribers {
               nodes {
+                id
                 name
+                displayName
+                email
+                active
+                admin
+                createdAt
+                updatedAt
               }
             }
           }
@@ -402,7 +601,14 @@ class LinearClient:
         if not response.get("issue"):
             raise LinearClientError(f"Issue '{issue_id}' not found")
 
-        return response
+        try:
+            return Issue.model_validate(response["issue"])
+        except ValidationError as e:
+            error_details = e.errors()[0]
+            field_path = " -> ".join(str(loc) for loc in error_details["loc"])
+            raise LinearClientError(
+                f"Failed to parse issue '{issue_id}': {error_details['msg']} at {field_path}"
+            )
 
     def list_projects(
         self,
@@ -411,7 +617,7 @@ class LinearClient:
         limit: int = 50,
         include_archived: bool = False,
         sort: str = "updated",
-    ) -> dict[str, Any]:
+    ) -> list[Project]:
         """List projects with optional filters.
 
         Args:
@@ -422,10 +628,10 @@ class LinearClient:
             sort: Sort field: created, updated (default: updated)
 
         Returns:
-            Query response containing projects
+            List of Project objects
 
         Raises:
-            LinearClientError: If the query fails
+            LinearClientError: If the query fails or data validation fails
         """
         # Build filter object
         filters = {}
@@ -488,19 +694,29 @@ class LinearClient:
             "orderBy": order_by,
         }
 
-        return self.query(query, variables)
+        response = self.query(query, variables)
 
-    def get_project(self, project_id: str) -> dict[str, Any]:
+        try:
+            connection = ProjectConnection.model_validate(response.get("projects", {}))
+            return connection.nodes
+        except ValidationError as e:
+            import json
+
+            raise LinearClientError(
+                f"Failed to parse projects from API response:\n{json.dumps(e.errors(), indent=2)}"
+            )
+
+    def get_project(self, project_id: str) -> Project:
         """Get a single project by ID or slug.
 
         Args:
             project_id: Project ID (UUID) or slug
 
         Returns:
-            Query response containing the project
+            Project object
 
         Raises:
-            LinearClientError: If the query fails or project not found
+            LinearClientError: If the query fails, project not found, or data validation fails
         """
         # GraphQL query
         query = """
@@ -570,13 +786,18 @@ class LinearClient:
         if not response.get("project"):
             raise LinearClientError(f"Project '{project_id}' not found")
 
-        return response
+        try:
+            return Project.model_validate(response["project"])
+        except ValidationError as e:
+            raise LinearClientError(
+                f"Failed to parse project '{project_id}': {e.errors()[0]['msg']}"
+            )
 
     def list_teams(
         self,
         limit: int = 50,
         include_archived: bool = False,
-    ) -> dict[str, Any]:
+    ) -> list[Team]:
         """List teams in the workspace.
 
         Args:
@@ -584,10 +805,10 @@ class LinearClient:
             include_archived: Include archived teams (default: False)
 
         Returns:
-            Query response containing teams
+            List of Team objects
 
         Raises:
-            LinearClientError: If the query fails
+            LinearClientError: If the query fails or data validation fails
         """
         # GraphQL query
         query = """
@@ -636,19 +857,27 @@ class LinearClient:
             "includeArchived": include_archived,
         }
 
-        return self.query(query, variables)
+        response = self.query(query, variables)
 
-    def get_team(self, team_id: str) -> dict[str, Any]:
+        try:
+            connection = TeamConnection.model_validate(response.get("teams", {}))
+            return connection.nodes
+        except ValidationError as e:
+            raise LinearClientError(
+                f"Failed to parse teams from API response: {e.errors()[0]['msg']}"
+            )
+
+    def get_team(self, team_id: str) -> Team:
         """Get a single team by ID or key.
 
         Args:
             team_id: Team ID (UUID) or key (e.g., 'ENG')
 
         Returns:
-            Query response containing the team
+            Team object
 
         Raises:
-            LinearClientError: If the query fails or team not found
+            LinearClientError: If the query fails, team not found, or data validation fails
         """
         # GraphQL query
         query = """
@@ -733,7 +962,12 @@ class LinearClient:
         if not response.get("team"):
             raise LinearClientError(f"Team '{team_id}' not found")
 
-        return response
+        try:
+            return Team.model_validate(response["team"])
+        except ValidationError as e:
+            raise LinearClientError(
+                f"Failed to parse team '{team_id}': {e.errors()[0]['msg']}"
+            )
 
     def list_cycles(
         self,
@@ -743,7 +977,7 @@ class LinearClient:
         past: bool = False,
         limit: int = 50,
         include_archived: bool = False,
-    ) -> dict[str, Any]:
+    ) -> list[Cycle]:
         """List cycles with optional filters.
 
         Args:
@@ -755,10 +989,10 @@ class LinearClient:
             include_archived: Include archived cycles (default: False)
 
         Returns:
-            Query response containing cycles
+            List of Cycle objects
 
         Raises:
-            LinearClientError: If the query fails
+            LinearClientError: If the query fails or data validation fails
         """
         query = """
         query Cycles($filter: CycleFilter, $first: Int, $includeArchived: Boolean) {
@@ -829,19 +1063,27 @@ class LinearClient:
             "includeArchived": include_archived,
         }
 
-        return self.query(query, variables)
+        response = self.query(query, variables)
 
-    def get_cycle(self, cycle_id: str) -> dict[str, Any]:
+        try:
+            connection = CycleConnection.model_validate(response.get("cycles", {}))
+            return connection.nodes
+        except ValidationError as e:
+            raise LinearClientError(
+                f"Failed to parse cycles from API response: {e.errors()[0]['msg']}"
+            )
+
+    def get_cycle(self, cycle_id: str) -> Cycle:
         """Get a single cycle by ID.
 
         Args:
             cycle_id: Cycle ID (UUID)
 
         Returns:
-            Query response containing the cycle
+            Cycle object
 
         Raises:
-            LinearClientError: If the query fails or cycle not found
+            LinearClientError: If the query fails, cycle not found, or data validation fails
         """
         query = """
         query Cycle($id: String!) {
@@ -898,14 +1140,19 @@ class LinearClient:
         if not response.get("cycle"):
             raise LinearClientError(f"Cycle '{cycle_id}' not found")
 
-        return response
+        try:
+            return Cycle.model_validate(response["cycle"])
+        except ValidationError as e:
+            raise LinearClientError(
+                f"Failed to parse cycle '{cycle_id}': {e.errors()[0]['msg']}"
+            )
 
     def list_users(
         self,
         active_only: bool = True,
         limit: int = 50,
         include_disabled: bool = False,
-    ) -> dict[str, Any]:
+    ) -> list[User]:
         """List users in the workspace.
 
         Args:
@@ -914,10 +1161,10 @@ class LinearClient:
             include_disabled: Include disabled users (default: False)
 
         Returns:
-            Query response containing users
+            List of User objects
 
         Raises:
-            LinearClientError: If the query fails
+            LinearClientError: If the query fails or data validation fails
         """
         query = """
         query Users($filter: UserFilter, $first: Int, $includeDisabled: Boolean) {
@@ -958,19 +1205,27 @@ class LinearClient:
             "includeDisabled": include_disabled,
         }
 
-        return self.query(query, variables)
+        response = self.query(query, variables)
 
-    def get_user(self, user_id: str) -> dict[str, Any]:
+        try:
+            connection = UserConnection.model_validate(response.get("users", {}))
+            return connection.nodes
+        except ValidationError as e:
+            raise LinearClientError(
+                f"Failed to parse users from API response: {e.errors()[0]['msg']}"
+            )
+
+    def get_user(self, user_id: str) -> User:
         """Get a single user by ID or email.
 
         Args:
             user_id: User ID (UUID) or email
 
         Returns:
-            Query response containing the user
+            User object
 
         Raises:
-            LinearClientError: If the query fails or user not found
+            LinearClientError: If the query fails, user not found, or data validation fails
         """
         query = """
         query User($id: String!) {
@@ -1032,14 +1287,19 @@ class LinearClient:
         if not response.get("user"):
             raise LinearClientError(f"User '{user_id}' not found")
 
-        return response
+        try:
+            return User.model_validate(response["user"])
+        except ValidationError as e:
+            raise LinearClientError(
+                f"Failed to parse user '{user_id}': {e.errors()[0]['msg']}"
+            )
 
     def list_labels(
         self,
         limit: int = 50,
         team: str | None = None,
         include_archived: bool = False,
-    ) -> dict[str, Any]:
+    ) -> list[Label]:
         """List issue labels.
 
         Args:
@@ -1048,7 +1308,10 @@ class LinearClient:
             include_archived: Include archived labels (default: False)
 
         Returns:
-            GraphQL response with labels data
+            List of Label objects
+
+        Raises:
+            LinearClientError: If the query fails or data validation fails
 
         Example:
             >>> client.list_labels(team="ENG", limit=20)
@@ -1115,7 +1378,17 @@ class LinearClient:
         if filters:
             variables["filter"] = filters
 
-        return self.query(query, variables)
+        response = self.query(query, variables)
+
+        try:
+            connection = LabelConnection.model_validate(response.get("issueLabels", {}))
+            return connection.nodes
+        except ValidationError as e:
+            import json
+
+            raise LinearClientError(
+                f"Failed to parse labels from API response:\n{json.dumps(e.errors(), indent=2)}"
+            )
 
     def get_viewer(self) -> dict[str, Any]:
         """Get the current authenticated user.
@@ -1158,7 +1431,7 @@ class LinearClient:
         due_date: str | None = None,
         parent_id: str | None = None,
         cycle_id: str | None = None,
-    ) -> dict[str, Any]:
+    ) -> Issue:
         """Create a new issue.
 
         Args:
@@ -1176,10 +1449,10 @@ class LinearClient:
             cycle_id: Cycle UUID
 
         Returns:
-            Mutation response containing created issue data
+            Created Issue object
 
         Raises:
-            LinearClientError: If the mutation fails
+            LinearClientError: If the mutation fails or data validation fails
         """
         mutation = """
         mutation IssueCreate($input: IssueCreateInput!) {
@@ -1195,20 +1468,37 @@ class LinearClient:
               priorityLabel
               createdAt
               state {
+                id
                 name
                 type
+                color
               }
               assignee {
+                id
                 name
+                displayName
                 email
+                active
+                admin
+                createdAt
+                updatedAt
               }
               team {
+                id
                 name
                 key
+                createdAt
+                updatedAt
+                cyclesEnabled
+                private
               }
               labels {
                 nodes {
+                  id
                   name
+                  color
+                  createdAt
+                  updatedAt
                 }
               }
             }
@@ -1252,4 +1542,9 @@ class LinearClient:
         if not issue_create.get("success"):
             raise LinearClientError("Failed to create issue")
 
-        return response
+        try:
+            return Issue.model_validate(issue_create["issue"])
+        except ValidationError as e:
+            raise LinearClientError(
+                f"Failed to parse created issue: {e.errors()[0]['msg']}"
+            )

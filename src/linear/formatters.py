@@ -46,7 +46,7 @@ def format_table(issues: list[Issue]) -> None:
         table.add_row(
             issue.format_short_id(),
             escape(title),
-            issue.state_name,
+            issue.state.name,
             issue.priority_label,
             issue.format_assignee(),
             issue.format_updated_date(),
@@ -75,13 +75,15 @@ def format_table_grouped(
     groups: dict[str, list[Issue]] = defaultdict(list)
     for issue in issues:
         if group_by == "cycle":
-            key = issue.cycle_name if issue.cycle_name else "No cycle"
+            key = issue.cycle.name if issue.cycle and issue.cycle.name else "No cycle"
         elif group_by == "project":
-            key = issue.project_name if issue.project_name else "No project"
-        elif group_by == "team":
             key = (
-                f"{issue.team_key} - {issue.team_name}" if issue.team_key else "No team"
+                issue.project.name
+                if issue.project and issue.project.name
+                else "No project"
             )
+        elif group_by == "team":
+            key = f"{issue.team.key} - {issue.team.name}"
         else:
             key = "Unknown"
         groups[key].append(issue)
@@ -91,7 +93,7 @@ def format_table_grouped(
 
     # Pre-calculate max widths for ALL columns across all issues
     max_id_width = max(len(issue.format_short_id()) for issue in issues)
-    max_status_width = max(len(issue.state_name) for issue in issues)
+    max_status_width = max(len(issue.state.name) for issue in issues)
     max_priority_width = max(len(issue.priority_label) for issue in issues)
     max_assignee_width = max(len(issue.format_assignee()) for issue in issues)
     max_updated_width = max(len(issue.format_updated_date()) for issue in issues)
@@ -167,7 +169,7 @@ def format_table_grouped(
             table.add_row(
                 issue.format_short_id(),
                 escape(issue.title),
-                issue.state_name,
+                issue.state.name,
                 issue.priority_label,
                 issue.format_assignee(),
                 issue.format_updated_date(),
@@ -188,40 +190,13 @@ def format_json(issues: list[Issue]) -> None:
     """
     issues_data = []
     for issue in issues:
-        issues_data.append(
-            {
-                "id": issue.id,
-                "identifier": issue.identifier,
-                "title": issue.title,
-                "description": issue.description,
-                "priority": issue.priority,
-                "priorityLabel": issue.priority_label,
-                "url": issue.url,
-                "createdAt": issue.created_at,
-                "updatedAt": issue.updated_at,
-                "completedAt": issue.completed_at,
-                "state": {"name": issue.state_name, "type": issue.state_type},
-                "assignee": (
-                    {"name": issue.assignee_name, "email": issue.assignee_email}
-                    if issue.assignee_name
-                    else None
-                ),
-                "project": {"name": issue.project_name} if issue.project_name else None,
-                "team": {"name": issue.team_name, "key": issue.team_key},
-                "cycle": (
-                    {
-                        "id": issue.cycle_id,
-                        "name": issue.cycle_name,
-                        "number": issue.cycle_number,
-                    }
-                    if issue.cycle_id
-                    else None
-                ),
-                "labels": issue.labels,
-            }
-        )
+        # Use model_dump with by_alias=True to get camelCase field names
+        issue_dict = issue.model_dump(mode="json", by_alias=True)
+        issues_data.append(issue_dict)
 
-    print(json.dumps({"issues": issues_data, "count": len(issues)}, indent=2))
+    print(
+        json.dumps({"issues": issues_data, "count": len(issues)}, indent=2, default=str)
+    )
 
 
 def format_projects_table(projects: list[Project]) -> None:
@@ -261,7 +236,7 @@ def format_projects_table(projects: list[Project]) -> None:
             project.state.title(),
             project.format_progress(),
             project.format_lead(),
-            project.team_key,
+            project.teams[0].key if project.teams else "",
             project.format_target_date(),
         )
 
@@ -277,179 +252,87 @@ def format_projects_json(projects: list[Project]) -> None:
     """
     projects_data = []
     for project in projects:
-        projects_data.append(
-            {
-                "id": project.id,
-                "name": project.name,
-                "description": project.description,
-                "state": project.state,
-                "progress": project.progress,
-                "startDate": project.start_date,
-                "targetDate": project.target_date,
-                "url": project.url,
-                "createdAt": project.created_at,
-                "updatedAt": project.updated_at,
-                "archivedAt": project.archived_at,
-                "color": project.color,
-                "icon": project.icon,
-                "lead": (
-                    {"name": project.lead_name, "email": project.lead_email}
-                    if project.lead_name
-                    else None
-                ),
-                "team": {"name": project.team_name, "key": project.team_key},
-            }
+        # Use model_dump with by_alias=True to get camelCase field names
+        project_dict = project.model_dump(mode="json", by_alias=True)
+        projects_data.append(project_dict)
+
+    print(
+        json.dumps(
+            {"projects": projects_data, "count": len(projects)}, indent=2, default=str
         )
+    )
 
-    print(json.dumps({"projects": projects_data, "count": len(projects)}, indent=2))
 
-
-def format_project_detail(project_data: dict) -> None:
+def format_project_detail(project: Project) -> None:
     """Format a single project with full details.
 
     Args:
-        project_data: Project data from API response
+        project: Project Pydantic model
     """
     console = Console()
-    project = project_data.get("project", {})
-
-    if not project:
-        console.print("[yellow]Project not found.[/yellow]")
-        return
 
     # Header
-    console.print(
-        f"\n[bold bright_blue]{project.get('name', 'Untitled Project')}[/bold bright_blue]"
-    )
-    console.print(f"[dim]{project.get('url', '')}[/dim]\n")
+    console.print(f"\n[bold bright_blue]{project.name}[/bold bright_blue]")
+    console.print(f"[dim]{project.url}[/dim]\n")
 
     # Status section
-    state = project.get("state", "unknown")
-    progress = project.get("progress", 0.0)
-    console.print(f"[bold]State:[/bold] [green]{state.title()}[/green]")
-    console.print(f"[bold]Progress:[/bold] [yellow]{progress * 100:.0f}%[/yellow]")
+    console.print(f"[bold]State:[/bold] [green]{project.state.title()}[/green]")
+    console.print(
+        f"[bold]Progress:[/bold] [yellow]{project.format_progress()}[/yellow]"
+    )
 
     # People
-    lead = project.get("lead")
-    if lead:
+    if project.lead:
         console.print(
-            f"[bold]Lead:[/bold] [magenta]{lead.get('name')}[/magenta] ({lead.get('email')})"
+            f"[bold]Lead:[/bold] [magenta]{project.lead.name}[/magenta] ({project.lead.email})"
         )
     else:
         console.print("[bold]Lead:[/bold] No lead assigned")
 
-    creator = project.get("creator")
-    if creator:
+    if project.creator:
         console.print(
-            f"[bold]Creator:[/bold] {creator.get('name')} ({creator.get('email')})"
+            f"[bold]Creator:[/bold] {project.creator.name} ({project.creator.email})"
         )
 
     # Teams
-    teams_data = project.get("teams", {}).get("nodes", [])
-    if teams_data:
-        team_names = [f"{team.get('name')} ({team.get('key')})" for team in teams_data]
+    if project.teams:
+        team_names = [f"{team.name} ({team.key})" for team in project.teams]
         console.print(f"[bold]Teams:[/bold] {', '.join(team_names)}")
 
-    # Members
-    members_data = project.get("members", {}).get("nodes", [])
-    if members_data:
-        member_names = [member.get("name", "Unknown") for member in members_data[:10]]
-        member_str = ", ".join(member_names)
-        if len(members_data) > 10:
-            member_str += f" and {len(members_data) - 10} more"
-        console.print(f"[bold]Members:[/bold] {member_str}")
-
     # Dates
-    console.print(f"\n[bold]Created:[/bold] {project.get('createdAt', 'Unknown')[:10]}")
-    console.print(f"[bold]Updated:[/bold] {project.get('updatedAt', 'Unknown')[:10]}")
+    console.print(f"\n[bold]Created:[/bold] {project.format_date(project.created_at)}")
+    console.print(f"[bold]Updated:[/bold] {project.format_updated_date()}")
 
-    if project.get("startDate"):
-        console.print(f"[bold]Start Date:[/bold] {project.get('startDate')[:10]}")
+    if project.start_date:
+        console.print(f"[bold]Start Date:[/bold] {project.format_start_date()}")
 
-    if project.get("targetDate"):
-        console.print(f"[bold]Target Date:[/bold] {project.get('targetDate')[:10]}")
+    if project.target_date:
+        console.print(f"[bold]Target Date:[/bold] {project.format_target_date()}")
 
-    if project.get("completedAt"):
-        console.print(f"[bold]Completed:[/bold] {project.get('completedAt')[:10]}")
+    if project.completed_at:
+        console.print(
+            f"[bold]Completed:[/bold] {project.format_date(project.completed_at)}"
+        )
 
-    if project.get("canceledAt"):
-        console.print(f"[bold]Canceled:[/bold] {project.get('canceledAt')[:10]}")
+    if project.canceled_at:
+        console.print(
+            f"[bold]Canceled:[/bold] {project.format_date(project.canceled_at)}"
+        )
 
     # Description
-    description = project.get("description")
-    if description:
+    if project.description:
         console.print("\n[bold]Description:[/bold]")
-        console.print(description)
-
-    # Issues
-    issues_data = project.get("issues", {}).get("nodes", [])
-    if issues_data:
-        console.print(f"\n[bold]Issues ({len(issues_data)}):[/bold]")
-
-        # Group by state type
-        backlog = [
-            i for i in issues_data if i.get("state", {}).get("type") == "backlog"
-        ]
-        started = [
-            i for i in issues_data if i.get("state", {}).get("type") == "started"
-        ]
-        completed = [
-            i for i in issues_data if i.get("state", {}).get("type") == "completed"
-        ]
-        canceled = [
-            i for i in issues_data if i.get("state", {}).get("type") == "canceled"
-        ]
-
-        if backlog:
-            console.print(f"\n  [dim]Backlog ({len(backlog)}):[/dim]")
-            for issue in backlog[:5]:
-                assignee_data = issue.get("assignee")
-                assignee = (
-                    assignee_data.get("name", "Unassigned")
-                    if assignee_data
-                    else "Unassigned"
-                )
-                console.print(
-                    f"    • {issue.get('identifier')} - {issue.get('title', 'Untitled')[:50]} ({assignee})"
-                )
-
-        if started:
-            console.print(f"\n  [green]In Progress ({len(started)}):[/green]")
-            for issue in started[:5]:
-                assignee_data = issue.get("assignee")
-                assignee = (
-                    assignee_data.get("name", "Unassigned")
-                    if assignee_data
-                    else "Unassigned"
-                )
-                console.print(
-                    f"    • {issue.get('identifier')} - {issue.get('title', 'Untitled')[:50]} ({assignee})"
-                )
-
-        if completed:
-            console.print(f"\n  [blue]Completed ({len(completed)}):[/blue]")
-            for issue in completed[:3]:
-                assignee_data = issue.get("assignee")
-                assignee = (
-                    assignee_data.get("name", "Unassigned")
-                    if assignee_data
-                    else "Unassigned"
-                )
-                console.print(
-                    f"    • {issue.get('identifier')} - {issue.get('title', 'Untitled')[:50]} ({assignee})"
-                )
-
-        if canceled:
-            console.print(f"\n  [dim]Canceled ({len(canceled)}):[/dim]")
+        console.print(project.description)
 
 
-def format_project_json(project_data: dict) -> None:
+def format_project_json(project: Project) -> None:
     """Format a single project as JSON.
 
     Args:
-        project_data: Project data from API response
+        project: Project Pydantic model
     """
-    print(json.dumps(project_data, indent=2))
+    project_dict = project.model_dump(mode="json", by_alias=True)
+    print(json.dumps(project_dict, indent=2, default=str))
 
 
 def format_teams_table(teams: list[Team]) -> None:
@@ -490,9 +373,9 @@ def format_teams_table(teams: list[Team]) -> None:
         table.add_row(
             team.key,
             name,
-            str(team.members_count),
-            str(team.issues_count),
-            str(team.projects_count),
+            "0",  # members_count not in model
+            "0",  # issues_count not in model
+            "0",  # projects_count not in model
             cycles_status,
             team.format_updated_date(),
         )
@@ -509,300 +392,166 @@ def format_teams_json(teams: list[Team]) -> None:
     """
     teams_data = []
     for team in teams:
-        teams_data.append(
-            {
-                "id": team.id,
-                "name": team.name,
-                "key": team.key,
-                "description": team.description,
-                "color": team.color,
-                "icon": team.icon,
-                "private": team.private,
-                "archived": team.archived,
-                "createdAt": team.created_at,
-                "updatedAt": team.updated_at,
-                "membersCount": team.members_count,
-                "issuesCount": team.issues_count,
-                "projectsCount": team.projects_count,
-                "cyclesEnabled": team.cycles_enabled,
-            }
-        )
+        # Use model_dump with by_alias=True to get camelCase field names
+        team_dict = team.model_dump(mode="json", by_alias=True)
+        teams_data.append(team_dict)
 
-    print(json.dumps({"teams": teams_data, "count": len(teams)}, indent=2))
+    print(json.dumps({"teams": teams_data, "count": len(teams)}, indent=2, default=str))
 
 
-def format_team_detail(team_data: dict) -> None:
+def format_team_detail(team: Team) -> None:
     """Format a single team with full details.
 
     Args:
-        team_data: Team data from API response
+        team: Team Pydantic model
     """
     console = Console()
-    team = team_data.get("team", {})
-
-    if not team:
-        console.print("[yellow]Team not found.[/yellow]")
-        return
 
     # Header
-    console.print(
-        f"\n[bold bright_blue]{team.get('name', 'Untitled Team')} ({team.get('key', '')})[/bold bright_blue]"
-    )
+    console.print(f"\n[bold bright_blue]{team.name} ({team.key})[/bold bright_blue]")
 
     # Organization
-    org = team.get("organization", {})
-    if org:
-        console.print(f"[dim]Organization: {org.get('name', '')}[/dim]\n")
+    if team.organization:
+        console.print(f"[dim]Organization: {team.organization.name}[/dim]\n")
 
     # Basic info
-    console.print(f"[bold]Team Key:[/bold] {team.get('key', '')}")
+    console.print(f"[bold]Team Key:[/bold] {team.key}")
+    console.print(f"[bold]Private:[/bold] {'Yes' if team.private else 'No'}")
     console.print(
-        f"[bold]Private:[/bold] {'Yes' if team.get('private', False) else 'No'}"
-    )
-    console.print(
-        f"[bold]Cycles Enabled:[/bold] {'Yes' if team.get('cyclesEnabled', False) else 'No'}"
+        f"[bold]Cycles Enabled:[/bold] {'Yes' if team.cycles_enabled else 'No'}"
     )
 
-    timezone = team.get("timezone")
-    if timezone:
-        console.print(f"[bold]Timezone:[/bold] {timezone}")
+    if team.timezone:
+        console.print(f"[bold]Timezone:[/bold] {team.timezone}")
 
     # Dates
-    console.print(f"\n[bold]Created:[/bold] {team.get('createdAt', 'Unknown')[:10]}")
-    console.print(f"[bold]Updated:[/bold] {team.get('updatedAt', 'Unknown')[:10]}")
+    created_date = (
+        team.created_at.strftime("%Y-%m-%d") if team.created_at else "Unknown"
+    )
+    console.print(f"\n[bold]Created:[/bold] {created_date}")
+    console.print(f"[bold]Updated:[/bold] {team.format_updated_date()}")
 
-    if team.get("archivedAt"):
-        console.print(f"[bold]Archived:[/bold] {team.get('archivedAt')[:10]}")
+    if team.archived_at:
+        console.print(f"[bold]Archived:[/bold] {team.archived_at.strftime('%Y-%m-%d')}")
 
     # Description
-    description = team.get("description")
-    if description:
+    if team.description:
         console.print("\n[bold]Description:[/bold]")
-        console.print(description)
-
-    # Members
-    members_data = team.get("members", {}).get("nodes", [])
-    if members_data:
-        console.print(f"\n[bold]Members ({len(members_data)}):[/bold]")
-        for member in members_data[:10]:
-            name = member.get("displayName") or member.get("name", "Unknown")
-            email = member.get("email", "")
-            active_status = (
-                "" if member.get("active", True) else " [dim](inactive)[/dim]"
-            )
-            admin_status = (
-                " [yellow](admin)[/yellow]" if member.get("admin", False) else ""
-            )
-            console.print(f"  • {name} ({email}){admin_status}{active_status}")
-        if len(members_data) > 10:
-            console.print(f"  [dim]... and {len(members_data) - 10} more[/dim]")
-
-    # Active Issues
-    issues_data = team.get("issues", {}).get("nodes", [])
-    if issues_data:
-        console.print(f"\n[bold]Active Issues ({len(issues_data)}):[/bold]")
-        for issue in issues_data[:10]:
-            state_name = issue.get("state", {}).get("name", "Unknown")
-            title = issue.get("title", "Untitled")[:50]
-            assignee_data = issue.get("assignee")
-            assignee = (
-                assignee_data.get("name", "Unassigned")
-                if assignee_data
-                else "Unassigned"
-            )
-            priority = issue.get("priorityLabel", "No priority")
-            console.print(f"  • {issue.get('identifier')} - {title}")
-            console.print(f"    [dim]{state_name} | {priority} | {assignee}[/dim]")
-        if len(issues_data) > 10:
-            console.print(f"  [dim]... and {len(issues_data) - 10} more[/dim]")
-
-    # Projects
-    projects_data = team.get("projects", {}).get("nodes", [])
-    if projects_data:
-        console.print(f"\n[bold]Projects ({len(projects_data)}):[/bold]")
-        for project in projects_data:
-            name = project.get("name", "Untitled")
-            state = project.get("state", "unknown").title()
-            progress = project.get("progress", 0.0) * 100
-            lead_data = project.get("lead")
-            lead = lead_data.get("name", "No lead") if lead_data else "No lead"
-            console.print(f"  • {name} - {state} ({progress:.0f}%) - Lead: {lead}")
-
-    # Workflow States
-    states_data = team.get("states", {}).get("nodes", [])
-    if states_data:
-        console.print(f"\n[bold]Workflow States ({len(states_data)}):[/bold]")
-        # Group by type
-        backlog = [s for s in states_data if s.get("type") == "backlog"]
-        unstarted = [s for s in states_data if s.get("type") == "unstarted"]
-        started = [s for s in states_data if s.get("type") == "started"]
-        completed = [s for s in states_data if s.get("type") == "completed"]
-        canceled = [s for s in states_data if s.get("type") == "canceled"]
-
-        if backlog:
-            state_names = [s.get("name", "") for s in backlog]
-            console.print(f"  [dim]Backlog:[/dim] {', '.join(state_names)}")
-        if unstarted:
-            state_names = [s.get("name", "") for s in unstarted]
-            console.print(f"  [yellow]Unstarted:[/yellow] {', '.join(state_names)}")
-        if started:
-            state_names = [s.get("name", "") for s in started]
-            console.print(f"  [green]Started:[/green] {', '.join(state_names)}")
-        if completed:
-            state_names = [s.get("name", "") for s in completed]
-            console.print(f"  [blue]Completed:[/blue] {', '.join(state_names)}")
-        if canceled:
-            state_names = [s.get("name", "") for s in canceled]
-            console.print(f"  [dim]Canceled:[/dim] {', '.join(state_names)}")
-
-    # Labels
-    labels_data = team.get("labels", {}).get("nodes", [])
-    if labels_data:
-        label_names = [label.get("name", "") for label in labels_data[:20]]
-        label_str = ", ".join(label_names)
-        if len(labels_data) > 20:
-            label_str += f" and {len(labels_data) - 20} more"
-        console.print(f"\n[bold]Labels ({len(labels_data)}):[/bold] {label_str}")
+        console.print(team.description)
 
 
-def format_team_json(team_data: dict) -> None:
+def format_team_json(team: Team) -> None:
     """Format a single team as JSON.
 
     Args:
-        team_data: Team data from API response
+        team: Team Pydantic model
     """
-    print(json.dumps(team_data, indent=2))
+    team_dict = team.model_dump(mode="json", by_alias=True)
+    print(json.dumps(team_dict, indent=2, default=str))
 
 
-def format_issue_detail(issue_data: dict) -> None:
+def format_issue_detail(issue: Issue) -> None:
     """Format a single issue with full details.
 
     Args:
-        issue_data: Issue data from API response
+        issue: Issue Pydantic model
     """
     console = Console()
-    issue = issue_data.get("issue", {})
-
-    if not issue:
-        console.print("[yellow]Issue not found.[/yellow]")
-        return
 
     # Header
     console.print(
-        f"\n[bold bright_blue]{issue.get('identifier', 'N/A')}[/bold bright_blue]: {escape(issue.get('title', 'Untitled'))}"
+        f"\n[bold bright_blue]{issue.identifier}[/bold bright_blue]: {escape(issue.title)}"
     )
-    console.print(f"[dim]{issue.get('url', '')}[/dim]\n")
+    console.print(f"[dim]{issue.url}[/dim]\n")
 
     # Status section
-    state = issue.get("state", {})
-    console.print(f"[bold]Status:[/bold] [green]{state.get('name', 'Unknown')}[/green]")
-    console.print(
-        f"[bold]Priority:[/bold] [yellow]{issue.get('priorityLabel', 'No priority')}[/yellow]"
-    )
+    console.print(f"[bold]Status:[/bold] [green]{issue.state.name}[/green]")
+    console.print(f"[bold]Priority:[/bold] [yellow]{issue.priority_label}[/yellow]")
 
     # People
-    assignee = issue.get("assignee")
-    if assignee:
+    if issue.assignee:
         console.print(
-            f"[bold]Assignee:[/bold] [magenta]{assignee.get('name')}[/magenta] ({assignee.get('email')})"
+            f"[bold]Assignee:[/bold] [magenta]{issue.assignee.name}[/magenta] ({issue.assignee.email})"
         )
     else:
         console.print("[bold]Assignee:[/bold] Unassigned")
 
-    creator = issue.get("creator")
-    if creator:
+    if issue.creator:
         console.print(
-            f"[bold]Creator:[/bold] {creator.get('name')} ({creator.get('email')})"
+            f"[bold]Creator:[/bold] {issue.creator.name} ({issue.creator.email})"
         )
 
     # Project & Team
-    project = issue.get("project")
-    if project:
-        console.print(f"[bold]Project:[/bold] {project.get('name')}")
+    if issue.project:
+        console.print(f"[bold]Project:[/bold] {issue.project.name}")
 
-    team = issue.get("team", {})
-    console.print(f"[bold]Team:[/bold] {team.get('name')} ({team.get('key')})")
+    console.print(f"[bold]Team:[/bold] {issue.team.name} ({issue.team.key})")
 
     # Cycle
-    cycle = issue.get("cycle")
-    if cycle:
-        console.print(
-            f"[bold]Cycle:[/bold] {cycle.get('name')} (#{cycle.get('number')})"
-        )
+    if issue.cycle:
+        console.print(f"[bold]Cycle:[/bold] {issue.cycle.name} (#{issue.cycle.number})")
 
     # Dates
-    console.print(f"\n[bold]Created:[/bold] {issue.get('createdAt', 'Unknown')[:10]}")
-    console.print(f"[bold]Updated:[/bold] {issue.get('updatedAt', 'Unknown')[:10]}")
+    console.print(f"\n[bold]Created:[/bold] {issue.format_created_date()}")
+    console.print(f"[bold]Updated:[/bold] {issue.format_updated_date()}")
 
-    if issue.get("dueDate"):
-        console.print(f"[bold]Due Date:[/bold] {issue.get('dueDate')[:10]}")
+    if issue.due_date:
+        console.print(f"[bold]Due Date:[/bold] {issue.due_date.strftime('%Y-%m-%d')}")
 
-    if issue.get("completedAt"):
-        console.print(f"[bold]Completed:[/bold] {issue.get('completedAt')[:10]}")
+    if issue.completed_at:
+        console.print(
+            f"[bold]Completed:[/bold] {issue.completed_at.strftime('%Y-%m-%d')}"
+        )
 
     # Estimate
-    if issue.get("estimate"):
-        console.print(f"[bold]Estimate:[/bold] {issue.get('estimate')} points")
+    if issue.estimate:
+        console.print(f"[bold]Estimate:[/bold] {issue.estimate} points")
 
     # Labels
-    labels = issue.get("labels", {}).get("nodes", [])
-    if labels:
-        label_names = [label.get("name") for label in labels]
+    if issue.labels:
+        label_names = [label.name for label in issue.labels]
         console.print(f"[bold]Labels:[/bold] {', '.join(label_names)}")
 
     # Parent issue
-    parent = issue.get("parent")
-    if parent:
+    if issue.parent:
         console.print(
-            f"[bold]Parent:[/bold] {parent.get('identifier')} - {parent.get('title')}"
+            f"[bold]Parent:[/bold] {issue.parent.identifier} - {issue.parent.title}"
         )
 
     # Description
-    description = issue.get("description")
-    if description:
+    if issue.description:
         console.print("\n[bold]Description:[/bold]")
-        console.print(description)
+        console.print(issue.description)
 
     # Comments
-    comments_data = issue.get("comments") or {}
-    comments = comments_data.get("nodes", [])
-    if comments:
-        console.print(f"\n[bold]Comments ({len(comments)}):[/bold]")
-        for comment in comments[:5]:  # Show first 5 comments
-            if comment:
-                user = comment.get("user") or {}
-                created = comment.get("createdAt", "")[:10]
-                console.print(
-                    f"\n[cyan]{user.get('name', 'Unknown')}[/cyan] on {created}:"
-                )
-                console.print(comment.get("body", "")[:200])  # Truncate long comments
+    if issue.comments:
+        console.print(f"\n[bold]Comments ({len(issue.comments)}):[/bold]")
+        for comment in issue.comments[:5]:  # Show first 5 comments
+            console.print(
+                f"\n[cyan]{comment.user.name}[/cyan] on {comment.created_at.strftime('%Y-%m-%d')}:"
+            )
+            console.print(comment.body[:200])  # Truncate long comments
 
     # Attachments
-    attachments_data = issue.get("attachments") or {}
-    attachments = attachments_data.get("nodes", [])
-    if attachments:
-        console.print(f"\n[bold]Attachments ({len(attachments)}):[/bold]")
-        for attachment in attachments:
-            if attachment:
-                console.print(
-                    f"  • {attachment.get('title')} - {attachment.get('url')}"
-                )
+    if issue.attachments:
+        console.print(f"\n[bold]Attachments ({len(issue.attachments)}):[/bold]")
+        for attachment in issue.attachments:
+            console.print(f"  • {attachment.title} - {attachment.url}")
 
     # Subscribers
-    subscribers_data = issue.get("subscribers") or {}
-    subscribers = subscribers_data.get("nodes", [])
-    if subscribers:
-        sub_names = [sub.get("name", "Unknown") for sub in subscribers if sub]
+    if issue.subscribers:
+        sub_names = [sub.name for sub in issue.subscribers]
         console.print(f"\n[bold]Subscribers:[/bold] {', '.join(sub_names)}")
 
 
-def format_issue_json(issue_data: dict) -> None:
+def format_issue_json(issue: Issue) -> None:
     """Format a single issue as JSON.
 
     Args:
-        issue_data: Issue data from API response
+        issue: Issue Pydantic model
     """
-    print(json.dumps(issue_data, indent=2))
+    issue_dict = issue.model_dump(mode="json", by_alias=True)
+    print(json.dumps(issue_dict, indent=2, default=str))
 
 
 def format_cycles_table(cycles: list[Cycle]) -> None:
@@ -850,12 +599,12 @@ def format_cycles_table(cycles: list[Cycle]) -> None:
             status = "Unknown"
 
         table.add_row(
-            cycle.team_key,
+            cycle.team.key,
             name,
             f"#{cycle.number}",
             status,
             cycle.format_progress(),
-            str(cycle.issues_count),
+            "0",  # issues_count not in model
             cycle.format_starts_at(),
             cycle.format_ends_at(),
         )
@@ -872,63 +621,36 @@ def format_cycles_json(cycles: list[Cycle]) -> None:
     """
     cycles_data = []
     for cycle in cycles:
-        cycles_data.append(
-            {
-                "id": cycle.id,
-                "number": cycle.number,
-                "name": cycle.name,
-                "description": cycle.description,
-                "startsAt": cycle.starts_at,
-                "endsAt": cycle.ends_at,
-                "completedAt": cycle.completed_at,
-                "archivedAt": cycle.archived_at,
-                "createdAt": cycle.created_at,
-                "updatedAt": cycle.updated_at,
-                "isActive": cycle.is_active,
-                "isFuture": cycle.is_future,
-                "isPast": cycle.is_past,
-                "isNext": cycle.is_next,
-                "isPrevious": cycle.is_previous,
-                "progress": cycle.progress,
-                "team": {
-                    "id": cycle.team_id,
-                    "name": cycle.team_name,
-                    "key": cycle.team_key,
-                },
-                "issuesCount": cycle.issues_count,
-            }
-        )
+        # Use model_dump with by_alias=True to get camelCase field names
+        cycle_dict = cycle.model_dump(mode="json", by_alias=True)
+        cycles_data.append(cycle_dict)
 
-    print(json.dumps({"cycles": cycles_data, "count": len(cycles)}, indent=2))
+    print(
+        json.dumps({"cycles": cycles_data, "count": len(cycles)}, indent=2, default=str)
+    )
 
 
-def format_cycle_detail(cycle_data: dict) -> None:
+def format_cycle_detail(cycle: Cycle) -> None:
     """Format a single cycle with full details.
 
     Args:
-        cycle_data: Cycle data from API response
+        cycle: Cycle Pydantic model
     """
     console = Console()
-    cycle = cycle_data.get("cycle", {})
-
-    if not cycle:
-        console.print("[yellow]Cycle not found.[/yellow]")
-        return
 
     # Header
-    team = cycle.get("team", {})
     console.print(
-        f"\n[bold bright_blue]{cycle.get('name', 'Untitled Cycle')}[/bold bright_blue] "
-        f"[dim](Cycle #{cycle.get('number', '?')})[/dim]"
+        f"\n[bold bright_blue]{cycle.name}[/bold bright_blue] "
+        f"[dim](Cycle #{cycle.number})[/dim]"
     )
-    console.print(f"[dim]Team: {team.get('name', '')} ({team.get('key', '')})[/dim]\n")
+    console.print(f"[dim]Team: {cycle.team.name} ({cycle.team.key})[/dim]\n")
 
     # Status section with visual indicator
-    if cycle.get("isActive"):
+    if cycle.is_active:
         status_display = "[green]🟢 Active[/green]"
-    elif cycle.get("isFuture"):
+    elif cycle.is_future:
         status_display = "[blue]🔵 Future[/blue]"
-    elif cycle.get("isPast"):
+    elif cycle.is_past:
         status_display = "[dim]⚪ Past[/dim]"
     else:
         status_display = "Unknown"
@@ -936,152 +658,62 @@ def format_cycle_detail(cycle_data: dict) -> None:
     console.print(f"[bold]Status:[/bold] {status_display}")
 
     # Progress bar visualization
-    progress = cycle.get("progress", 0.0)
-    progress_pct = progress * 100
+    progress_pct = cycle.progress * 100
     bar_width = 30
-    filled = int(bar_width * progress)
+    filled = int(bar_width * cycle.progress)
     bar = "█" * filled + "░" * (bar_width - filled)
     console.print(f"[bold]Progress:[/bold] [yellow]{bar}[/yellow] {progress_pct:.1f}%")
 
     # Dates section
-    starts_at = cycle.get("startsAt", "")[:10] if cycle.get("startsAt") else "Not set"
-    ends_at = cycle.get("endsAt", "")[:10] if cycle.get("endsAt") else "Not set"
-    console.print(f"\n[bold]Start Date:[/bold] {starts_at}")
-    console.print(f"[bold]End Date:[/bold] {ends_at}")
+    console.print(f"\n[bold]Start Date:[/bold] {cycle.format_starts_at()}")
+    console.print(f"[bold]End Date:[/bold] {cycle.format_ends_at()}")
 
-    if cycle.get("completedAt"):
-        console.print(f"[bold]Completed:[/bold] {cycle.get('completedAt')[:10]}")
+    if cycle.completed_at:
+        console.print(
+            f"[bold]Completed:[/bold] {cycle.format_date(cycle.completed_at)}"
+        )
 
     # Metadata
-    console.print(f"\n[bold]Created:[/bold] {cycle.get('createdAt', 'Unknown')[:10]}")
-    console.print(f"[bold]Updated:[/bold] {cycle.get('updatedAt', 'Unknown')[:10]}")
+    console.print(f"\n[bold]Created:[/bold] {cycle.format_date(cycle.created_at)}")
+    console.print(f"[bold]Updated:[/bold] {cycle.format_date(cycle.updated_at)}")
 
-    if cycle.get("archivedAt"):
-        console.print(f"[bold]Archived:[/bold] {cycle.get('archivedAt')[:10]}")
+    if cycle.archived_at:
+        console.print(f"[bold]Archived:[/bold] {cycle.format_date(cycle.archived_at)}")
 
     # Special flags
     flags = []
-    if cycle.get("isNext"):
+    if cycle.is_next:
         flags.append("Next Cycle")
-    if cycle.get("isPrevious"):
+    if cycle.is_previous:
         flags.append("Previous Cycle")
     if flags:
         console.print(f"[bold]Tags:[/bold] {', '.join(flags)}")
 
     # Description
-    description = cycle.get("description")
-    if description:
+    if cycle.description:
         console.print("\n[bold]Description:[/bold]")
-        console.print(description)
-
-    # Issues breakdown
-    issues_data = cycle.get("issues", {}).get("nodes", [])
-    if issues_data:
-        console.print(f"\n[bold]Issues ({len(issues_data)}):[/bold]")
-
-        # Group by state type
-        backlog = [
-            i for i in issues_data if i.get("state", {}).get("type") == "backlog"
-        ]
-        unstarted = [
-            i for i in issues_data if i.get("state", {}).get("type") == "unstarted"
-        ]
-        started = [
-            i for i in issues_data if i.get("state", {}).get("type") == "started"
-        ]
-        completed = [
-            i for i in issues_data if i.get("state", {}).get("type") == "completed"
-        ]
-        canceled = [
-            i for i in issues_data if i.get("state", {}).get("type") == "canceled"
-        ]
-
-        # Calculate total estimate
-        total_estimate = sum(issue.get("estimate", 0) or 0 for issue in issues_data)
-        completed_estimate = sum(issue.get("estimate", 0) or 0 for issue in completed)
-
-        console.print(
-            f"\n  [dim]Total Estimate:[/dim] {completed_estimate}/{total_estimate} points completed"
-        )
-
-        if unstarted:
-            console.print(f"\n  [yellow]Unstarted ({len(unstarted)}):[/yellow]")
-            for issue in unstarted[:5]:
-                assignee_data = issue.get("assignee")
-                assignee = (
-                    assignee_data.get("name", "Unassigned")
-                    if assignee_data
-                    else "Unassigned"
-                )
-                priority = issue.get("priorityLabel", "No priority")
-                estimate = issue.get("estimate", 0) or 0
-                console.print(
-                    f"    • {issue.get('identifier')} - {issue.get('title', 'Untitled')[:50]} "
-                    f"({assignee}, {priority}, {estimate}pts)"
-                )
-            if len(unstarted) > 5:
-                console.print(f"    [dim]... and {len(unstarted) - 5} more[/dim]")
-
-        if started:
-            console.print(f"\n  [green]In Progress ({len(started)}):[/green]")
-            for issue in started[:5]:
-                assignee_data = issue.get("assignee")
-                assignee = (
-                    assignee_data.get("name", "Unassigned")
-                    if assignee_data
-                    else "Unassigned"
-                )
-                priority = issue.get("priorityLabel", "No priority")
-                estimate = issue.get("estimate", 0) or 0
-                console.print(
-                    f"    • {issue.get('identifier')} - {issue.get('title', 'Untitled')[:50]} "
-                    f"({assignee}, {priority}, {estimate}pts)"
-                )
-            if len(started) > 5:
-                console.print(f"    [dim]... and {len(started) - 5} more[/dim]")
-
-        if completed:
-            console.print(f"\n  [blue]Completed ({len(completed)}):[/blue]")
-            for issue in completed[:3]:
-                assignee_data = issue.get("assignee")
-                assignee = (
-                    assignee_data.get("name", "Unassigned")
-                    if assignee_data
-                    else "Unassigned"
-                )
-                estimate = issue.get("estimate", 0) or 0
-                console.print(
-                    f"    • {issue.get('identifier')} - {issue.get('title', 'Untitled')[:50]} "
-                    f"({assignee}, {estimate}pts)"
-                )
-            if len(completed) > 3:
-                console.print(f"    [dim]... and {len(completed) - 3} more[/dim]")
-
-        if backlog:
-            console.print(f"\n  [dim]Backlog ({len(backlog)})[/dim]")
-
-        if canceled:
-            console.print(f"\n  [dim]Canceled ({len(canceled)})[/dim]")
+        console.print(cycle.description)
 
     # Scope history (if available)
-    scope_history = cycle.get("scopeHistory")
-    if scope_history:
-        console.print(f"\n[bold]Scope History:[/bold] {len(scope_history)} data points")
-
-    issue_count_history = cycle.get("issueCountHistory")
-    if issue_count_history:
+    if cycle.scope_history:
         console.print(
-            f"[bold]Issue Count History:[/bold] {len(issue_count_history)} data points"
+            f"\n[bold]Scope History:[/bold] {len(cycle.scope_history)} data points"
+        )
+
+    if cycle.issue_count_history:
+        console.print(
+            f"[bold]Issue Count History:[/bold] {len(cycle.issue_count_history)} data points"
         )
 
 
-def format_cycle_json(cycle_data: dict) -> None:
+def format_cycle_json(cycle: Cycle) -> None:
     """Format a single cycle as JSON.
 
     Args:
-        cycle_data: Cycle data from API response
+        cycle: Cycle Pydantic model
     """
-    print(json.dumps(cycle_data, indent=2))
+    cycle_dict = cycle.model_dump(mode="json", by_alias=True)
+    print(json.dumps(cycle_dict, indent=2, default=str))
 
 
 def format_users_table(users: list[User]) -> None:
@@ -1149,131 +781,79 @@ def format_users_json(users: list[User]) -> None:
     """
     users_data = []
     for user in users:
-        users_data.append(
-            {
-                "id": user.id,
-                "name": user.name,
-                "displayName": user.display_name,
-                "email": user.email,
-                "active": user.active,
-                "admin": user.admin,
-                "createdAt": user.created_at,
-                "updatedAt": user.updated_at,
-                "avatarUrl": user.avatar_url,
-                "timezone": user.timezone,
-                "organizationId": user.organization_id,
-            }
-        )
+        # Use model_dump with by_alias=True to get camelCase field names
+        user_dict = user.model_dump(mode="json", by_alias=True)
+        users_data.append(user_dict)
 
-    print(json.dumps({"users": users_data, "count": len(users)}, indent=2))
+    print(json.dumps({"users": users_data, "count": len(users)}, indent=2, default=str))
 
 
-def format_user_detail(user_data: dict) -> None:
+def format_user_detail(user: User) -> None:
     """Format a single user with full details.
 
     Args:
-        user_data: User data from API response
+        user: User Pydantic model
     """
     console = Console()
-    user = user_data.get("user", {})
-
-    if not user:
-        console.print("[yellow]User not found.[/yellow]")
-        return
 
     # Header
-    display_name = user.get("displayName") or user.get("name", "Unknown")
-    console.print(f"\n[bold bright_blue]{display_name}[/bold bright_blue]")
-    console.print(f"[dim]{user.get('email', '')}[/dim]\n")
+    console.print(f"\n[bold bright_blue]{user.display_name}[/bold bright_blue]")
+    console.print(f"[dim]{user.email}[/dim]\n")
 
     # Status and role
-    is_active = user.get("active", True)
-    is_admin = user.get("admin", False)
-
-    if is_active:
+    if user.active:
         status_display = "[green]✓ Active[/green]"
     else:
         status_display = "[dim]✗ Inactive[/dim]"
 
-    role_display = "[yellow]Admin[/yellow]" if is_admin else "Member"
+    role_display = "[yellow]Admin[/yellow]" if user.admin else "Member"
 
     console.print(f"[bold]Status:[/bold] {status_display}")
     console.print(f"[bold]Role:[/bold] {role_display}")
 
     # Organization
-    org = user.get("organization", {})
-    if org:
-        console.print(f"[bold]Organization:[/bold] {org.get('name', 'Unknown')}")
+    if user.organization:
+        console.print(f"[bold]Organization:[/bold] {user.organization.name}")
 
     # Timezone
-    timezone = user.get("timezone")
-    if timezone:
-        console.print(f"[bold]Timezone:[/bold] {timezone}")
+    if user.timezone:
+        console.print(f"[bold]Timezone:[/bold] {user.timezone}")
 
     # Status message
-    status_label = user.get("statusLabel")
-    status_emoji = user.get("statusEmoji")
-    if status_label:
-        status_msg = f"{status_emoji} {status_label}" if status_emoji else status_label
+    if user.status_label:
+        status_msg = (
+            f"{user.status_emoji} {user.status_label}"
+            if user.status_emoji
+            else user.status_label
+        )
         console.print(f"[bold]Status Message:[/bold] {status_msg}")
 
-        status_until = user.get("statusUntilAt")
-        if status_until:
-            console.print(f"[dim]  (until {status_until[:10]})[/dim]")
+        if user.status_until_at:
+            console.print(
+                f"[dim]  (until {user.status_until_at.strftime('%Y-%m-%d')})[/dim]"
+            )
 
     # Description
-    description = user.get("description")
-    if description:
+    if user.description:
         console.print("\n[bold]Bio:[/bold]")
-        console.print(description)
+        console.print(user.description)
 
     # Dates
-    console.print(f"\n[bold]Joined:[/bold] {user.get('createdAt', 'Unknown')[:10]}")
-    console.print(f"[bold]Last Updated:[/bold] {user.get('updatedAt', 'Unknown')[:10]}")
-
-    # Teams
-    teams_data = user.get("teams", {}).get("nodes", [])
-    if teams_data:
-        console.print(f"\n[bold]Teams ({len(teams_data)}):[/bold]")
-        for team in teams_data[:10]:
-            console.print(f"  • {team.get('name', 'Unknown')} ({team.get('key', '')})")
-        if len(teams_data) > 10:
-            console.print(f"  [dim]... and {len(teams_data) - 10} more[/dim]")
-
-    # Assigned issues
-    assigned_issues = user.get("assignedIssues", {}).get("nodes", [])
-    if assigned_issues:
-        console.print(
-            f"\n[bold]Active Assigned Issues ({len(assigned_issues)}):[/bold]"
-        )
-        for issue in assigned_issues[:10]:
-            state = issue.get("state", {})
-            state_name = state.get("name", "Unknown")
-            priority = issue.get("priorityLabel", "No priority")
-            console.print(
-                f"  • {issue.get('identifier')} - {issue.get('title', 'Untitled')[:60]} "
-                f"[{state_name}, {priority}]"
-            )
-        if len(assigned_issues) > 10:
-            console.print(f"  [dim]... and {len(assigned_issues) - 10} more[/dim]")
-
-    # Created issues (recent)
-    created_issues = user.get("createdIssues", {}).get("nodes", [])
-    if created_issues:
-        console.print("\n[bold]Recently Created Issues:[/bold]")
-        for issue in created_issues[:5]:
-            console.print(
-                f"  • {issue.get('identifier')} - {issue.get('title', 'Untitled')[:60]}"
-            )
+    console.print(f"\n[bold]Joined:[/bold] {user.format_created_at()}")
+    updated_date = (
+        user.updated_at.strftime("%Y-%m-%d") if user.updated_at else "Unknown"
+    )
+    console.print(f"[bold]Last Updated:[/bold] {updated_date}")
 
 
-def format_user_json(user_data: dict) -> None:
+def format_user_json(user: User) -> None:
     """Format a single user as JSON.
 
     Args:
-        user_data: User data from API response
+        user: User Pydantic model
     """
-    print(json.dumps(user_data, indent=2))
+    user_dict = user.model_dump(mode="json", by_alias=True)
+    print(json.dumps(user_dict, indent=2, default=str))
 
 
 def format_labels_table(labels: list[Label]) -> None:
@@ -1294,7 +874,6 @@ def format_labels_table(labels: list[Label]) -> None:
     table.add_column("Name", style="cyan", min_width=20)
     table.add_column("Team", style="yellow", min_width=10)
     table.add_column("Color", style="white", min_width=10)
-    table.add_column("Issues", style="blue", min_width=8)
     table.add_column("Description", style="dim", min_width=30)
 
     for label in labels:
@@ -1310,7 +889,6 @@ def format_labels_table(labels: list[Label]) -> None:
             label.name,
             label.format_team(),
             color_display,
-            str(label.issues_count),
             description,
         )
 
@@ -1326,22 +904,11 @@ def format_labels_json(labels: list[Label]) -> None:
     Args:
         labels: List of Label objects
     """
-    labels_data = [
-        {
-            "id": label.id,
-            "name": label.name,
-            "description": label.description,
-            "color": label.color,
-            "team_key": label.team_key,
-            "team_name": label.team_name,
-            "issues_count": label.issues_count,
-            "children_count": label.children_count,
-            "parent_name": label.parent_name,
-            "created_at": label.created_at,
-            "archived_at": label.archived_at,
-        }
-        for label in labels
-    ]
+    labels_data = []
+    for label in labels:
+        # Use model_dump with by_alias=True to get camelCase field names
+        label_dict = label.model_dump(mode="json", by_alias=True)
+        labels_data.append(label_dict)
 
     output = {"labels": labels_data, "count": len(labels)}
-    print(json.dumps(output, indent=2))
+    print(json.dumps(output, indent=2, default=str))

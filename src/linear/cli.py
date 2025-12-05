@@ -41,14 +41,7 @@ from linear.formatters import (
     format_users_json,
     format_users_table,
 )
-from linear.models import (
-    parse_cycles_response,
-    parse_issues_response,
-    parse_labels_response,
-    parse_projects_response,
-    parse_teams_response,
-    parse_users_response,
-)
+from pydantic import ValidationError
 
 
 def version_callback(value: bool) -> None:
@@ -179,7 +172,7 @@ def list_issues(
             assignee = viewer.get("email")
 
         # Fetch issues
-        response = client.list_issues(
+        issues = client.list_issues(
             assignee=assignee,
             project=project,
             status=status,
@@ -190,9 +183,6 @@ def list_issues(
             include_archived=include_archived,
             sort=order_by,
         )
-
-        # Parse response
-        issues = parse_issues_response(response)
 
         # Format output
         if format == "json":
@@ -210,6 +200,9 @@ def list_issues(
 
     except LinearClientError as e:
         typer.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except ValidationError as e:
+        typer.echo(f"Data validation error: {e.errors()[0]['msg']}", err=True)
         sys.exit(1)
     except Exception as e:
         typer.echo(f"Unexpected error: {e}", err=True)
@@ -246,27 +239,25 @@ def view_issue(
         client = LinearClient()
 
         # Fetch issue
-        response = client.get_issue(issue_id)
+        issue = client.get_issue(issue_id)
 
         # Open in browser if requested
         if web:
-            issue_url = response.get("issue", {}).get("url")
-            if issue_url:
-                webbrowser.open(issue_url)
-                console = Console()
-                console.print(f"[green]✓[/green] Opened {issue_id} in browser")
-            else:
-                typer.echo("Error: Issue URL not found", err=True)
-                sys.exit(1)
+            webbrowser.open(str(issue.url))
+            console = Console()
+            console.print(f"[green]✓[/green] Opened {issue_id} in browser")
 
         # Format output (still show details even with --web)
         if format == "json":
-            format_issue_json(response)
+            format_issue_json(issue)
         else:  # detail
-            format_issue_detail(response)
+            format_issue_detail(issue)
 
     except LinearClientError as e:
         typer.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except ValidationError as e:
+        typer.echo(f"Data validation error: {e.errors()[0]['msg']}", err=True)
         sys.exit(1)
     except Exception as e:
         typer.echo(f"Unexpected error: {e}", err=True)
@@ -311,7 +302,7 @@ def search_issues(
         client = LinearClient()
 
         # Search issues
-        response = client.search_issues(
+        issues = client.search_issues(
             query=query,
             limit=limit,
             include_archived=include_archived,
@@ -319,7 +310,6 @@ def search_issues(
         )
 
         # Parse response
-        issues = parse_issues_response(response)
 
         # Format output
         if format == "json":
@@ -337,6 +327,9 @@ def search_issues(
 
     except LinearClientError as e:
         typer.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except ValidationError as e:
+        typer.echo(f"Data validation error: {e.errors()[0]['msg']}", err=True)
         sys.exit(1)
     except Exception as e:
         typer.echo(f"Unexpected error: {e}", err=True)
@@ -462,12 +455,11 @@ def create_issue(
         assignee_email = None
         if assignee:
             # Look up user by email
-            user_response = client.get_user(assignee)
-            user_data = user_response.get("user")
-            if user_data:
-                assignee_id = user_data["id"]
+            try:
+                user = client.get_user(assignee)
+                assignee_id = user.id
                 assignee_email = assignee
-            else:
+            except LinearClientError:
                 console.print(f"[red]Error: User '{assignee}' not found[/red]")
                 raise typer.Exit(1)
         else:
@@ -477,8 +469,8 @@ def create_issue(
             console.print(f"[dim]Assigning to: {viewer_email}[/dim]")
 
         # Handle team: auto-select if 1 team, error if multiple
-        team_id = None
-        team_name = None
+        team_id: str | None = None
+        team_name: str | None = None
         if not team:
             # Use viewer's teams
             teams_data = viewer_teams
@@ -506,12 +498,11 @@ def create_issue(
                 raise typer.Exit(1)
         else:
             # Resolve team key/name to ID
-            team_response = client.get_team(team)
-            team_data = team_response.get("team")
-            if team_data:
-                team_id = team_data["id"]
-                team_name = f"{team_data['key']} - {team_data['name']}"
-            else:
+            try:
+                team_obj = client.get_team(team)
+                team_id = team_obj.id
+                team_name = f"{team_obj.key} - {team_obj.name}"
+            except LinearClientError:
                 console.print(f"[red]Error: Team '{team}' not found[/red]")
                 raise typer.Exit(1)
 
@@ -521,9 +512,8 @@ def create_issue(
 
         label_ids = None
         if labels:
-            labels_response = client.list_labels(team=team_id, limit=250)
-            labels_data = labels_response.get("issueLabels", {}).get("nodes", [])
-            label_map = {label["name"].lower(): label["id"] for label in labels_data}
+            labels_list = client.list_labels(team=team_id, limit=250)
+            label_map = {label.name.lower(): label.id for label in labels_list}
 
             label_ids = []
             for label_name in labels:
@@ -546,11 +536,10 @@ def create_issue(
                 project_id = project
             else:
                 # Look up by name
-                projects_response = client.list_projects(team=team_id, limit=250)
-                projects_data = projects_response.get("projects", {}).get("nodes", [])
-                for p in projects_data:
-                    if p["name"].lower() == project.lower():
-                        project_id = p["id"]
+                projects_list = client.list_projects(team=team_id, limit=250)
+                for p in projects_list:
+                    if p.name.lower() == project.lower():
+                        project_id = p.id
                         break
 
                 if not project_id:
@@ -562,17 +551,13 @@ def create_issue(
         state_id = None
         if state:
             # Get team states
-            team_response = client.get_team(team_id)
-            states_data = (
-                team_response.get("team", {}).get("states", {}).get("nodes", [])
+            # Note: get_team() doesn't return workflow states, so we can't look up by name
+            # The user must provide the state ID or leave it empty
+            typer.echo(
+                "Warning: State lookup by name not supported. Please provide state ID or leave empty.",
+                err=True,
             )
-            for s in states_data:
-                if s["name"].lower() == state.lower():
-                    state_id = s["id"]
-                    break
-
-            if not state_id:
-                typer.echo(f"Warning: State '{state}' not found, skipping", err=True)
+            state_id = None
 
         # Show summary and ask for confirmation
         console.print("\n[bold]Issue Summary:[/bold]")
@@ -618,8 +603,13 @@ def create_issue(
             console.print("[yellow]Issue creation cancelled.[/yellow]")
             sys.exit(0)
 
+        # Ensure team_id is set (should always be set at this point)
+        if not team_id:
+            console.print("[red]Error: Team ID not set[/red]")
+            raise typer.Exit(1)
+
         # Create the issue
-        response = client.create_issue(
+        issue = client.create_issue(
             title=title,
             team_id=team_id,
             description=description,
@@ -632,33 +622,30 @@ def create_issue(
         )
 
         # Format output
-        issue_data = response.get("issueCreate", {}).get("issue", {})
-
         if format == "json":
-            typer.echo(json.dumps(issue_data, indent=2))
+            typer.echo(json.dumps(issue.model_dump(by_alias=True), indent=2))
         else:
             # Detail format - success message with key info
             console.print("\n[green]✓[/green] Issue created successfully!")
-            console.print(f"[bold]Identifier:[/bold] {issue_data.get('identifier')}")
-            console.print(f"[bold]Title:[/bold] {issue_data.get('title')}")
-            console.print(f"[bold]URL:[/bold] {issue_data.get('url')}")
+            console.print(f"[bold]Identifier:[/bold] {issue.identifier}")
+            console.print(f"[bold]Title:[/bold] {issue.title}")
+            console.print(f"[bold]URL:[/bold] {issue.url}")
 
-            assignee_data = issue_data.get("assignee")
-            if assignee_data:
-                console.print(f"[bold]Assignee:[/bold] {assignee_data.get('name')}")
+            if issue.assignee:
+                console.print(f"[bold]Assignee:[/bold] {issue.assignee.name}")
 
-            console.print(f"[bold]Priority:[/bold] {issue_data.get('priorityLabel')}")
-            console.print(
-                f"[bold]State:[/bold] {issue_data.get('state', {}).get('name')}"
-            )
+            console.print(f"[bold]Priority:[/bold] {issue.priority_label}")
+            console.print(f"[bold]State:[/bold] {issue.state.name}")
 
-            labels_data = issue_data.get("labels", {}).get("nodes", [])
-            if labels_data:
-                label_names = ", ".join([label["name"] for label in labels_data])
+            if issue.labels:
+                label_names = ", ".join([label.name for label in issue.labels])
                 console.print(f"[bold]Labels:[/bold] {label_names}")
 
     except LinearClientError as e:
         typer.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except ValidationError as e:
+        typer.echo(f"Data validation error: {e.errors()[0]['msg']}", err=True)
         sys.exit(1)
     except Exception as e:
         typer.echo(f"Unexpected error: {e}", err=True)
@@ -716,7 +703,7 @@ def list_projects(
         client = LinearClient()
 
         # Fetch projects
-        response = client.list_projects(
+        projects = client.list_projects(
             state=state,
             team=team,
             limit=limit,
@@ -725,7 +712,6 @@ def list_projects(
         )
 
         # Parse response
-        projects = parse_projects_response(response)
 
         # Format output
         if format == "json":
@@ -735,6 +721,9 @@ def list_projects(
 
     except LinearClientError as e:
         typer.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except ValidationError as e:
+        typer.echo(f"Data validation error: {e.errors()[0]['msg']}", err=True)
         sys.exit(1)
     except Exception as e:
         typer.echo(f"Unexpected error: {e}", err=True)
@@ -763,16 +752,19 @@ def view_project(
         client = LinearClient()
 
         # Fetch project
-        response = client.get_project(project_id)
+        project = client.get_project(project_id)
 
         # Format output
         if format == "json":
-            format_project_json(response)
+            format_project_json(project)
         else:  # detail
-            format_project_detail(response)
+            format_project_detail(project)
 
     except LinearClientError as e:
         typer.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except ValidationError as e:
+        typer.echo(f"Data validation error: {e.errors()[0]['msg']}", err=True)
         sys.exit(1)
     except Exception as e:
         typer.echo(f"Unexpected error: {e}", err=True)
@@ -809,13 +801,12 @@ def list_teams(
         client = LinearClient()
 
         # Fetch teams
-        response = client.list_teams(
+        teams = client.list_teams(
             limit=limit,
             include_archived=include_archived,
         )
 
         # Parse response
-        teams = parse_teams_response(response)
 
         # Format output
         if format == "json":
@@ -825,6 +816,9 @@ def list_teams(
 
     except LinearClientError as e:
         typer.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except ValidationError as e:
+        typer.echo(f"Data validation error: {e.errors()[0]['msg']}", err=True)
         sys.exit(1)
     except Exception as e:
         typer.echo(f"Unexpected error: {e}", err=True)
@@ -853,16 +847,19 @@ def view_team(
         client = LinearClient()
 
         # Fetch team
-        response = client.get_team(team_id)
+        team = client.get_team(team_id)
 
         # Format output
         if format == "json":
-            format_team_json(response)
+            format_team_json(team)
         else:  # detail
-            format_team_detail(response)
+            format_team_detail(team)
 
     except LinearClientError as e:
         typer.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except ValidationError as e:
+        typer.echo(f"Data validation error: {e.errors()[0]['msg']}", err=True)
         sys.exit(1)
     except Exception as e:
         typer.echo(f"Unexpected error: {e}", err=True)
@@ -915,7 +912,7 @@ def list_cycles(
         client = LinearClient()
 
         # Fetch cycles
-        response = client.list_cycles(
+        cycles = client.list_cycles(
             team=team,
             active=active,
             future=future,
@@ -925,7 +922,6 @@ def list_cycles(
         )
 
         # Parse cycles
-        cycles = parse_cycles_response(response)
 
         # Format output
         if format == "json":
@@ -935,6 +931,9 @@ def list_cycles(
 
     except LinearClientError as e:
         typer.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except ValidationError as e:
+        typer.echo(f"Data validation error: {e.errors()[0]['msg']}", err=True)
         sys.exit(1)
     except Exception as e:
         typer.echo(f"Unexpected error: {e}", err=True)
@@ -963,16 +962,19 @@ def view_cycle(
         client = LinearClient()
 
         # Fetch cycle
-        response = client.get_cycle(cycle_id)
+        cycle = client.get_cycle(cycle_id)
 
         # Format output
         if format == "json":
-            format_cycle_json(response)
+            format_cycle_json(cycle)
         else:  # detail
-            format_cycle_detail(response)
+            format_cycle_detail(cycle)
 
     except LinearClientError as e:
         typer.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except ValidationError as e:
+        typer.echo(f"Data validation error: {e.errors()[0]['msg']}", err=True)
         sys.exit(1)
     except Exception as e:
         typer.echo(f"Unexpected error: {e}", err=True)
@@ -1015,14 +1017,13 @@ def list_users(
         client = LinearClient()
 
         # Fetch users
-        response = client.list_users(
+        users = client.list_users(
             active_only=active_only,
             limit=limit,
             include_disabled=include_disabled,
         )
 
         # Parse users
-        users = parse_users_response(response)
 
         # Format output
         if format == "json":
@@ -1032,6 +1033,9 @@ def list_users(
 
     except LinearClientError as e:
         typer.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except ValidationError as e:
+        typer.echo(f"Data validation error: {e.errors()[0]['msg']}", err=True)
         sys.exit(1)
     except Exception as e:
         typer.echo(f"Unexpected error: {e}", err=True)
@@ -1063,16 +1067,19 @@ def view_user(
         client = LinearClient()
 
         # Fetch user
-        response = client.get_user(user_id)
+        user = client.get_user(user_id)
 
         # Format output
         if format == "json":
-            format_user_json(response)
+            format_user_json(user)
         else:  # detail
-            format_user_detail(response)
+            format_user_detail(user)
 
     except LinearClientError as e:
         typer.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except ValidationError as e:
+        typer.echo(f"Data validation error: {e.errors()[0]['msg']}", err=True)
         sys.exit(1)
     except Exception as e:
         typer.echo(f"Unexpected error: {e}", err=True)
@@ -1111,14 +1118,13 @@ def list_labels(
         client = LinearClient()
 
         # Fetch labels
-        response = client.list_labels(
+        labels = client.list_labels(
             limit=limit,
             team=team,
             include_archived=include_archived,
         )
 
         # Parse response
-        labels = parse_labels_response(response)
 
         # Format output
         if format == "json":
@@ -1128,6 +1134,9 @@ def list_labels(
 
     except LinearClientError as e:
         typer.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except ValidationError as e:
+        typer.echo(f"Data validation error: {e.errors()[0]['msg']}", err=True)
         sys.exit(1)
     except Exception as e:
         typer.echo(f"Unexpected error: {e}", err=True)
