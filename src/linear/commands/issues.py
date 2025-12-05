@@ -12,7 +12,7 @@ from rich.prompt import Confirm
 from pydantic import ValidationError
 
 from linear.api import LinearClient, LinearClientError
-from linear.claude_integration import (
+from linear.ai.claude import (
     extract_with_claude,
     should_use_claude_parsing,
 )
