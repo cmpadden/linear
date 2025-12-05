@@ -8,7 +8,7 @@ from typing import Optional
 import typer
 from typing_extensions import Annotated
 from rich.console import Console
-from rich.prompt import Confirm
+from rich.prompt import Prompt
 from pydantic import ValidationError
 
 from linear.api import LinearClient, LinearClientError
@@ -22,6 +22,7 @@ from linear.formatters import (
     format_json,
     format_table,
 )
+from linear.utils.editor import IssueData, edit_issue_in_editor
 
 app = typer.Typer(help="Manage Linear issues")
 
@@ -489,49 +490,100 @@ def create_issue(
             )
             state_id = None
 
-        # Show summary and ask for confirmation
-        console.print("\n[bold]Issue Summary:[/bold]")
-        console.print(f"  [bold]Title:[/bold] {title}")
+        # Show summary and ask for confirmation (with edit loop)
+        while True:
+            console.print("\n[bold]Issue Summary:[/bold]")
+            console.print(f"  [bold]Title:[/bold] {title}")
 
-        # Always show description (even if empty)
-        if description:
-            # Truncate long descriptions
-            desc_preview = (
-                description[:50] + "..." if len(description) > 50 else description
+            # Always show description (even if empty)
+            if description:
+                # Truncate long descriptions
+                desc_preview = (
+                    description[:50] + "..." if len(description) > 50 else description
+                )
+                console.print(f"  [bold]Description:[/bold] {desc_preview}")
+            else:
+                console.print("  [bold]Description:[/bold] [dim](none)[/dim]")
+
+            console.print(f"  [bold]Assignee:[/bold] {assignee_email}")
+            console.print(f"  [bold]Team:[/bold] {team_name}")
+
+            # Always show priority
+            if priority is not None:
+                priority_labels = {
+                    1: "Urgent",
+                    2: "High",
+                    3: "Medium",
+                    4: "Low",
+                }
+                console.print(
+                    f"  [bold]Priority:[/bold] {priority_labels.get(priority, 'None')}"
+                )
+            else:
+                console.print("  [bold]Priority:[/bold] [dim](none)[/dim]")
+            if labels:
+                console.print(f"  [bold]Labels:[/bold] {', '.join(labels)}")
+            if project:
+                console.print(f"  [bold]Project:[/bold] {project}")
+            if state:
+                console.print(f"  [bold]State:[/bold] {state}")
+            if estimate:
+                console.print(f"  [bold]Estimate:[/bold] {estimate} points")
+
+            # Ask for confirmation with edit option
+            response = Prompt.ask(
+                "\nCreate this issue?",
+                choices=["y", "yes", "n", "no", "e", "edit"],
+                default="y",
+                show_choices=True,
+                case_sensitive=False,
             )
-            console.print(f"  [bold]Description:[/bold] {desc_preview}")
-        else:
-            console.print("  [bold]Description:[/bold] [dim](none)[/dim]")
+            choice = response[0].lower()
 
-        console.print(f"  [bold]Assignee:[/bold] {assignee_email}")
-        console.print(f"  [bold]Team:[/bold] {team_name}")
+            if choice == "n":
+                console.print("[yellow]Issue creation cancelled.[/yellow]")
+                sys.exit(0)
+            elif choice == "y":
+                break  # Proceed to create issue
+            elif choice == "e":
+                # Edit in $EDITOR
+                try:
+                    # Prepare IssueData
+                    issue_data = IssueData(
+                        title=title,
+                        description=description,
+                        priority=priority if priority is not None else 0,
+                        estimate=estimate,
+                        team_name=team_name,
+                        assignee_email=assignee_email,
+                        project_name=project,
+                        labels=labels,
+                        state_name=state,
+                    )
 
-        # Always show priority
-        if priority is not None:
-            priority_labels = {
-                1: "Urgent",
-                2: "High",
-                3: "Medium",
-                4: "Low",
-            }
-            console.print(
-                f"  [bold]Priority:[/bold] {priority_labels.get(priority, 'None')}"
-            )
-        else:
-            console.print("  [bold]Priority:[/bold] [dim](none)[/dim]")
-        if labels:
-            console.print(f"  [bold]Labels:[/bold] {', '.join(labels)}")
-        if project:
-            console.print(f"  [bold]Project:[/bold] {project}")
-        if state:
-            console.print(f"  [bold]State:[/bold] {state}")
-        if estimate:
-            console.print(f"  [bold]Estimate:[/bold] {estimate} points")
+                    # Open editor and get edited data
+                    edited_data = edit_issue_in_editor(issue_data)
 
-        # Ask for confirmation
-        if not Confirm.ask("\nCreate this issue?", default=True):
-            console.print("[yellow]Issue creation cancelled.[/yellow]")
-            sys.exit(0)
+                    # Update variables
+                    title = edited_data.title
+                    description = edited_data.description
+                    priority = edited_data.priority
+                    estimate = edited_data.estimate
+
+                    console.print("[green]Changes saved. Review updated issue:[/green]")
+                    # Loop continues, will show updated summary
+
+                except ValueError as e:
+                    console.print(f"[red]Validation error: {e}[/red]")
+                    console.print("[yellow]Please try again or cancel.[/yellow]")
+                    # Loop continues, user can edit again or cancel
+                except FileNotFoundError as e:
+                    console.print(f"[red]Editor error: {e}[/red]")
+                    sys.exit(1)  # Fatal error
+                except Exception as e:
+                    console.print(f"[red]Unexpected error: {e}[/red]")
+                    console.print("[yellow]Continuing with original values.[/yellow]")
+                    # Loop continues with original values
 
         # Ensure team_id is set (should always be set at this point)
         if not team_id:
