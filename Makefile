@@ -5,30 +5,29 @@ help:
 	@echo ""
 	@echo "Available targets:"
 	@echo "  install       Install dependencies (including dev dependencies)"
-	@echo "  format        Format code with ruff"
-	@echo "  lint          Run ruff linter with auto-fix"
 	@echo "  ty            Run ty type checker"
+	@echo "  ruff          Format code with ruff"
 	@echo "  check         Run all checks (format, lint, ty)"
 	@echo "  build         Build distributions (wheel + sdist)"
 	@echo "  publish       Prepare release and guide GitHub release creation"
 	@echo "  test          Run tests (placeholder)"
 	@echo "  clean         Remove cache and build artifacts"
 	@echo "  pre-commit    Install pre-commit hooks"
-	@echo "  ruff          Alias for format (legacy)"
+	@echo "  release-patch Create patch release (0.0.7 → 0.0.8)"
+	@echo "  release-minor Create minor release (0.0.7 → 0.1.0)"
+	@echo "  release-major Create major release (0.0.7 → 1.0.0)"
 
 install:
 	uv sync --dev
 
-format:
-	uv run ruff format src/
-
-lint:
-	uv run ruff check --fix src/
+ruff:
+	uv run ruff check --fix .
+	uv run ruff format .
 
 ty:
 	uv run ty check
 
-check: format lint ty
+check: ruff ty
 	@echo "✓ All checks passed"
 
 test:
@@ -43,8 +42,6 @@ clean:
 pre-commit:
 	uv run pre-commit install
 	@echo "✓ Pre-commit hooks installed"
-
-ruff: format
 
 build:
 	@echo "Building distributions..."
@@ -85,3 +82,12 @@ publish: check
 	echo ""; \
 	echo "After publishing, view at:"; \
 	echo "  https://pypi.org/project/linear-app/$$VERSION/"
+
+release-patch: check
+	@./scripts/release.sh patch
+
+release-minor: check
+	@./scripts/release.sh minor
+
+release-major: check
+	@./scripts/release.sh major

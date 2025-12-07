@@ -452,24 +452,13 @@ This project uses GitHub Actions for automated PyPI publishing. When you create 
 
 ### Release Process
 
-1. **Update version in pyproject.toml**
-   ```bash
-   vim pyproject.toml  # Change version = "X.Y.Z"
-   ```
+Choose the appropriate semantic version bump:
 
-2. **Commit and push version bump**
-   ```bash
-   git add pyproject.toml
-   git commit -m "Bump version to X.Y.Z"
-   git push origin main
-   ```
-
-3. **Create GitHub release**
-
-   **Option A: Using GitHub CLI (recommended)**
-   ```bash
-   gh release create vX.Y.Z --generate-notes
-   ```
+```bash
+make release-patch  # Bug fixes, minor changes (0.0.7 → 0.0.8)
+make release-minor  # New features, backwards-compatible (0.0.7 → 0.1.0)
+make release-major  # Breaking changes (0.0.7 → 1.0.0)
+```
 
 ### Tag Format
 
