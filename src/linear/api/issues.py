@@ -572,6 +572,7 @@ def create_issue(
           priority
           priorityLabel
           createdAt
+          updatedAt
           state {
             id
             name
@@ -650,6 +651,8 @@ def create_issue(
     try:
         return Issue.model_validate(issue_create["issue"])
     except ValidationError as e:
+        error_details = e.errors()[0]
+        field_path = " -> ".join(str(loc) for loc in error_details["loc"])
         raise LinearClientError(
-            f"Failed to parse created issue: {e.errors()[0]['msg']}"
+            f"Failed to parse created issue: {error_details['msg']} at {field_path}"
         )
