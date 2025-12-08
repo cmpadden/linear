@@ -1153,12 +1153,12 @@ def _update_with_flags(
 
     if response[0].lower() == "n":
         console.print("[yellow]Update cancelled.[/yellow]")
-        raise typer.Exit(0)
+        sys.exit(0)
 
     # Apply update
     try:
         updated_issue = client.update_issue(issue_id=original.id, **api_input)
-        console.print("\n[green]✓[/green] Issue updated successfully!")
+        console.print("\n[green]Issue updated successfully[/green]")
         return updated_issue
     except LinearClientError as e:
         console.print(f"[red]Error: {e}[/red]")
@@ -1211,7 +1211,7 @@ def _update_with_editor(
 
     if not changes:
         console.print("[yellow]No changes detected. Update cancelled.[/yellow]")
-        raise typer.Exit(0)
+        sys.exit(0)
 
     # Confirmation loop with re-edit support
     while True:
@@ -1234,7 +1234,7 @@ def _update_with_editor(
 
         if response[0].lower() == "n":
             console.print("[yellow]Update cancelled.[/yellow]")
-            raise typer.Exit(0)
+            sys.exit(0)
         elif response[0].lower() == "y":
             break  # Proceed to apply changes
         elif response[0].lower() == "e":
@@ -1247,7 +1247,7 @@ def _update_with_editor(
                     console.print(
                         "[yellow]No changes detected. Update cancelled.[/yellow]"
                     )
-                    raise typer.Exit(0)
+                    sys.exit(0)
                 # Loop continues
             except ValueError as e:
                 console.print(f"[red]Validation error: {e}[/red]")
@@ -1259,7 +1259,7 @@ def _update_with_editor(
     # Apply update
     try:
         updated_issue = client.update_issue(issue_id=original.id, **api_input)
-        console.print("\n[green]✓[/green] Issue updated successfully!")
+        console.print("\n[green]Issue updated successfully[/green]")
         return updated_issue
     except LinearClientError as e:
         console.print(f"[red]Error: {e}[/red]")
@@ -1409,39 +1409,13 @@ def update_issue(
             # Interactive editor mode
             updated_issue = _update_with_editor(issue_id, client, console)
 
-        # Display result
+        # Display result for JSON format only
         if format == "json":
             console.print(format_issue_json(updated_issue))
-        else:
-            # Detail format
-            console.print(f"\n[bold]Issue {updated_issue.identifier}:[/bold]")
-            console.print(f"[bold]Title:[/bold] {updated_issue.title}")
-            console.print(f"[bold]URL:[/bold] {updated_issue.url}")
-
-            if updated_issue.description:
-                desc_preview = (
-                    updated_issue.description[:100] + "..."
-                    if len(updated_issue.description) > 100
-                    else updated_issue.description
-                )
-                console.print(f"[bold]Description:[/bold] {desc_preview}")
-
-            if updated_issue.assignee:
-                console.print(f"[bold]Assignee:[/bold] {updated_issue.assignee.name}")
-
-            console.print(f"[bold]Priority:[/bold] {updated_issue.priority_label}")
-            console.print(f"[bold]State:[/bold] {updated_issue.state.name}")
-
-            if updated_issue.labels:
-                label_names = ", ".join([label.name for label in updated_issue.labels])
-                console.print(f"[bold]Labels:[/bold] {label_names}")
 
     except LinearClientError as e:
         typer.echo(f"Error: {e}", err=True)
         sys.exit(1)
     except ValidationError as e:
         typer.echo(f"Data validation error: {e.errors()[0]['msg']}", err=True)
-        sys.exit(1)
-    except Exception as e:
-        typer.echo(f"Unexpected error: {e}", err=True)
         sys.exit(1)
