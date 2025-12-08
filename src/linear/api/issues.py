@@ -459,8 +459,11 @@ def get_issue(self: "LinearClient", issue_id: str) -> Issue:
         }
         labels {
           nodes {
+            id
             name
             color
+            createdAt
+            updatedAt
           }
         }
         comments {
@@ -655,4 +658,152 @@ def create_issue(
         field_path = " -> ".join(str(loc) for loc in error_details["loc"])
         raise LinearClientError(
             f"Failed to parse created issue: {error_details['msg']} at {field_path}"
+        )
+
+
+def update_issue(
+    self: "LinearClient",
+    issue_id: str,
+    title: str | None = None,
+    description: str | None = None,
+    assignee_id: str | None = None,
+    priority: int | None = None,
+    label_ids: list[str] | None = None,
+    project_id: str | None = None,
+    state_id: str | None = None,
+    estimate: int | None = None,
+    due_date: str | None = None,
+    parent_id: str | None = None,
+    cycle_id: str | None = None,
+) -> Issue:
+    """Update an existing issue.
+
+    Args:
+        issue_id: Issue UUID (not identifier - must be resolved first)
+        title: New issue title
+        description: New issue description (None = no change, explicit None via API = clear)
+        assignee_id: New assignee UUID (None = no change, explicit None via API = unassign)
+        priority: New priority 0=None, 1=Urgent, 2=High, 3=Medium, 4=Low
+        label_ids: New list of label UUIDs (replaces all labels)
+        project_id: New project UUID (None = no change, explicit None via API = remove)
+        state_id: New workflow state UUID
+        estimate: New story points (None = no change, explicit None via API = clear)
+        due_date: New due date (ISO format)
+        parent_id: New parent issue UUID
+        cycle_id: New cycle UUID
+
+    Returns:
+        Updated Issue object
+
+    Raises:
+        LinearClientError: If the mutation fails or data validation fails
+    """
+    mutation = """
+    mutation IssueUpdate($id: String!, $input: IssueUpdateInput!) {
+      issueUpdate(id: $id, input: $input) {
+        success
+        issue {
+          id
+          identifier
+          title
+          description
+          url
+          priority
+          priorityLabel
+          createdAt
+          updatedAt
+          estimate
+          state {
+            id
+            name
+            type
+            color
+          }
+          assignee {
+            id
+            name
+            displayName
+            email
+            active
+            admin
+            createdAt
+            updatedAt
+          }
+          team {
+            id
+            name
+            key
+            createdAt
+            updatedAt
+            cyclesEnabled
+            private
+          }
+          project {
+            id
+            name
+            state
+            progress
+            url
+            createdAt
+            updatedAt
+          }
+          labels {
+            nodes {
+              id
+              name
+              color
+              createdAt
+              updatedAt
+            }
+          }
+        }
+      }
+    }
+    """
+
+    # Build input object - only include provided fields (selective field inclusion)
+    input_data = {}
+
+    if title is not None:
+        input_data["title"] = title
+    if description is not None:
+        input_data["description"] = description
+    if assignee_id is not None:
+        input_data["assigneeId"] = assignee_id
+    if priority is not None:
+        input_data["priority"] = priority
+    if label_ids is not None:
+        input_data["labelIds"] = label_ids
+    if project_id is not None:
+        input_data["projectId"] = project_id
+    if state_id is not None:
+        input_data["stateId"] = state_id
+    if estimate is not None:
+        input_data["estimate"] = estimate
+    if due_date is not None:
+        input_data["dueDate"] = due_date
+    if parent_id is not None:
+        input_data["parentId"] = parent_id
+    if cycle_id is not None:
+        input_data["cycleId"] = cycle_id
+
+    variables = {
+        "id": issue_id,
+        "input": input_data,
+    }
+
+    response = self.query(mutation, variables)
+
+    # Check if mutation was successful
+    issue_update = response.get("issueUpdate", {})
+    if not issue_update.get("success"):
+        raise LinearClientError("Failed to update issue")
+
+    try:
+        return Issue.model_validate(issue_update["issue"])
+    except ValidationError as e:
+        error_details = e.errors()[0]
+        field_path = " -> ".join(str(loc) for loc in error_details["loc"])
+        raise LinearClientError(
+            f"Failed to parse updated issue: {error_details['msg']} at {field_path}"
         )
