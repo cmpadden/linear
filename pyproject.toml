@@ -1,7 +1,7 @@
 [project]
 name = "linear-app"
 # Version is managed by `uv version` - DO NOT edit manually. Use `make release-{patch,minor,major}` instead.
-version = "0.0.9"
+version = "0.0.10"
 description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
