@@ -1,5 +1,7 @@
 """Pydantic models for Linear entities."""
 
+from .attachments import Attachment as AttachmentModel
+from .attachments import AttachmentConnection
 from .base import Organization, PageInfo
 from .comments import Comment as CommentModel
 from .comments import CommentConnection, CommentUser
@@ -22,6 +24,9 @@ __all__ = [
     # Base
     "PageInfo",
     "Organization",
+    # Attachments
+    "AttachmentModel",
+    "AttachmentConnection",
     # Comments
     "Comment",
     "CommentModel",

@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.0.12] (unreleased)
 
 ### Added
+- **Attachments management**: Added full support for managing issue attachments
+  - `linear attachments list <issue-id>` - List all attachments for an issue with title, URL, and creation date
+  - `linear attachments upload <issue-id> <file-path>` - Upload file attachment to an issue (supports `--title` flag for custom title, defaults to filename)
+  - `linear attachments delete <attachment-id>` - Delete attachment (with confirmation prompt, use `--yes` to skip)
+  - Supports both table and JSON output formats via `--format` flag
+  - Automatically handles file upload to Linear's storage and creates attachment record
+  - Resolves issue identifiers (e.g., ENG-123) to UUIDs for all operations
 - **Issue relations management**: Added full support for managing relationships between issues
   - `linear issues relations list <issue-id>` - List all relations for an issue with type, related issue details, status, and team
   - `linear issues relations add <issue-id> <related-issue-id>` - Create relation between two issues with `--type` flag (blocks, blocked, related, duplicate)

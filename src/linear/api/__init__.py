@@ -2,7 +2,7 @@
 
 from .client import LinearClient as BaseClient
 from .client import LinearClientError
-from . import issues, projects, teams, cycles, users, labels, comments
+from . import issues, projects, teams, cycles, users, labels, comments, attachments
 
 
 class LinearClient(BaseClient):
@@ -60,6 +60,11 @@ class LinearClient(BaseClient):
     update_label = labels.update_label
     delete_label = labels.delete_label
     archive_label = labels.archive_label
+
+    # Attachments
+    list_attachments = attachments.list_attachments
+    upload_attachment = attachments.upload_attachment
+    delete_attachment = attachments.delete_attachment
 
 
 __all__ = ["LinearClient", "LinearClientError"]

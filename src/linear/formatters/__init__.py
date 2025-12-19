@@ -1,5 +1,9 @@
 """Output formatters for Linear CLI."""
 
+from linear.formatters.attachments import (
+    format_json as format_attachments_json,
+    format_table as format_attachments_table,
+)
 from linear.formatters.comments import (
     format_comment_detail,
     format_comment_json,
@@ -42,6 +46,9 @@ from linear.formatters.users import (
 )
 
 __all__ = [
+    # Attachments
+    "format_attachments_table",
+    "format_attachments_json",
     # Comments
     "format_comments_table",
     "format_comments_json",
