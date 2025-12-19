@@ -38,6 +38,10 @@ class LinearClient(BaseClient):
 
     # Labels
     list_labels = labels.list_labels
+    create_label = labels.create_label
+    update_label = labels.update_label
+    delete_label = labels.delete_label
+    archive_label = labels.archive_label
 
 
 __all__ = ["LinearClient", "LinearClientError"]

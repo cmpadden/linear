@@ -32,6 +32,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Fixed state lookup by name in `linear issues update` (now supports `--state "In Progress"`)
   - Shows available states when an invalid state name is provided
   - Confirmation prompt with before/after state comparison
+- **Label management**: Added full CRUD operations for labels
+  - `linear labels create` - Create new label with `--name`, `--description`, `--color`, and optional `--team`
+  - `linear labels update <label-id>` - Update label name, description, or color
+  - `linear labels delete <label-id>` - Permanently delete label (with confirmation prompt, use `--yes` to skip)
+  - `linear labels archive <label-id>` - Archive label
 
 ### Changed
 - **Version flag**: Changed version flag shorthand from `-v` to `-V` to avoid conflict with the new `--verbose` flag
