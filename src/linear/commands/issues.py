@@ -2155,6 +2155,9 @@ def remove_relation(
             )
             sys.exit(1)
 
+        # Type assertion: target_relation is guaranteed to be non-None after the check above
+        assert target_relation is not None
+
         # Determine which issue to show
         if target_relation.issue.id == issue.id:
             related = target_relation.related_issue

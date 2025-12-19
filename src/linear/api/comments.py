@@ -7,7 +7,7 @@ from pydantic import ValidationError
 from linear.models.comments import Comment, CommentConnection
 
 if TYPE_CHECKING:
-    from .client import LinearClient
+    from linear.api.client import LinearClient
 
 
 class LinearClientError(Exception):

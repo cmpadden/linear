@@ -37,3 +37,9 @@ target-version = "py313"
 
 [tool.ruff.format]
 quote-style = "double"
+
+[tool.ruff.lint]
+select = ["TID252"]  # Enable relative-imports rule
+
+[tool.ruff.lint.flake8-tidy-imports]
+ban-relative-imports = "all"  # Disallow all relative imports

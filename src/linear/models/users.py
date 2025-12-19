@@ -5,7 +5,7 @@ from typing import Optional, TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
-from .base import Organization, PageInfo
+from linear.models.base import Organization, PageInfo
 
 if TYPE_CHECKING:
     pass

@@ -5,7 +5,7 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator
 
-from .base import PageInfo
+from linear.models.base import PageInfo
 
 
 class Project(BaseModel):
@@ -69,8 +69,8 @@ class Project(BaseModel):
 
 
 # Import User and Team for forward references
-from .users import User  # noqa: E402
-from .teams import Team  # noqa: E402
+from linear.models.users import User  # noqa: E402
+from linear.models.teams import Team  # noqa: E402
 
 Project.model_rebuild()
 

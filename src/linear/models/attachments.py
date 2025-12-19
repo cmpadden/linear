@@ -4,7 +4,7 @@ from datetime import datetime
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 
-from .base import PageInfo
+from linear.models.base import PageInfo
 
 
 class Attachment(BaseModel):

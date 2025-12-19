@@ -5,7 +5,7 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from .base import PageInfo
+from linear.models.base import PageInfo
 
 
 class Label(BaseModel):
@@ -41,7 +41,7 @@ class Label(BaseModel):
 
 
 # Import Team for forward reference
-from .teams import Team  # noqa: E402
+from linear.models.teams import Team  # noqa: E402
 
 Label.model_rebuild()
 

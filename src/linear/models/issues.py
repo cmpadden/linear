@@ -5,7 +5,7 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field, HttpUrl, field_validator
 
-from .base import PageInfo
+from linear.models.base import PageInfo
 
 
 class WorkflowState(BaseModel):
@@ -106,11 +106,11 @@ class Issue(BaseModel):
 
 
 # Import dependencies for forward references
-from .users import User  # noqa: E402
-from .teams import Team  # noqa: E402
-from .projects import Project  # noqa: E402
-from .cycles import Cycle  # noqa: E402
-from .labels import Label  # noqa: E402
+from linear.models.users import User  # noqa: E402
+from linear.models.teams import Team  # noqa: E402
+from linear.models.projects import Project  # noqa: E402
+from linear.models.cycles import Cycle  # noqa: E402
+from linear.models.labels import Label  # noqa: E402
 
 # Rebuild models to resolve forward references
 Comment.model_rebuild()

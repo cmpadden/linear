@@ -5,7 +5,7 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from .base import Organization, PageInfo
+from linear.models.base import Organization, PageInfo
 
 
 class Team(BaseModel):

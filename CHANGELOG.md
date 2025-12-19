@@ -46,6 +46,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 - **Enhanced issue search**: `linear issues search` now searches both title and description fields (previously title only) using OR logic for more comprehensive results (2025-12-19)
+- **Enforce absolute imports**: Enabled TID252 rule to ban all relative imports in favor of absolute imports (e.g., `from linear.models import Issue`)
 
 ## [0.0.11]
 

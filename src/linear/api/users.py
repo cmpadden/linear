@@ -7,7 +7,7 @@ from pydantic import ValidationError
 from linear.models import User, UserConnection
 
 if TYPE_CHECKING:
-    from .client import LinearClient
+    from linear.api.client import LinearClient
 
 
 class LinearClientError(Exception):

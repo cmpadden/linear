@@ -1,12 +1,12 @@
 """Pydantic models for Linear entities."""
 
-from .attachments import Attachment as AttachmentModel
-from .attachments import AttachmentConnection
-from .base import Organization, PageInfo
-from .comments import Comment as CommentModel
-from .comments import CommentConnection, CommentUser
-from .cycles import Cycle, CycleConnection
-from .issues import (
+from linear.models.attachments import Attachment as AttachmentModel
+from linear.models.attachments import AttachmentConnection
+from linear.models.base import Organization, PageInfo
+from linear.models.comments import Comment as CommentModel
+from linear.models.comments import CommentConnection, CommentUser
+from linear.models.cycles import Cycle, CycleConnection
+from linear.models.issues import (
     Attachment,
     Comment,
     Issue,
@@ -15,10 +15,10 @@ from .issues import (
     IssueRelationConnection,
     WorkflowState,
 )
-from .labels import Label, LabelConnection
-from .projects import Project, ProjectConnection
-from .teams import Team, TeamConnection
-from .users import User, UserConnection
+from linear.models.labels import Label, LabelConnection
+from linear.models.projects import Project, ProjectConnection
+from linear.models.teams import Team, TeamConnection
+from linear.models.users import User, UserConnection
 
 __all__ = [
     # Base

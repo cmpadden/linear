@@ -1,8 +1,16 @@
 """Linear API client with all methods."""
 
-from .client import LinearClient as BaseClient
-from .client import LinearClientError
-from . import issues, projects, teams, cycles, users, labels, comments, attachments
+from linear.api import (
+    attachments,
+    comments,
+    cycles,
+    issues,
+    labels,
+    projects,
+    teams,
+    users,
+)
+from linear.api.client import LinearClient as BaseClient, LinearClientError
 
 
 class LinearClient(BaseClient):
