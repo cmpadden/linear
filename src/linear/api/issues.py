@@ -869,3 +869,34 @@ def archive_issue(self: "LinearClient", issue_id: str) -> bool:
         raise LinearClientError("Failed to archive issue")
 
     return True
+
+
+def unarchive_issue(self: "LinearClient", issue_id: str) -> bool:
+    """Unarchive an issue.
+
+    Args:
+        issue_id: Issue UUID (not identifier - must be resolved first)
+
+    Returns:
+        True if successful
+
+    Raises:
+        LinearClientError: If the mutation fails
+    """
+    mutation = """
+    mutation IssueUnarchive($id: String!) {
+      issueUnarchive(id: $id) {
+        success
+      }
+    }
+    """
+
+    variables = {"id": issue_id}
+    response = self.query(mutation, variables)
+
+    # Check if mutation was successful
+    issue_unarchive = response.get("issueUnarchive", {})
+    if not issue_unarchive.get("success"):
+        raise LinearClientError("Failed to unarchive issue")
+
+    return True

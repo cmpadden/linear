@@ -16,6 +16,7 @@ class LinearClient(BaseClient):
     update_issue = issues.update_issue
     delete_issue = issues.delete_issue
     archive_issue = issues.archive_issue
+    unarchive_issue = issues.unarchive_issue
 
     # Projects
     list_projects = projects.list_projects

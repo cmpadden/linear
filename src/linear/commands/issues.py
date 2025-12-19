@@ -1617,3 +1617,89 @@ def archive_issue(
     except Exception as e:
         typer.echo(f"Unexpected error: {e}", err=True)
         sys.exit(1)
+
+
+@app.command("unarchive")
+def unarchive_issue(
+    ctx: typer.Context,
+    issue_id: Annotated[
+        str,
+        typer.Argument(help="Issue ID or identifier (e.g., 'ENG-123')"),
+    ],
+    yes: Annotated[
+        bool,
+        typer.Option("--yes", "-y", help="Skip confirmation prompt"),
+    ] = False,
+) -> None:
+    """Unarchive a Linear issue.
+
+    Examples:
+
+      # Unarchive an issue with confirmation
+      linear issues unarchive ENG-123
+
+      # Unarchive without confirmation prompt
+      linear issues unarchive ENG-123 --yes
+    """
+    try:
+        # Extract verbose flag from context
+        verbose = ctx.obj.get("verbose", False) if ctx.obj else False
+        verbose_logger = VerboseLogger(enabled=verbose)
+
+        # Initialize
+        client = LinearClient(verbose_logger=verbose_logger)
+        console = Console()
+
+        # Fetch the issue first to get details and resolve identifier to UUID
+        try:
+            issue = client.get_issue(issue_id)
+        except LinearClientError as e:
+            console.print(f"[red]Error: {e}[/red]")
+            console.print(
+                f"[dim]Make sure '{issue_id}' is a valid issue identifier or ID[/dim]"
+            )
+            raise typer.Exit(1)
+
+        # Show issue details
+        console.print("\n[bold]Issue to unarchive:[/bold]")
+        console.print(f"  [bold]Identifier:[/bold] {issue.identifier}")
+        console.print(f"  [bold]Title:[/bold] {issue.title}")
+        console.print(f"  [bold]Team:[/bold] {issue.team.key}")
+        console.print(f"  [bold]State:[/bold] {issue.state.name}")
+
+        if issue.assignee:
+            console.print(f"  [bold]Assignee:[/bold] {issue.assignee.email}")
+
+        # Confirmation (unless --yes flag is used)
+        if not yes:
+            response = Prompt.ask(
+                "\n[yellow]Are you sure you want to unarchive this issue?[/yellow]",
+                choices=["y", "yes", "n", "no"],
+                default="n",
+                show_choices=True,
+                case_sensitive=False,
+            )
+
+            if response[0].lower() == "n":
+                console.print("[yellow]Unarchive cancelled.[/yellow]")
+                sys.exit(0)
+
+        # Unarchive the issue
+        try:
+            client.unarchive_issue(issue_id=issue.id)
+            console.print(
+                f"\n[green]Issue {issue.identifier} unarchived successfully[/green]"
+            )
+        except LinearClientError as e:
+            console.print(f"[red]Error: {e}[/red]")
+            raise typer.Exit(1)
+
+    except LinearClientError as e:
+        typer.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except ValidationError as e:
+        typer.echo(f"Data validation error: {e.errors()[0]['msg']}", err=True)
+        sys.exit(1)
+    except Exception as e:
+        typer.echo(f"Unexpected error: {e}", err=True)
+        sys.exit(1)

@@ -22,6 +22,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Shows issue details before archiving for confirmation
   - Supports `--yes` / `-y` flag to skip confirmation prompt
   - Accepts both issue identifiers (e.g., `ENG-123`) and UUIDs
+- **Issue unarchiving**: Added `linear issues unarchive <issue-id>` command to unarchive issues
+  - Shows issue details before unarchiving for confirmation
+  - Supports `--yes` / `-y` flag to skip confirmation prompt
+  - Accepts both issue identifiers (e.g., `ENG-123`) and UUIDs
 
 ### Changed
 - **Version flag**: Changed version flag shorthand from `-v` to `-V` to avoid conflict with the new `--verbose` flag
