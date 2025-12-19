@@ -13,6 +13,7 @@ from linear.commands import (
     issues,
     labels,
     projects,
+    roadmaps,
     teams,
     users,
 )
@@ -79,6 +80,9 @@ app.add_typer(users.app, name="u", hidden=True)
 
 app.add_typer(labels.app, name="labels")
 app.add_typer(labels.app, name="l", hidden=True)
+
+app.add_typer(roadmaps.app, name="roadmaps")
+app.add_typer(roadmaps.app, name="r", hidden=True)
 
 
 def main() -> None:

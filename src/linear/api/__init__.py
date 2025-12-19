@@ -7,6 +7,7 @@ from linear.api import (
     issues,
     labels,
     projects,
+    roadmaps,
     teams,
     users,
 )
@@ -73,6 +74,12 @@ class LinearClient(BaseClient):
     list_attachments = attachments.list_attachments
     upload_attachment = attachments.upload_attachment
     delete_attachment = attachments.delete_attachment
+
+    # Roadmaps
+    list_roadmaps = roadmaps.list_roadmaps
+    get_roadmap = roadmaps.get_roadmap
+    create_roadmap = roadmaps.create_roadmap
+    update_roadmap = roadmaps.update_roadmap
 
 
 __all__ = ["LinearClient", "LinearClientError"]

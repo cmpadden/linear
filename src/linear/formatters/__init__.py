@@ -32,6 +32,12 @@ from linear.formatters.projects import (
     format_projects_json,
     format_projects_table,
 )
+from linear.formatters.roadmaps import (
+    format_roadmap_detail,
+    format_roadmap_json,
+    format_roadmaps_json,
+    format_roadmaps_table,
+)
 from linear.formatters.teams import (
     format_team_detail,
     format_team_json,
@@ -85,4 +91,9 @@ __all__ = [
     # Labels
     "format_labels_table",
     "format_labels_json",
+    # Roadmaps
+    "format_roadmaps_table",
+    "format_roadmaps_json",
+    "format_roadmap_detail",
+    "format_roadmap_json",
 ]

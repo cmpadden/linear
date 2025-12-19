@@ -7,6 +7,7 @@ from linear.commands import (
     issues,
     labels,
     projects,
+    roadmaps,
     teams,
     users,
 )
@@ -18,6 +19,7 @@ __all__ = [
     "issues",
     "labels",
     "projects",
+    "roadmaps",
     "teams",
     "users",
 ]

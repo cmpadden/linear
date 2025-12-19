@@ -17,6 +17,7 @@ from linear.models.issues import (
 )
 from linear.models.labels import Label, LabelConnection
 from linear.models.projects import Project, ProjectConnection
+from linear.models.roadmaps import Roadmap, RoadmapConnection
 from linear.models.teams import Team, TeamConnection
 from linear.models.users import User, UserConnection
 
@@ -54,4 +55,7 @@ __all__ = [
     # Labels
     "Label",
     "LabelConnection",
+    # Roadmaps
+    "Roadmap",
+    "RoadmapConnection",
 ]

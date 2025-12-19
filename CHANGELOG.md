@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.0.12] (unreleased)
 
 ### Added
+- **Roadmaps management**: Added full support for managing Linear roadmaps
+  - `linear roadmaps list` - List roadmaps with table and JSON output formats
+  - `linear roadmaps view <roadmap-id>` - View roadmap details by ID or slug
+  - `linear roadmaps create` - Create new roadmap with `--name`, `--description`, and `--owner-id` flags (supports `--editor` for description editing)
+  - `linear roadmaps update <roadmap-id>` - Update roadmap name, description, or owner (supports `--editor` for description editing)
+  - Supports pagination via `--per-page`, `--page`, and `--all` flags
+  - Supports both table/detail and JSON output formats via `--format` flag
+  - Roadmap alias: `linear r` for quick access
 - **Attachments management**: Added full support for managing issue attachments
   - `linear attachments list <issue-id>` - List all attachments for an issue with title, URL, and creation date
   - `linear attachments upload <issue-id> <file-path>` - Upload file attachment to an issue (supports `--title` flag for custom title, defaults to filename)
