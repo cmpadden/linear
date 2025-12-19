@@ -57,9 +57,19 @@ def list_issues(
         Optional[list[str]],
         typer.Option("--label", "-l", help="Filter by label (repeatable)"),
     ] = None,
-    limit: Annotated[
-        int, typer.Option("--limit", help="Number of issues to display")
+    per_page: Annotated[
+        int, typer.Option("--per-page", help="Number of issues per page (max 250)")
     ] = 50,
+    page: Annotated[
+        Optional[int], typer.Option("--page", help="Page number to fetch (starts at 1)")
+    ] = None,
+    all: Annotated[
+        bool, typer.Option("--all", help="Fetch all results automatically")
+    ] = False,
+    limit: Annotated[
+        Optional[int],
+        typer.Option("--limit", help="DEPRECATED: use --per-page instead"),
+    ] = None,
     include_archived: Annotated[
         bool, typer.Option("--include-archived", help="Include archived issues")
     ] = False,
@@ -90,7 +100,13 @@ def list_issues(
       linear issues list --assignee user@example.com
 
       # Filter by multiple criteria
-      linear issues list --status "in progress" --priority 1 --limit 10
+      linear issues list --status "in progress" --priority 1 --per-page 10
+
+      # Fetch all results
+      linear issues list --all
+
+      # Pagination
+      linear issues list --page 2 --per-page 25
 
       # Output as JSON
       linear issues list --format json
@@ -106,24 +122,81 @@ def list_issues(
         # Initialize client
         client = LinearClient(verbose_logger=verbose_logger)
 
+        # Handle deprecated --limit flag
+        if limit is not None:
+            console = Console()
+            console.print(
+                "[yellow]Warning: --limit is deprecated, use --per-page instead[/yellow]"
+            )
+            per_page = limit
+
+        # Validate per_page
+        if per_page > 250:
+            console = Console()
+            console.print("[red]Error: --per-page cannot exceed 250[/red]")
+            sys.exit(1)
+
         # Resolve 'me' or 'self' to current user's email
         if assignee and assignee.lower() in ("me", "self"):
             viewer_response = client.get_viewer()
             viewer = viewer_response.get("viewer", {})
             assignee = viewer.get("email")
 
+        # Calculate cursor for pagination
+        after_cursor: str | None = None
+        if page and page > 1:
+            # For now, we need to iterate through pages to get the cursor
+            # This is a limitation of cursor-based pagination
+            # In a real implementation, we might want to cache cursors
+            current_page = 1
+            while current_page < page:
+                _, page_info = client.list_issues(
+                    assignee=assignee,
+                    project=project,
+                    status=status,
+                    team=team,
+                    priority=priority,
+                    labels=label,
+                    limit=per_page,
+                    include_archived=include_archived,
+                    sort=order_by,
+                    after=after_cursor,
+                    fetch_all=False,
+                )
+                cursor_value = page_info.get("endCursor")
+                if not cursor_value or cursor_value == "":
+                    console = Console()
+                    console.print(
+                        f"[yellow]Page {page} does not exist (only {current_page} page(s) available)[/yellow]"
+                    )
+                    sys.exit(1)
+                after_cursor = str(cursor_value) if cursor_value else None
+                current_page += 1
+
         # Fetch issues
-        issues = client.list_issues(
+        issues, pagination_info = client.list_issues(
             assignee=assignee,
             project=project,
             status=status,
             team=team,
             priority=priority,
             labels=label,
-            limit=limit,
+            limit=per_page,
             include_archived=include_archived,
             sort=order_by,
+            after=after_cursor,
+            fetch_all=all,
         )
+
+        # Enhance pagination info for display
+        display_pagination_info: dict[str, str | bool | int] = dict(pagination_info)
+        if not all:
+            start_index = ((page or 1) - 1) * per_page + 1
+            end_index = start_index + len(issues) - 1
+            display_pagination_info["startIndex"] = start_index
+            display_pagination_info["endIndex"] = end_index
+            display_pagination_info["currentPage"] = page or 1
+            display_pagination_info["perPage"] = per_page
 
         # Format output
         if format == "json":
@@ -134,10 +207,12 @@ def list_issues(
                 from linear.formatters import format_table_grouped
 
                 format_table_grouped(
-                    issues, cast(Literal["cycle", "project", "team"], group_by)
+                    issues,
+                    cast(Literal["cycle", "project", "team"], group_by),
+                    display_pagination_info,
                 )
             else:
-                format_table(issues)
+                format_table(issues, display_pagination_info)
 
     except LinearClientError as e:
         typer.echo(f"Error: {e}", err=True)
@@ -214,9 +289,16 @@ def view_issue(
 def search_issues(
     ctx: typer.Context,
     query: Annotated[str, typer.Argument(help="Search query (searches issue titles)")],
-    limit: Annotated[
-        int, typer.Option("--limit", help="Number of issues to display")
+    per_page: Annotated[
+        int, typer.Option("--per-page", help="Number of issues per page (max 250)")
     ] = 50,
+    all: Annotated[
+        bool, typer.Option("--all", help="Fetch all results automatically")
+    ] = False,
+    limit: Annotated[
+        Optional[int],
+        typer.Option("--limit", help="DEPRECATED: use --per-page instead"),
+    ] = None,
     include_archived: Annotated[
         bool, typer.Option("--include-archived", help="Include archived issues")
     ] = False,
@@ -241,8 +323,11 @@ def search_issues(
       # Search with output as JSON
       linear issues search "bug fix" --format json
 
-       # Limit results
-       linear issues search refactor --limit 10
+      # Fetch all matching results
+      linear issues search refactor --all
+
+      # Limit results per page
+      linear issues search bug --per-page 10
     """
     try:
         # Extract verbose flag from context
@@ -252,29 +337,45 @@ def search_issues(
         # Initialize client
         client = LinearClient(verbose_logger=verbose_logger)
 
+        # Handle deprecated --limit flag
+        if limit is not None:
+            console = Console()
+            console.print(
+                "[yellow]Warning: --limit is deprecated, use --per-page instead[/yellow]"
+            )
+            per_page = limit
+
+        # Validate per_page
+        if per_page > 250:
+            console = Console()
+            console.print("[red]Error: --per-page cannot exceed 250[/red]")
+            sys.exit(1)
+
         # Search issues
-        issues = client.search_issues(
+        issues, pagination_info = client.search_issues(
             query=query,
-            limit=limit,
+            limit=per_page,
             include_archived=include_archived,
             sort=order_by,
+            fetch_all=all,
         )
-
-        # Parse response
 
         # Format output
         if format == "json":
             format_json(issues)
         else:  # table
+            display_pagination_info: dict[str, str | bool | int] = dict(pagination_info)
             if group_by in ["cycle", "project", "team"]:
                 from typing import cast, Literal
                 from linear.formatters import format_table_grouped
 
                 format_table_grouped(
-                    issues, cast(Literal["cycle", "project", "team"], group_by)
+                    issues,
+                    cast(Literal["cycle", "project", "team"], group_by),
+                    display_pagination_info,
                 )
             else:
-                format_table(issues)
+                format_table(issues, display_pagination_info)
 
     except LinearClientError as e:
         typer.echo(f"Error: {e}", err=True)

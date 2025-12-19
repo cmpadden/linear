@@ -1,6 +1,6 @@
 """Issue-related API methods for Linear GraphQL API."""
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pydantic import ValidationError
 
@@ -27,7 +27,9 @@ def list_issues(
     limit: int = 50,
     include_archived: bool = False,
     sort: str = "updated",
-) -> list[Issue]:
+    after: str | None = None,
+    fetch_all: bool = False,
+) -> tuple[list[Issue], dict[str, Any]]:
     """List issues with optional filters.
 
     Args:
@@ -37,12 +39,15 @@ def list_issues(
         team: Filter by team key (e.g., ENG, DESIGN)
         priority: Filter by priority (0-4)
         labels: Filter by label names
-        limit: Maximum number of issues to return (default: 50)
+        limit: Maximum number of issues to return per page (default: 50)
         include_archived: Include archived issues (default: False)
         sort: Sort field: created, updated, priority (default: updated)
+        after: Cursor for pagination (fetches items after this cursor)
+        fetch_all: If True, automatically fetch all pages (default: False)
 
     Returns:
-        List of Issue objects
+        Tuple of (list of Issue objects, pagination metadata dict)
+        Pagination metadata contains: hasNextPage, endCursor, totalFetched
 
     Raises:
         LinearClientError: If the query fails or data validation fails
@@ -83,8 +88,8 @@ def list_issues(
 
     # GraphQL query
     query = """
-    query Issues($filter: IssueFilter, $first: Int, $includeArchived: Boolean, $orderBy: PaginationOrderBy) {
-      issues(filter: $filter, first: $first, includeArchived: $includeArchived, orderBy: $orderBy) {
+    query Issues($filter: IssueFilter, $first: Int, $after: String, $includeArchived: Boolean, $orderBy: PaginationOrderBy) {
+      issues(filter: $filter, first: $first, after: $after, includeArchived: $includeArchived, orderBy: $orderBy) {
         nodes {
           id
           identifier
@@ -172,9 +177,52 @@ def list_issues(
     }
     """
 
+    # Fetch all pages if requested
+    if fetch_all:
+        all_issues: list[Issue] = []
+        current_cursor = after
+        page_count = 0
+        max_pages = 100  # Safety limit to prevent infinite loops
+
+        while page_count < max_pages:
+            variables = {
+                "filter": filters if filters else None,
+                "first": min(limit, 250),  # Linear API max per page
+                "after": current_cursor,
+                "includeArchived": include_archived,
+                "orderBy": order_by,
+            }
+
+            response = self.query(query, variables)
+
+            try:
+                connection = IssueConnection.model_validate(response.get("issues", {}))
+                all_issues.extend(connection.nodes)
+                page_count += 1
+
+                if not connection.page_info.has_next_page:
+                    break
+
+                current_cursor = connection.page_info.end_cursor
+            except ValidationError as e:
+                error_details = e.errors()[0]
+                field_path = " -> ".join(str(loc) for loc in error_details["loc"])
+                raise LinearClientError(
+                    f"Failed to parse issues from API response: {error_details['msg']} at {field_path}"
+                )
+
+        pagination_info = {
+            "hasNextPage": False,
+            "endCursor": current_cursor or "",
+            "totalFetched": len(all_issues),
+        }
+        return all_issues, pagination_info
+
+    # Single page fetch
     variables = {
         "filter": filters if filters else None,
         "first": min(limit, 250),  # Linear API max
+        "after": after,
         "includeArchived": include_archived,
         "orderBy": order_by,
     }
@@ -183,7 +231,12 @@ def list_issues(
 
     try:
         connection = IssueConnection.model_validate(response.get("issues", {}))
-        return connection.nodes
+        pagination_info = {
+            "hasNextPage": connection.page_info.has_next_page,
+            "endCursor": connection.page_info.end_cursor or "",
+            "totalFetched": len(connection.nodes),
+        }
+        return connection.nodes, pagination_info
     except ValidationError as e:
         error_details = e.errors()[0]
         field_path = " -> ".join(str(loc) for loc in error_details["loc"])
@@ -198,17 +251,22 @@ def search_issues(
     limit: int = 50,
     include_archived: bool = False,
     sort: str = "updated",
-) -> list[Issue]:
+    after: str | None = None,
+    fetch_all: bool = False,
+) -> tuple[list[Issue], dict[str, Any]]:
     """Search issues by title.
 
     Args:
         query: Search query (searches issue titles, case-insensitive)
-        limit: Maximum number of issues to return (default: 50)
+        limit: Maximum number of issues to return per page (default: 50)
         include_archived: Include archived issues (default: False)
         sort: Sort field: created, updated, priority (default: updated)
+        after: Cursor for pagination (fetches items after this cursor)
+        fetch_all: If True, automatically fetch all pages (default: False)
 
     Returns:
-        List of matching Issue objects
+        Tuple of (list of matching Issue objects, pagination metadata dict)
+        Pagination metadata contains: hasNextPage, endCursor, totalFetched
 
     Raises:
         LinearClientError: If the query fails or data validation fails
@@ -226,8 +284,8 @@ def search_issues(
 
     # GraphQL query (same as list_issues)
     query_str = """
-    query Issues($filter: IssueFilter, $first: Int, $includeArchived: Boolean, $orderBy: PaginationOrderBy) {
-      issues(filter: $filter, first: $first, includeArchived: $includeArchived, orderBy: $orderBy) {
+    query Issues($filter: IssueFilter, $first: Int, $after: String, $includeArchived: Boolean, $orderBy: PaginationOrderBy) {
+      issues(filter: $filter, first: $first, after: $after, includeArchived: $includeArchived, orderBy: $orderBy) {
         nodes {
           id
           identifier
@@ -315,9 +373,50 @@ def search_issues(
     }
     """
 
+    # Fetch all pages if requested
+    if fetch_all:
+        all_issues: list[Issue] = []
+        current_cursor = after
+        page_count = 0
+        max_pages = 100  # Safety limit
+
+        while page_count < max_pages:
+            variables = {
+                "filter": filters,
+                "first": min(limit, 250),  # Linear API max per page
+                "after": current_cursor,
+                "includeArchived": include_archived,
+                "orderBy": order_by,
+            }
+
+            response = self.query(query_str, variables)
+
+            try:
+                connection = IssueConnection.model_validate(response.get("issues", {}))
+                all_issues.extend(connection.nodes)
+                page_count += 1
+
+                if not connection.page_info.has_next_page:
+                    break
+
+                current_cursor = connection.page_info.end_cursor
+            except ValidationError as e:
+                raise LinearClientError(
+                    f"Failed to parse issues from API response: {e.errors()[0]['msg']}"
+                )
+
+        pagination_info = {
+            "hasNextPage": False,
+            "endCursor": current_cursor or "",
+            "totalFetched": len(all_issues),
+        }
+        return all_issues, pagination_info
+
+    # Single page fetch
     variables = {
         "filter": filters,
         "first": min(limit, 250),  # Linear API max
+        "after": after,
         "includeArchived": include_archived,
         "orderBy": order_by,
     }
@@ -326,7 +425,12 @@ def search_issues(
 
     try:
         connection = IssueConnection.model_validate(response.get("issues", {}))
-        return connection.nodes
+        pagination_info = {
+            "hasNextPage": connection.page_info.has_next_page,
+            "endCursor": connection.page_info.end_cursor or "",
+            "totalFetched": len(connection.nodes),
+        }
+        return connection.nodes, pagination_info
     except ValidationError as e:
         raise LinearClientError(
             f"Failed to parse issues from API response: {e.errors()[0]['msg']}"
@@ -616,7 +720,7 @@ def create_issue(
     """
 
     # Build input object
-    input_data = {
+    input_data: dict[str, Any] = {
         "title": title,
         "teamId": team_id,
     }
@@ -762,7 +866,7 @@ def update_issue(
     """
 
     # Build input object - only include provided fields (selective field inclusion)
-    input_data = {}
+    input_data: dict[str, Any] = {}
 
     if title is not None:
         input_data["title"] = title

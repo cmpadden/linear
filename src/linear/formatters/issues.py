@@ -11,11 +11,14 @@ from rich.table import Table
 from linear.models import Issue
 
 
-def format_table(issues: list[Issue]) -> None:
+def format_table(
+    issues: list[Issue], pagination_info: dict[str, bool | str | int] | None = None
+) -> None:
     """Format issues as a rich table.
 
     Args:
         issues: List of Issue objects to display
+        pagination_info: Optional pagination metadata (hasNextPage, endCursor, totalFetched, etc.)
     """
     console = Console()
 
@@ -53,17 +56,38 @@ def format_table(issues: list[Issue]) -> None:
         )
 
     console.print(table)
-    console.print(f"\n[dim]Total: {len(issues)} issue(s)[/dim]")
+
+    # Show pagination info
+    if pagination_info:
+        start = pagination_info.get("startIndex", 1)
+        end = pagination_info.get("endIndex", len(issues))
+        total = pagination_info.get("totalCount")
+        has_next = pagination_info.get("hasNextPage", False)
+
+        if total:
+            info_text = f"Showing {start}-{end} of {total}"
+        else:
+            info_text = f"Showing {len(issues)} issue(s)"
+
+        if has_next:
+            info_text += " (more available, use --page to see more)"
+
+        console.print(f"\n[dim]{info_text}[/dim]")
+    else:
+        console.print(f"\n[dim]Total: {len(issues)} issue(s)[/dim]")
 
 
 def format_table_grouped(
-    issues: list[Issue], group_by: Literal["cycle", "project", "team"]
+    issues: list[Issue],
+    group_by: Literal["cycle", "project", "team"],
+    pagination_info: dict[str, bool | str | int] | None = None,
 ) -> None:
     """Format issues as a rich table grouped by a specific field.
 
     Args:
         issues: List of Issue objects to display
         group_by: Field to group by (cycle, project, or team)
+        pagination_info: Optional pagination metadata (hasNextPage, endCursor, totalFetched, etc.)
     """
     console = Console()
 
@@ -177,9 +201,28 @@ def format_table_grouped(
 
         console.print(table)
 
-    console.print(
-        f"\n[dim]Total: {len(issues)} issue(s) across {len(groups)} group(s)[/dim]"
-    )
+    # Show pagination info
+    if pagination_info:
+        start = pagination_info.get("startIndex", 1)
+        end = pagination_info.get("endIndex", len(issues))
+        total = pagination_info.get("totalCount")
+        has_next = pagination_info.get("hasNextPage", False)
+
+        if total:
+            info_text = (
+                f"Showing {start}-{end} of {total} across {len(groups)} group(s)"
+            )
+        else:
+            info_text = f"Total: {len(issues)} issue(s) across {len(groups)} group(s)"
+
+        if has_next:
+            info_text += " (more available, use --page to see more)"
+
+        console.print(f"\n[dim]{info_text}[/dim]")
+    else:
+        console.print(
+            f"\n[dim]Total: {len(issues)} issue(s) across {len(groups)} group(s)[/dim]"
+        )
 
 
 def format_json(issues: list[Issue]) -> None:

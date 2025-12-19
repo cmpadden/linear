@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.0.11] (unreleased)
 
 ### Added
+- **Pagination support**: Added cursor-based pagination for issue list and search commands
+  - `--per-page` flag to control number of results per page (max 250, default 50)
+  - `--page` flag to fetch a specific page number (starts at 1)
+  - `--all` flag to automatically fetch all results across multiple pages
+  - Pagination info displayed in table footer (e.g., "Showing 1-50 of 247 (more available, use --page to see more)")
+  - Supports both grouped and ungrouped table views
+  - Works with `linear issues list` and `linear issues search` commands
+  - Note: `--limit` flag is deprecated in favor of `--per-page`
 - **Verbose mode**: Added `--verbose` / `-v` global flag to display GraphQL queries, variables, and response times for debugging
   - GraphQL queries are syntax-highlighted using Rich
   - Variables displayed in formatted JSON
@@ -42,6 +50,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Version flag**: Changed version flag shorthand from `-v` to `-V` to avoid conflict with the new `--verbose` flag
   - `--version` (long form) remains unchanged
   - New shorthand: `linear -V` or `linear --version`
+
+### Deprecated
+- **`--limit` flag**: Deprecated in favor of `--per-page` for consistency with pagination terminology
+  - Still works but shows a warning message
+  - Will be removed in a future version
 
 ---
 
