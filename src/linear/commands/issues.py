@@ -1166,7 +1166,9 @@ def _resolve_update_ids(
         else:
             # Look up labels by name in the issue's team
             try:
-                labels_list = client.list_labels(team=original_issue.team.id, limit=250)
+                labels_list, _ = client.list_labels(
+                    team=original_issue.team.id, limit=250
+                )
                 label_map = {label.name.lower(): label for label in labels_list}
 
                 resolved_label_ids = []

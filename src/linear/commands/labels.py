@@ -127,7 +127,7 @@ def create_label(
                 team_id = team
             else:
                 # Try to resolve by key or name
-                teams = client.list_teams(limit=100)
+                teams, _ = client.list_teams(limit=100)
                 team_id = None
                 for t in teams:
                     if (t.key and t.key.upper() == team.upper()) or (
