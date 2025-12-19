@@ -23,6 +23,7 @@ from linear.formatters import (
     format_json,
     format_table,
 )
+from linear.utils import VerboseLogger
 from linear.utils.editor import IssueData, edit_issue_in_editor
 
 app = typer.Typer(help="Manage Linear issues")
@@ -30,6 +31,7 @@ app = typer.Typer(help="Manage Linear issues")
 
 @app.command("list")
 def list_issues(
+    ctx: typer.Context,
     assignee: Annotated[
         Optional[str],
         typer.Option(
@@ -93,12 +95,16 @@ def list_issues(
       # Output as JSON
       linear issues list --format json
 
-      # Filter by labels
-      linear issues list --label bug --label urgent
+       # Filter by labels
+       linear issues list --label bug --label urgent
     """
     try:
+        # Extract verbose flag from context
+        verbose = ctx.obj.get("verbose", False) if ctx.obj else False
+        verbose_logger = VerboseLogger(enabled=verbose)
+
         # Initialize client
-        client = LinearClient()
+        client = LinearClient(verbose_logger=verbose_logger)
 
         # Resolve 'me' or 'self' to current user's email
         if assignee and assignee.lower() in ("me", "self"):
@@ -146,6 +152,7 @@ def list_issues(
 
 @app.command("view")
 def view_issue(
+    ctx: typer.Context,
     issue_id: Annotated[
         str, typer.Argument(help="Issue ID or identifier (e.g., 'ENG-123')")
     ],
@@ -166,12 +173,16 @@ def view_issue(
       # Open issue in browser
       linear issues view ENG-123 --web
 
-      # View issue as JSON
-      linear issues view ENG-123 --format json
+       # View issue as JSON
+       linear issues view ENG-123 --format json
     """
     try:
+        # Extract verbose flag from context
+        verbose = ctx.obj.get("verbose", False) if ctx.obj else False
+        verbose_logger = VerboseLogger(enabled=verbose)
+
         # Initialize client
-        client = LinearClient()
+        client = LinearClient(verbose_logger=verbose_logger)
 
         # Fetch issue
         issue = client.get_issue(issue_id)
@@ -201,6 +212,7 @@ def view_issue(
 
 @app.command("search")
 def search_issues(
+    ctx: typer.Context,
     query: Annotated[str, typer.Argument(help="Search query (searches issue titles)")],
     limit: Annotated[
         int, typer.Option("--limit", help="Number of issues to display")
@@ -229,12 +241,16 @@ def search_issues(
       # Search with output as JSON
       linear issues search "bug fix" --format json
 
-      # Limit results
-      linear issues search refactor --limit 10
+       # Limit results
+       linear issues search refactor --limit 10
     """
     try:
+        # Extract verbose flag from context
+        verbose = ctx.obj.get("verbose", False) if ctx.obj else False
+        verbose_logger = VerboseLogger(enabled=verbose)
+
         # Initialize client
-        client = LinearClient()
+        client = LinearClient(verbose_logger=verbose_logger)
 
         # Search issues
         issues = client.search_issues(
@@ -273,6 +289,7 @@ def search_issues(
 
 @app.command("create")
 def create_issue(
+    ctx: typer.Context,
     prompt: Annotated[
         Optional[str],
         typer.Argument(help="Natural language prompt describing the issue"),
@@ -330,8 +347,12 @@ def create_issue(
     # Defaults: assignee=current user, team=auto-selected if only 1, priority=none
     """
     try:
+        # Extract verbose flag from context
+        verbose = ctx.obj.get("verbose", False) if ctx.obj else False
+        verbose_logger = VerboseLogger(enabled=verbose)
+
         console = Console()
-        client = LinearClient()
+        client = LinearClient(verbose_logger=verbose_logger)
 
         if should_use_claude_parsing(
             prompt,
@@ -1153,7 +1174,7 @@ def _update_with_flags(
 
     if response[0].lower() == "n":
         console.print("[yellow]Update cancelled.[/yellow]")
-        sys.exit(0)
+        raise typer.Exit()
 
     # Apply update
     try:
@@ -1211,7 +1232,7 @@ def _update_with_editor(
 
     if not changes:
         console.print("[yellow]No changes detected. Update cancelled.[/yellow]")
-        sys.exit(0)
+        raise typer.Exit()
 
     # Confirmation loop with re-edit support
     while True:
@@ -1234,7 +1255,7 @@ def _update_with_editor(
 
         if response[0].lower() == "n":
             console.print("[yellow]Update cancelled.[/yellow]")
-            sys.exit(0)
+            raise typer.Exit()
         elif response[0].lower() == "y":
             break  # Proceed to apply changes
         elif response[0].lower() == "e":
@@ -1247,7 +1268,7 @@ def _update_with_editor(
                     console.print(
                         "[yellow]No changes detected. Update cancelled.[/yellow]"
                     )
-                    sys.exit(0)
+                    raise typer.Exit()
                 # Loop continues
             except ValueError as e:
                 console.print(f"[red]Validation error: {e}[/red]")
@@ -1268,6 +1289,7 @@ def _update_with_editor(
 
 @app.command("update")
 def update_issue(
+    ctx: typer.Context,
     issue_id: Annotated[
         str,
         typer.Argument(help="Issue ID or identifier (e.g., 'ENG-123')"),
@@ -1358,11 +1380,15 @@ def update_issue(
       # Open in editor for interactive editing
       linear issues update ENG-123
 
-      # Output as JSON
-      linear issues update ENG-123 --title "New title" --format json
+       # Output as JSON
+       linear issues update ENG-123 --title "New title" --format json
     """
+    # Extract verbose flag from context
+    verbose = ctx.obj.get("verbose", False) if ctx.obj else False
+    verbose_logger = VerboseLogger(enabled=verbose)
+
     # Initialize
-    client = LinearClient()
+    client = LinearClient(verbose_logger=verbose_logger)
     console = Console()
 
     # Validation
@@ -1415,7 +1441,7 @@ def update_issue(
 
     except LinearClientError as e:
         typer.echo(f"Error: {e}", err=True)
-        sys.exit(1)
+        raise typer.Exit(1)
     except ValidationError as e:
         typer.echo(f"Data validation error: {e.errors()[0]['msg']}", err=True)
-        sys.exit(1)
+        raise typer.Exit(1)

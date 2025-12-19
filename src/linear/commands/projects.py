@@ -14,12 +14,14 @@ from linear.formatters import (
     format_projects_json,
     format_projects_table,
 )
+from linear.utils import VerboseLogger
 
 app = typer.Typer(help="Manage Linear projects")
 
 
 @app.command("list")
 def list_projects(
+    ctx: typer.Context,
     state: Annotated[
         Optional[str],
         typer.Option(
@@ -61,12 +63,16 @@ def list_projects(
       # Output as JSON
       linear projects list --format json
 
-      # Limit results
-      linear projects list --limit 10
+       # Limit results
+       linear projects list --limit 10
     """
     try:
+        # Extract verbose flag from context
+        verbose = ctx.obj.get("verbose", False) if ctx.obj else False
+        verbose_logger = VerboseLogger(enabled=verbose)
+
         # Initialize client
-        client = LinearClient()
+        client = LinearClient(verbose_logger=verbose_logger)
 
         # Fetch projects
         projects = client.list_projects(
@@ -98,6 +104,7 @@ def list_projects(
 
 @app.command("view")
 def view_project(
+    ctx: typer.Context,
     project_id: Annotated[str, typer.Argument(help="Project ID or slug")],
     format: Annotated[
         str, typer.Option("--format", "-f", help="Output format: detail, json")
@@ -110,12 +117,16 @@ def view_project(
       # View project by ID
       linear projects view abc123-def456
 
-      # View project as JSON
-      linear projects view my-project --format json
+       # View project as JSON
+       linear projects view my-project --format json
     """
     try:
+        # Extract verbose flag from context
+        verbose = ctx.obj.get("verbose", False) if ctx.obj else False
+        verbose_logger = VerboseLogger(enabled=verbose)
+
         # Initialize client
-        client = LinearClient()
+        client = LinearClient(verbose_logger=verbose_logger)
 
         # Fetch project
         project = client.get_project(project_id)

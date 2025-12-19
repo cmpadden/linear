@@ -13,12 +13,14 @@ from linear.formatters import (
     format_teams_json,
     format_teams_table,
 )
+from linear.utils import VerboseLogger
 
 app = typer.Typer(help="Manage Linear teams")
 
 
 @app.command("list")
 def list_teams(
+    ctx: typer.Context,
     limit: Annotated[
         int, typer.Option("--limit", help="Number of teams to display")
     ] = 50,
@@ -39,12 +41,16 @@ def list_teams(
       # Include archived teams
       linear teams list --include-archived
 
-      # Output as JSON
-      linear teams list --format json
+       # Output as JSON
+       linear teams list --format json
     """
     try:
+        # Extract verbose flag from context
+        verbose = ctx.obj.get("verbose", False) if ctx.obj else False
+        verbose_logger = VerboseLogger(enabled=verbose)
+
         # Initialize client
-        client = LinearClient()
+        client = LinearClient(verbose_logger=verbose_logger)
 
         # Fetch teams
         teams = client.list_teams(
@@ -73,6 +79,7 @@ def list_teams(
 
 @app.command("view")
 def view_team(
+    ctx: typer.Context,
     team_id: Annotated[str, typer.Argument(help="Team ID or key (e.g., 'ENG')")],
     format: Annotated[
         str, typer.Option("--format", "-f", help="Output format: detail, json")
@@ -85,12 +92,16 @@ def view_team(
       # View team by key
       linear teams view ENG
 
-      # View team as JSON
-      linear teams view ENG --format json
+       # View team as JSON
+       linear teams view ENG --format json
     """
     try:
+        # Extract verbose flag from context
+        verbose = ctx.obj.get("verbose", False) if ctx.obj else False
+        verbose_logger = VerboseLogger(enabled=verbose)
+
         # Initialize client
-        client = LinearClient()
+        client = LinearClient(verbose_logger=verbose_logger)
 
         # Fetch team
         team = client.get_team(team_id)

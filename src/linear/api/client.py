@@ -1,9 +1,13 @@
 """Base Linear API client for GraphQL interactions."""
 
 import os
-from typing import Any
+import time
+from typing import Any, TYPE_CHECKING
 
 import httpx
+
+if TYPE_CHECKING:
+    from linear.utils.context import VerboseLogger
 
 
 class LinearClientError(Exception):
@@ -18,11 +22,14 @@ class LinearClient:
     API_URL = "https://api.linear.app/graphql"
     RATE_LIMIT = 1500  # requests per hour
 
-    def __init__(self, api_key: str | None = None):
+    def __init__(
+        self, api_key: str | None = None, verbose_logger: "VerboseLogger | None" = None
+    ):
         """Initialize the Linear client.
 
         Args:
             api_key: Linear API key. If not provided, will read from LINEAR_API_KEY env var.
+            verbose_logger: Optional logger for verbose output.
 
         Raises:
             LinearClientError: If no API key is provided or found.
@@ -39,14 +46,25 @@ class LinearClient:
             "Content-Type": "application/json",
         }
 
+        # Store verbose logger (import here to avoid circular dependency)
+        if verbose_logger is None:
+            from linear.utils.context import VerboseLogger
+
+            verbose_logger = VerboseLogger(enabled=False)
+        self.verbose_logger = verbose_logger
+
     def query(
-        self, query: str, variables: dict[str, Any] | None = None
+        self,
+        query: str,
+        variables: dict[str, Any] | None = None,
+        operation_name: str | None = None,
     ) -> dict[str, Any]:
         """Execute a GraphQL query.
 
         Args:
             query: GraphQL query string
             variables: Optional query variables
+            operation_name: Optional operation name for verbose logging
 
         Returns:
             Query response data
@@ -54,15 +72,24 @@ class LinearClient:
         Raises:
             LinearClientError: If the query fails
         """
+        # Log query if verbose mode enabled
+        self.verbose_logger.log_graphql_query(query, variables, operation_name)
+
         payload = {"query": query}
         if variables:
             payload["variables"] = variables
 
         try:
+            start_time = time.perf_counter()
+
             with httpx.Client(timeout=30.0) as client:
                 response = client.post(self.API_URL, json=payload, headers=self.headers)
                 response.raise_for_status()
                 data = response.json()
+
+                # Log response time
+                duration_ms = (time.perf_counter() - start_time) * 1000
+                self.verbose_logger.log_response_time(duration_ms)
 
                 if "errors" in data:
                     errors = data["errors"]

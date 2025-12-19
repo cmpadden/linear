@@ -23,19 +23,29 @@ app = typer.Typer(
 
 @app.callback()
 def main_callback(
+    ctx: typer.Context,
     version: Annotated[
         Optional[bool],
         typer.Option(
             "--version",
-            "-v",
+            "-V",
             callback=version_callback,
             is_eager=True,
             help="Show version and exit",
         ),
     ] = None,
+    verbose: Annotated[
+        bool,
+        typer.Option(
+            "--verbose",
+            "-v",
+            help="Show verbose output (GraphQL queries, response times)",
+        ),
+    ] = False,
 ) -> None:
     """Linear CLI - Interact with Linear from your terminal."""
-    pass
+    # Store verbose flag in context for all commands to access
+    ctx.obj = {"verbose": verbose}
 
 
 # Register command modules

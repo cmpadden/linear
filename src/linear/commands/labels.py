@@ -12,12 +12,14 @@ from linear.formatters import (
     format_labels_json,
     format_labels_table,
 )
+from linear.utils import VerboseLogger
 
 app = typer.Typer(help="Manage Linear labels", no_args_is_help=True)
 
 
 @app.command("list")
 def list_labels(
+    ctx: typer.Context,
     limit: Annotated[
         int, typer.Option("--limit", "-l", help="Maximum number of labels to return")
     ] = 50,
@@ -44,8 +46,12 @@ def list_labels(
         linear labels list --include-archived
     """
     try:
+        # Extract verbose flag from context
+        verbose = ctx.obj.get("verbose", False) if ctx.obj else False
+        verbose_logger = VerboseLogger(enabled=verbose)
+
         # Initialize client
-        client = LinearClient()
+        client = LinearClient(verbose_logger=verbose_logger)
 
         # Fetch labels
         labels = client.list_labels(

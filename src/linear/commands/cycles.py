@@ -14,12 +14,14 @@ from linear.formatters import (
     format_cycles_json,
     format_cycles_table,
 )
+from linear.utils import VerboseLogger
 
 app = typer.Typer(help="Manage Linear cycles", no_args_is_help=True)
 
 
 @app.command("list")
 def list_cycles(
+    ctx: typer.Context,
     team: Annotated[
         Optional[str], typer.Option("--team", "-t", help="Filter by team name or key")
     ] = None,
@@ -56,12 +58,16 @@ def list_cycles(
       # Show future cycles for a specific team
       linear cycles list --team design --future
 
-      # Output as JSON
-      linear cycles list --format json
+       # Output as JSON
+       linear cycles list --format json
     """
     try:
+        # Extract verbose flag from context
+        verbose = ctx.obj.get("verbose", False) if ctx.obj else False
+        verbose_logger = VerboseLogger(enabled=verbose)
+
         # Initialize client
-        client = LinearClient()
+        client = LinearClient(verbose_logger=verbose_logger)
 
         # Fetch cycles
         cycles = client.list_cycles(
@@ -94,6 +100,7 @@ def list_cycles(
 
 @app.command("view")
 def view_cycle(
+    ctx: typer.Context,
     cycle_id: Annotated[str, typer.Argument(help="Cycle ID")],
     format: Annotated[
         str, typer.Option("--format", "-f", help="Output format: detail, json")
@@ -106,12 +113,16 @@ def view_cycle(
       # View cycle by ID
       linear cycles view abc123-def456
 
-      # View cycle as JSON
-      linear cycles view abc123 --format json
+       # View cycle as JSON
+       linear cycles view abc123 --format json
     """
     try:
+        # Extract verbose flag from context
+        verbose = ctx.obj.get("verbose", False) if ctx.obj else False
+        verbose_logger = VerboseLogger(enabled=verbose)
+
         # Initialize client
-        client = LinearClient()
+        client = LinearClient(verbose_logger=verbose_logger)
 
         # Fetch cycle
         cycle = client.get_cycle(cycle_id)

@@ -169,6 +169,20 @@ linear labels list [OPTIONS]
 
 ### Common Patterns
 
+**Global Options:**
+These options can be used with any command:
+- `--verbose` / `-v` - Show verbose output including GraphQL queries, variables, and response times (output to stderr)
+- `--version` / `-V` - Show CLI version and exit
+
+Example:
+```bash
+# Show GraphQL queries and timing for debugging
+linear --verbose issues list --limit 5
+
+# Check CLI version
+linear --version
+```
+
 **Command Aliases:**
 You can use short aliases for all command groups:
 - `linear i` instead of `linear issues`

@@ -28,3 +28,11 @@
 - **CLI Commands**: Use Typer with rich type annotations; support `--format` flag (table/json)
 - **Formatters**: Use Rich library for tables/colors; handle empty lists gracefully
 - **Models**: Pydantic with `ConfigDict(populate_by_name=True)`; use Field aliases for camelCase GraphQL fields
+
+## Documentation Standards
+- **CHANGELOG.md**: Always update when adding features, fixing bugs, or making breaking changes
+  - Add entries under `[0.0.X] (unreleased)` section at the top
+  - Use categories: Added, Changed, Fixed, Deprecated, Removed, Security
+  - Follow [Keep a Changelog](https://keepachangelog.com/) format
+- **README.md**: Update for new commands, flags, or significant behavior changes
+- **PLAN.md**: Mark features as complete with date when implemented

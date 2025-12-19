@@ -13,12 +13,14 @@ from linear.formatters import (
     format_users_json,
     format_users_table,
 )
+from linear.utils import VerboseLogger
 
 app = typer.Typer(help="Manage Linear users", no_args_is_help=True)
 
 
 @app.command("list")
 def list_users(
+    ctx: typer.Context,
     active_only: Annotated[
         bool, typer.Option("--active-only", help="Show only active users")
     ] = True,
@@ -45,12 +47,16 @@ def list_users(
       # List with limit
       linear users list --limit 20
 
-      # Output as JSON
-      linear users list --format json
+       # Output as JSON
+       linear users list --format json
     """
     try:
+        # Extract verbose flag from context
+        verbose = ctx.obj.get("verbose", False) if ctx.obj else False
+        verbose_logger = VerboseLogger(enabled=verbose)
+
         # Initialize client
-        client = LinearClient()
+        client = LinearClient(verbose_logger=verbose_logger)
 
         # Fetch users
         users = client.list_users(
@@ -80,6 +86,7 @@ def list_users(
 
 @app.command("view")
 def view_user(
+    ctx: typer.Context,
     user_id: Annotated[str, typer.Argument(help="User ID or email")],
     format: Annotated[
         str, typer.Option("--format", "-f", help="Output format: detail, json")
@@ -95,12 +102,16 @@ def view_user(
       # View user by email
       linear users view user@example.com
 
-      # View user as JSON
-      linear users view abc123 --format json
+       # View user as JSON
+       linear users view abc123 --format json
     """
     try:
+        # Extract verbose flag from context
+        verbose = ctx.obj.get("verbose", False) if ctx.obj else False
+        verbose_logger = VerboseLogger(enabled=verbose)
+
         # Initialize client
-        client = LinearClient()
+        client = LinearClient(verbose_logger=verbose_logger)
 
         # Fetch user
         user = client.get_user(user_id)
