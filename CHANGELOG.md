@@ -57,6 +57,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Version flag**: Changed version flag shorthand from `-v` to `-V` to avoid conflict with the new `--verbose` flag
   - `--version` (long form) remains unchanged
   - New shorthand: `linear -V` or `linear --version`
+- **Release script**: GitHub releases now use CHANGELOG.md sections instead of auto-generated notes
+  - Automatically extracts the relevant version section from CHANGELOG.md
+  - Falls back to auto-generated notes if no changelog section is found
 
 ### Deprecated
 - **`--limit` flag**: Deprecated in favor of `--per-page` for consistency with pagination terminology

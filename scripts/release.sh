@@ -46,8 +46,29 @@ git push origin "v$NEW_VERSION"
 echo ""
 echo "Version bumped to $NEW_VERSION"
 echo ""
-echo "Creating GitHub release..."
-gh release create "v$NEW_VERSION" --generate-notes
+echo "Extracting changelog section..."
+
+# Extract the changelog section for this version
+CHANGELOG_SECTION=$(awk -v version="$NEW_VERSION" '
+    /^## \[/ {
+        if (found) exit
+        if ($0 ~ "\\[" version "\\]") {
+            found = 1
+            next
+        }
+    }
+    found && /^## \[/ { exit }
+    found { print }
+' CHANGELOG.md)
+
+if [ -z "$CHANGELOG_SECTION" ]; then
+    echo "⚠️  Warning: No changelog section found for version $NEW_VERSION"
+    echo "Creating release with auto-generated notes..."
+    gh release create "v$NEW_VERSION" --generate-notes
+else
+    echo "Creating GitHub release with changelog..."
+    gh release create "v$NEW_VERSION" --notes "$CHANGELOG_SECTION"
+fi
 
 echo ""
 echo "Release v$NEW_VERSION created!"
