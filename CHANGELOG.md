@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.0.12] (unreleased)
 
 ### Added
+- **Teams admin operations**: Added team creation, update, deletion, and archival operations
+  - `linear teams create` - Create new team with `--name`, `--key`, `--description`, and `--private` flags
+  - `linear teams update <team-id>` - Update team name, key, description, or privacy settings
+  - `linear teams delete <team-id>` - Delete team (with confirmation prompt, use `--yes` to skip)
+  - `linear teams archive <team-id>` - Archive team (with confirmation prompt, use `--yes` to skip)
+  - Supports both detail and JSON output formats via `--format` flag
+  - Team lookup by ID or key for all operations
 - **Cycles management**: Added cycle creation, update, deletion, and archival operations
   - `linear cycles create` - Create new cycle with `--name`, `--team`, `--starts-at`, `--ends-at`, and `--description` flags
   - `linear cycles update <cycle-id>` - Update cycle name, dates, or description

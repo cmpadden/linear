@@ -33,6 +33,10 @@ class LinearClient(BaseClient):
     list_teams = teams.list_teams
     get_team = teams.get_team
     get_team_states = teams.get_team_states
+    create_team = teams.create_team
+    update_team = teams.update_team
+    delete_team = teams.delete_team
+    archive_team = teams.archive_team
 
     # Cycles
     list_cycles = cycles.list_cycles

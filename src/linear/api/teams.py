@@ -232,3 +232,246 @@ def get_team_states(self: "LinearClient", team_id: str) -> list[dict]:
 
     states_data = response.get("team", {}).get("states", {}).get("nodes", [])
     return states_data
+
+
+def create_team(
+    self: "LinearClient",
+    name: str,
+    key: str,
+    description: str | None = None,
+    private: bool = False,
+) -> Team:
+    """Create a new team.
+
+    Args:
+        name: Team name (required)
+        key: Team key/identifier (required, e.g., 'ENG', 'DESIGN')
+        description: Team description
+        private: Whether team is private (default: False)
+
+    Returns:
+        Created Team object
+
+    Raises:
+        LinearClientError: If the mutation fails or data validation fails
+    """
+    mutation = """
+    mutation TeamCreate($input: TeamCreateInput!) {
+      teamCreate(input: $input) {
+        success
+        team {
+          id
+          name
+          key
+          description
+          color
+          icon
+          private
+          archivedAt
+          createdAt
+          updatedAt
+          cyclesEnabled
+          members {
+            nodes {
+              id
+              name
+            }
+          }
+          issues {
+            nodes {
+              id
+            }
+          }
+          projects {
+            nodes {
+              id
+            }
+          }
+        }
+      }
+    }
+    """
+
+    # Build input object
+    input_data: dict[str, str | bool] = {
+        "name": name,
+        "key": key,
+        "private": private,
+    }
+
+    # Add optional fields if provided
+    if description:
+        input_data["description"] = description
+
+    variables = {"input": input_data}
+    response = self.query(mutation, variables)
+
+    # Check if mutation was successful
+    team_create = response.get("teamCreate", {})
+    if not team_create.get("success"):
+        raise LinearClientError("Failed to create team")
+
+    try:
+        return Team.model_validate(team_create["team"])
+    except ValidationError as e:
+        error_details = e.errors()[0]
+        field_path = " -> ".join(str(loc) for loc in error_details["loc"])
+        raise LinearClientError(
+            f"Failed to parse created team: {error_details['msg']} at {field_path}"
+        )
+
+
+def update_team(
+    self: "LinearClient",
+    team_id: str,
+    name: str | None = None,
+    key: str | None = None,
+    description: str | None = None,
+    private: bool | None = None,
+) -> Team:
+    """Update an existing team.
+
+    Args:
+        team_id: Team ID (UUID) or key
+        name: New team name
+        key: New team key/identifier
+        description: New team description
+        private: Whether team is private
+
+    Returns:
+        Updated Team object
+
+    Raises:
+        LinearClientError: If the mutation fails or data validation fails
+    """
+    mutation = """
+    mutation TeamUpdate($id: String!, $input: TeamUpdateInput!) {
+      teamUpdate(id: $id, input: $input) {
+        success
+        team {
+          id
+          name
+          key
+          description
+          color
+          icon
+          private
+          archivedAt
+          createdAt
+          updatedAt
+          cyclesEnabled
+          members {
+            nodes {
+              id
+              name
+            }
+          }
+          issues {
+            nodes {
+              id
+            }
+          }
+          projects {
+            nodes {
+              id
+            }
+          }
+        }
+      }
+    }
+    """
+
+    # Build input object - only include provided fields
+    input_data: dict[str, str | bool] = {}
+
+    if name is not None:
+        input_data["name"] = name
+    if key is not None:
+        input_data["key"] = key
+    if description is not None:
+        input_data["description"] = description
+    if private is not None:
+        input_data["private"] = private
+
+    variables = {
+        "id": team_id,
+        "input": input_data,
+    }
+
+    response = self.query(mutation, variables)
+
+    # Check if mutation was successful
+    team_update = response.get("teamUpdate", {})
+    if not team_update.get("success"):
+        raise LinearClientError("Failed to update team")
+
+    try:
+        return Team.model_validate(team_update["team"])
+    except ValidationError as e:
+        error_details = e.errors()[0]
+        field_path = " -> ".join(str(loc) for loc in error_details["loc"])
+        raise LinearClientError(
+            f"Failed to parse updated team: {error_details['msg']} at {field_path}"
+        )
+
+
+def delete_team(self: "LinearClient", team_id: str) -> bool:
+    """Delete a team.
+
+    Args:
+        team_id: Team ID (UUID) or key
+
+    Returns:
+        True if successful
+
+    Raises:
+        LinearClientError: If the mutation fails
+    """
+    mutation = """
+    mutation TeamDelete($id: String!) {
+      teamDelete(id: $id) {
+        success
+      }
+    }
+    """
+
+    variables = {"id": team_id}
+    response = self.query(mutation, variables)
+
+    # Check if mutation was successful
+    team_delete = response.get("teamDelete", {})
+    if not team_delete.get("success"):
+        raise LinearClientError("Failed to delete team")
+
+    return True
+
+
+def archive_team(self: "LinearClient", team_id: str) -> bool:
+    """Archive a team.
+
+    Args:
+        team_id: Team ID (UUID) or key
+
+    Returns:
+        True if successful
+
+    Raises:
+        LinearClientError: If the mutation fails
+    """
+    mutation = """
+    mutation TeamArchive($id: String!) {
+      teamArchive(id: $id) {
+        success
+      }
+    }
+    """
+
+    variables = {"id": team_id}
+    response = self.query(mutation, variables)
+
+    # Check if mutation was successful
+    team_archive = response.get("teamArchive", {})
+    if not team_archive.get("success"):
+        raise LinearClientError("Failed to archive team")
+
+    return True
