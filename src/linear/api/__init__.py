@@ -25,6 +25,7 @@ class LinearClient(BaseClient):
     # Teams
     list_teams = teams.list_teams
     get_team = teams.get_team
+    get_team_states = teams.get_team_states
 
     # Cycles
     list_cycles = cycles.list_cycles

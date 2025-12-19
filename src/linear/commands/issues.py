@@ -502,15 +502,23 @@ def create_issue(
 
         # Resolve state name to ID
         state_id = None
-        if state:
-            # Get team states
-            # Note: get_team() doesn't return workflow states, so we can't look up by name
-            # The user must provide the state ID or leave it empty
-            typer.echo(
-                "Warning: State lookup by name not supported. Please provide state ID or leave empty.",
-                err=True,
-            )
-            state_id = None
+        if state and team_id:
+            # Look up state by name
+            try:
+                states_list = client.get_team_states(team_id)
+                for s in states_list:
+                    if s["name"].lower() == state.lower():
+                        state_id = s["id"]
+                        break
+
+                if not state_id:
+                    console.print(
+                        f"[yellow]Warning: State '{state}' not found in team {team_name.split(' - ')[0] if team_name else team_id}, skipping[/yellow]"
+                    )
+            except LinearClientError as e:
+                console.print(
+                    f"[yellow]Warning: Failed to list states: {e}, skipping[/yellow]"
+                )
 
         # Show summary and ask for confirmation (with edit loop)
         while True:
@@ -1083,11 +1091,38 @@ def _resolve_update_ids(
                 console.print(f"[red]Error: Failed to list labels: {e}[/red]")
                 raise typer.Exit(1)
 
-    # State resolution - skip for now (would need workflow state lookup)
+    # State resolution
     if "state" in changes:
-        console.print(
-            "[yellow]Warning: State updates are not yet supported, skipping[/yellow]"
-        )
+        state = changes["state"]
+        if state is None or (isinstance(state, str) and state.lower() == "null"):
+            # Cannot unset state (every issue must have a state)
+            console.print(
+                "[yellow]Warning: Cannot remove state from issue, skipping[/yellow]"
+            )
+        else:
+            # Look up state by name in the issue's team
+            try:
+                team_id = original_issue.team.id
+                if not team_id:
+                    console.print("[red]Error: Issue team ID not found[/red]")
+                    raise typer.Exit(1)
+
+                states_list = client.get_team_states(team_id)
+                state_found = False
+                for s in states_list:
+                    if s["name"].lower() == state.lower():
+                        api_input["state_id"] = s["id"]
+                        display_values["state"] = s["name"]
+                        state_found = True
+                        break
+                if not state_found:
+                    console.print(
+                        f"[red]Error: State '{state}' not found in team {original_issue.team.key}[/red]"
+                    )
+                    raise typer.Exit(1)
+            except LinearClientError as e:
+                console.print(f"[red]Error: Failed to list states: {e}[/red]")
+                raise typer.Exit(1)
 
     return api_input, display_values
 
@@ -1689,6 +1724,123 @@ def unarchive_issue(
             client.unarchive_issue(issue_id=issue.id)
             console.print(
                 f"\n[green]Issue {issue.identifier} unarchived successfully[/green]"
+            )
+        except LinearClientError as e:
+            console.print(f"[red]Error: {e}[/red]")
+            raise typer.Exit(1)
+
+    except LinearClientError as e:
+        typer.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except ValidationError as e:
+        typer.echo(f"Data validation error: {e.errors()[0]['msg']}", err=True)
+        sys.exit(1)
+    except Exception as e:
+        typer.echo(f"Unexpected error: {e}", err=True)
+        sys.exit(1)
+
+
+@app.command("move-state")
+def move_state(
+    ctx: typer.Context,
+    issue_id: Annotated[
+        str,
+        typer.Argument(help="Issue ID or identifier (e.g., 'ENG-123')"),
+    ],
+    state: Annotated[
+        str,
+        typer.Argument(help="State name (e.g., 'In Progress', 'Done')"),
+    ],
+    yes: Annotated[
+        bool,
+        typer.Option("--yes", "-y", help="Skip confirmation prompt"),
+    ] = False,
+) -> None:
+    """Move an issue to a different workflow state.
+
+    Examples:
+
+      # Move issue to "In Progress" state
+      linear issues move-state ENG-123 "In Progress"
+
+      # Move issue to "Done" state without confirmation
+      linear issues move-state ENG-123 Done --yes
+    """
+    try:
+        # Extract verbose flag from context
+        verbose = ctx.obj.get("verbose", False) if ctx.obj else False
+        verbose_logger = VerboseLogger(enabled=verbose)
+
+        # Initialize
+        client = LinearClient(verbose_logger=verbose_logger)
+        console = Console()
+
+        # Fetch the issue first to get details and resolve identifier to UUID
+        try:
+            issue = client.get_issue(issue_id)
+        except LinearClientError as e:
+            console.print(f"[red]Error: {e}[/red]")
+            console.print(
+                f"[dim]Make sure '{issue_id}' is a valid issue identifier or ID[/dim]"
+            )
+            raise typer.Exit(1)
+
+        # Look up state by name in the issue's team
+        try:
+            team_id = issue.team.id
+            if not team_id:
+                console.print("[red]Error: Issue team ID not found[/red]")
+                raise typer.Exit(1)
+
+            states_list = client.get_team_states(team_id)
+            state_id = None
+            state_name = None
+            for s in states_list:
+                if s["name"].lower() == state.lower():
+                    state_id = s["id"]
+                    state_name = s["name"]
+                    break
+
+            if not state_id:
+                console.print(
+                    f"[red]Error: State '{state}' not found in team {issue.team.key}[/red]"
+                )
+                console.print("\n[bold]Available states:[/bold]")
+                for s in states_list:
+                    console.print(f"  {s['name']}")
+                raise typer.Exit(1)
+        except LinearClientError as e:
+            console.print(f"[red]Error: Failed to list states: {e}[/red]")
+            raise typer.Exit(1)
+
+        # Show issue details and state change
+        console.print("\n[bold]Issue:[/bold]")
+        console.print(f"  [bold]Identifier:[/bold] {issue.identifier}")
+        console.print(f"  [bold]Title:[/bold] {issue.title}")
+        console.print(f"  [bold]Team:[/bold] {issue.team.key}")
+        console.print("\n[bold]State change:[/bold]")
+        console.print(f"  [dim]Current:[/dim] {issue.state.name}")
+        console.print(f"  [green]New:[/green]     {state_name}")
+
+        # Confirmation (unless --yes flag is used)
+        if not yes:
+            response = Prompt.ask(
+                "\n[yellow]Apply this state change?[/yellow]",
+                choices=["y", "yes", "n", "no"],
+                default="y",
+                show_choices=True,
+                case_sensitive=False,
+            )
+
+            if response[0].lower() == "n":
+                console.print("[yellow]State change cancelled.[/yellow]")
+                sys.exit(0)
+
+        # Update the issue state
+        try:
+            client.update_issue(issue_id=issue.id, state_id=state_id)
+            console.print(
+                f"\n[green]Issue {issue.identifier} moved to '{state_name}' successfully[/green]"
             )
         except LinearClientError as e:
             console.print(f"[red]Error: {e}[/red]")

@@ -193,3 +193,42 @@ def get_team(self: "LinearClient", team_id: str) -> Team:
         raise LinearClientError(
             f"Failed to parse team '{team_id}': {e.errors()[0]['msg']}"
         )
+
+
+def get_team_states(self: "LinearClient", team_id: str) -> list[dict]:
+    """Get workflow states for a team.
+
+    Args:
+        team_id: Team ID (UUID) or key (e.g., 'ENG')
+
+    Returns:
+        List of workflow state dictionaries with id, name, type, color
+
+    Raises:
+        LinearClientError: If the query fails or team not found
+    """
+    # GraphQL query
+    query = """
+    query Team($id: String!) {
+      team(id: $id) {
+        id
+        states {
+          nodes {
+            id
+            name
+            type
+            color
+          }
+        }
+      }
+    }
+    """
+
+    variables = {"id": team_id}
+    response = self.query(query, variables)
+
+    if not response.get("team"):
+        raise LinearClientError(f"Team '{team_id}' not found")
+
+    states_data = response.get("team", {}).get("states", {}).get("nodes", [])
+    return states_data
