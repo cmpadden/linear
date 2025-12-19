@@ -32,9 +32,19 @@ def list_cycles(
         bool, typer.Option("--future", help="Show only future cycles")
     ] = False,
     past: Annotated[bool, typer.Option("--past", help="Show only past cycles")] = False,
-    limit: Annotated[
-        int, typer.Option("--limit", "-l", help="Number of cycles to display")
+    per_page: Annotated[
+        int, typer.Option("--per-page", help="Number of cycles per page (max 250)")
     ] = 50,
+    page: Annotated[
+        Optional[int], typer.Option("--page", help="Page number to fetch (starts at 1)")
+    ] = None,
+    all: Annotated[
+        bool, typer.Option("--all", help="Fetch all results automatically")
+    ] = False,
+    limit: Annotated[
+        Optional[int],
+        typer.Option("--limit", "-l", help="DEPRECATED: use --per-page instead"),
+    ] = None,
     include_archived: Annotated[
         bool, typer.Option("--include-archived", help="Include archived cycles")
     ] = False,
@@ -58,8 +68,14 @@ def list_cycles(
       # Show future cycles for a specific team
       linear cycles list --team design --future
 
-       # Output as JSON
-       linear cycles list --format json
+      # Fetch all results
+      linear cycles list --all
+
+      # Pagination
+      linear cycles list --page 2 --per-page 25
+
+      # Output as JSON
+      linear cycles list --format json
     """
     try:
         # Extract verbose flag from context
@@ -69,23 +85,75 @@ def list_cycles(
         # Initialize client
         client = LinearClient(verbose_logger=verbose_logger)
 
+        from rich.console import Console
+
+        console = Console()
+
+        # Handle deprecated --limit flag
+        if limit is not None:
+            console.print(
+                "[yellow]Warning: --limit is deprecated, use --per-page instead[/yellow]"
+            )
+            per_page = limit
+
+        # Validate per_page
+        if per_page > 250:
+            console.print("[red]Error: --per-page cannot exceed 250[/red]")
+            sys.exit(1)
+
+        # Calculate cursor for pagination
+        after_cursor: str | None = None
+        effective_per_page = limit if limit is not None else per_page
+        if page and page > 1:
+            # For now, we need to iterate through pages to get the cursor
+            current_page = 1
+            while current_page < page:
+                _, page_info = client.list_cycles(
+                    team=team,
+                    active=active,
+                    future=future,
+                    past=past,
+                    limit=effective_per_page,
+                    include_archived=include_archived,
+                    after=after_cursor,
+                    fetch_all=False,
+                )
+                cursor_value = page_info.get("endCursor")
+                if not cursor_value or cursor_value == "":
+                    console.print(
+                        f"[yellow]Page {page} does not exist (only {current_page} page(s) available)[/yellow]"
+                    )
+                    sys.exit(1)
+                after_cursor = str(cursor_value) if cursor_value else None
+                current_page += 1
+
         # Fetch cycles
-        cycles, _ = client.list_cycles(
+        cycles, pagination_info = client.list_cycles(
             team=team,
             active=active,
             future=future,
             past=past,
-            limit=limit,
+            limit=effective_per_page,
             include_archived=include_archived,
+            after=after_cursor,
+            fetch_all=all,
         )
 
-        # Parse cycles
+        # Enhance pagination info for display
+        display_pagination_info: dict[str, str | bool | int] = dict(pagination_info)
+        if not all:
+            start_index = ((page or 1) - 1) * effective_per_page + 1
+            end_index = start_index + len(cycles) - 1
+            display_pagination_info["startIndex"] = start_index
+            display_pagination_info["endIndex"] = end_index
+            display_pagination_info["currentPage"] = page or 1
+            display_pagination_info["perPage"] = effective_per_page
 
         # Format output
         if format == "json":
             format_cycles_json(cycles)
         else:  # table
-            format_cycles_table(cycles)
+            format_cycles_table(cycles, display_pagination_info)
 
     except LinearClientError as e:
         typer.echo(f"Error: {e}", err=True)

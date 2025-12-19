@@ -21,9 +21,19 @@ app = typer.Typer(help="Manage Linear labels", no_args_is_help=True)
 @app.command("list")
 def list_labels(
     ctx: typer.Context,
-    limit: Annotated[
-        int, typer.Option("--limit", "-l", help="Maximum number of labels to return")
+    per_page: Annotated[
+        int, typer.Option("--per-page", help="Number of labels per page (max 250)")
     ] = 50,
+    page: Annotated[
+        Optional[int], typer.Option("--page", help="Page number to fetch (starts at 1)")
+    ] = None,
+    all: Annotated[
+        bool, typer.Option("--all", help="Fetch all results automatically")
+    ] = False,
+    limit: Annotated[
+        Optional[int],
+        typer.Option("--limit", "-l", help="DEPRECATED: use --per-page instead"),
+    ] = None,
     team: Annotated[
         Optional[str],
         typer.Option(
@@ -43,8 +53,10 @@ def list_labels(
     Examples:
         linear labels list
         linear labels list --team ENG
-        linear labels list --limit 20 --format json
+        linear labels list --per-page 20 --format json
         linear labels list --include-archived
+        linear labels list --all
+        linear labels list --page 2 --per-page 25
     """
     try:
         # Extract verbose flag from context
@@ -53,21 +65,67 @@ def list_labels(
 
         # Initialize client
         client = LinearClient(verbose_logger=verbose_logger)
+        console = Console()
+
+        # Handle deprecated --limit flag
+        if limit is not None:
+            console.print(
+                "[yellow]Warning: --limit is deprecated, use --per-page instead[/yellow]"
+            )
+            per_page = limit
+
+        # Validate per_page
+        if per_page > 250:
+            console.print("[red]Error: --per-page cannot exceed 250[/red]")
+            sys.exit(1)
+
+        # Calculate cursor for pagination
+        after_cursor: str | None = None
+        effective_per_page = per_page
+        if page and page > 1:
+            # For now, we need to iterate through pages to get the cursor
+            current_page = 1
+            while current_page < page:
+                _, page_info = client.list_labels(
+                    limit=effective_per_page,
+                    team=team,
+                    include_archived=include_archived,
+                    after=after_cursor,
+                    fetch_all=False,
+                )
+                cursor_value = page_info.get("endCursor")
+                if not cursor_value or cursor_value == "":
+                    console.print(
+                        f"[yellow]Page {page} does not exist (only {current_page} page(s) available)[/yellow]"
+                    )
+                    sys.exit(1)
+                after_cursor = str(cursor_value) if cursor_value else None
+                current_page += 1
 
         # Fetch labels
-        labels, _ = client.list_labels(
-            limit=limit,
+        labels, pagination_info = client.list_labels(
+            limit=effective_per_page,
             team=team,
             include_archived=include_archived,
+            after=after_cursor,
+            fetch_all=all,
         )
 
-        # Parse response
+        # Enhance pagination info for display
+        display_pagination_info: dict[str, str | bool | int] = dict(pagination_info)
+        if not all:
+            start_index = ((page or 1) - 1) * effective_per_page + 1
+            end_index = start_index + len(labels) - 1
+            display_pagination_info["startIndex"] = start_index
+            display_pagination_info["endIndex"] = end_index
+            display_pagination_info["currentPage"] = page or 1
+            display_pagination_info["perPage"] = effective_per_page
 
         # Format output
         if format == "json":
             format_labels_json(labels)
         else:  # table
-            format_labels_table(labels)
+            format_labels_table(labels, display_pagination_info)
 
     except LinearClientError as e:
         typer.echo(f"Error: {e}", err=True)
