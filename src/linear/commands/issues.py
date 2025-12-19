@@ -566,7 +566,7 @@ def create_issue(
 
         label_ids = None
         if labels:
-            labels_list = client.list_labels(team=team_id, limit=250)
+            labels_list, _ = client.list_labels(team=team_id, limit=250)
             label_map = {label.name.lower(): label.id for label in labels_list}
 
             label_ids = []
@@ -590,7 +590,7 @@ def create_issue(
                 project_id = project
             else:
                 # Look up by name
-                projects_list = client.list_projects(team=team_id, limit=250)
+                projects_list, _ = client.list_projects(team=team_id, limit=250)
                 for p in projects_list:
                     if p.name.lower() == project.lower():
                         project_id = p.id
@@ -741,7 +741,7 @@ def create_issue(
                         # Re-resolve project ID
                         if project:
                             project_id = None
-                            projects_list = client.list_projects(
+                            projects_list, _ = client.list_projects(
                                 team=team_id, limit=250
                             )
                             for p in projects_list:
@@ -762,7 +762,8 @@ def create_issue(
                         labels = edited_data.labels
                         # Re-resolve label IDs
                         if labels:
-                            labels_list = client.list_labels(team=team_id, limit=250)
+                            label_ids = []
+                            labels_list, _ = client.list_labels(team=team_id, limit=250)
                             label_map = {
                                 label.name.lower(): label.id for label in labels_list
                             }
@@ -1136,7 +1137,7 @@ def _resolve_update_ids(
         else:
             # Look up project by name in the issue's team
             try:
-                projects_list = client.list_projects(
+                projects_list, _ = client.list_projects(
                     team=original_issue.team.id, limit=250
                 )
                 project_found = False

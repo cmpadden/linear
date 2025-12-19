@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.0.12] (unreleased)
 
 ### Added
+- **Extended pagination support**: Added cursor-based pagination to projects, teams, and users list commands
+  - `linear projects list` - Full pagination support with `--per-page`, `--page`, and `--all` flags
+  - `linear teams list` - Full pagination support with `--per-page`, `--page`, and `--all` flags
+  - `linear users list` - Full pagination support with `--per-page`, `--page`, and `--all` flags
+  - Pagination info displayed in table footer showing current range and availability of more results
+  - Examples: `linear users list --page 2 --per-page 10`, `linear projects list --all`
+  - Note: Cycles and labels pagination API updated, command layer updates in progress
 - **Teams admin operations**: Added team creation, update, deletion, and archival operations
   - `linear teams create` - Create new team with `--name`, `--key`, `--description`, and `--private` flags
   - `linear teams update <team-id>` - Update team name, key, description, or privacy settings

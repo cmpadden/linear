@@ -70,7 +70,7 @@ def list_cycles(
         client = LinearClient(verbose_logger=verbose_logger)
 
         # Fetch cycles
-        cycles = client.list_cycles(
+        cycles, _ = client.list_cycles(
             team=team,
             active=active,
             future=future,

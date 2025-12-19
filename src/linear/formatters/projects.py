@@ -1,6 +1,7 @@
 """Project formatters for Linear CLI."""
 
 import json
+from typing import Any
 
 from rich.console import Console
 from rich.table import Table
@@ -8,11 +9,47 @@ from rich.table import Table
 from linear.models import Project
 
 
-def format_projects_table(projects: list[Project]) -> None:
+def _display_pagination(
+    console: Console, count: int, pagination_info: dict[str, Any]
+) -> None:
+    """Display pagination information.
+
+    Args:
+        console: Rich console
+        count: Number of items in current page
+        pagination_info: Pagination metadata
+    """
+    # Check if using --all mode (has startIndex means paging mode, not --all)
+    if "startIndex" not in pagination_info:
+        # --all mode was used
+        console.print(
+            f"\n[dim]Total: {pagination_info.get('totalFetched', count)} project(s)[/dim]"
+        )
+    elif pagination_info.get("hasNextPage"):
+        # More pages available
+        start = pagination_info.get("startIndex", 1)
+        end = pagination_info.get("endIndex", count)
+        console.print(
+            f"\n[dim]Showing {start}-{end} (more available, use --page to see more)[/dim]"
+        )
+    else:
+        # Last page or only page
+        if pagination_info.get("currentPage", 1) > 1:
+            start = pagination_info.get("startIndex", 1)
+            end = pagination_info.get("endIndex", count)
+            console.print(f"\n[dim]Showing {start}-{end}[/dim]")
+        else:
+            console.print(f"\n[dim]Total: {count} project(s)[/dim]")
+
+
+def format_projects_table(
+    projects: list[Project], pagination_info: dict[str, Any] | None = None
+) -> None:
     """Format projects as a rich table.
 
     Args:
         projects: List of Project objects to display
+        pagination_info: Optional pagination metadata
     """
     console = Console()
 
@@ -50,7 +87,12 @@ def format_projects_table(projects: list[Project]) -> None:
         )
 
     console.print(table)
-    console.print(f"\n[dim]Total: {len(projects)} project(s)[/dim]")
+
+    # Display pagination info
+    if pagination_info:
+        _display_pagination(console, len(projects), pagination_info)
+    else:
+        console.print(f"\n[dim]Total: {len(projects)} project(s)[/dim]")
 
 
 def format_projects_json(projects: list[Project]) -> None:

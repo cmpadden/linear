@@ -21,16 +21,21 @@ def list_labels(
     limit: int = 50,
     team: str | None = None,
     include_archived: bool = False,
-) -> list[Label]:
+    after: str | None = None,
+    fetch_all: bool = False,
+) -> tuple[list[Label], dict[str, Any]]:
     """List issue labels.
 
     Args:
-        limit: Maximum number of labels to return (default: 50)
+        limit: Maximum number of labels to return per page (default: 50)
         team: Filter by team ID or key
         include_archived: Include archived labels (default: False)
+        after: Cursor for pagination (fetches items after this cursor)
+        fetch_all: If True, automatically fetch all pages (default: False)
 
     Returns:
-        List of Label objects
+        Tuple of (list of Label objects, pagination metadata dict)
+        Pagination metadata contains: hasNextPage, endCursor, totalFetched
 
     Raises:
         LinearClientError: If the query fails or data validation fails
@@ -39,8 +44,8 @@ def list_labels(
         >>> client.list_labels(team="ENG", limit=20)
     """
     query = """
-    query($first: Int, $filter: IssueLabelFilter, $includeArchived: Boolean) {
-      issueLabels(first: $first, filter: $filter, includeArchived: $includeArchived) {
+    query($first: Int, $after: String, $filter: IssueLabelFilter, $includeArchived: Boolean) {
+      issueLabels(first: $first, after: $after, filter: $filter, includeArchived: $includeArchived) {
         nodes {
           id
           name
@@ -100,11 +105,56 @@ def list_labels(
     if filters:
         variables["filter"] = filters
 
+    # Fetch all pages if requested
+    if fetch_all:
+        all_labels: list[Label] = []
+        current_cursor = after
+        page_count = 0
+        max_pages = 100
+
+        while page_count < max_pages:
+            variables["after"] = current_cursor
+
+            response = self.query(query, variables)
+
+            try:
+                connection = LabelConnection.model_validate(
+                    response.get("issueLabels", {})
+                )
+                all_labels.extend(connection.nodes)
+                page_count += 1
+
+                if not connection.page_info.has_next_page:
+                    break
+
+                current_cursor = connection.page_info.end_cursor
+            except ValidationError as e:
+                import json
+
+                raise LinearClientError(
+                    f"Failed to parse labels from API response:\n{json.dumps(e.errors(), indent=2)}"
+                )
+
+        pagination_info = {
+            "hasNextPage": False,
+            "endCursor": current_cursor or "",
+            "totalFetched": len(all_labels),
+        }
+        return all_labels, pagination_info
+
+    # Single page fetch
+    variables["after"] = after
+
     response = self.query(query, variables)
 
     try:
         connection = LabelConnection.model_validate(response.get("issueLabels", {}))
-        return connection.nodes
+        pagination_info = {
+            "hasNextPage": connection.page_info.has_next_page,
+            "endCursor": connection.page_info.end_cursor or "",
+            "totalFetched": len(connection.nodes),
+        }
+        return connection.nodes, pagination_info
     except ValidationError as e:
         import json
 

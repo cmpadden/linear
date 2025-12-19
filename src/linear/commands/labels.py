@@ -55,7 +55,7 @@ def list_labels(
         client = LinearClient(verbose_logger=verbose_logger)
 
         # Fetch labels
-        labels = client.list_labels(
+        labels, _ = client.list_labels(
             limit=limit,
             team=team,
             include_archived=include_archived,

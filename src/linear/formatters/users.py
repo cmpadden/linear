@@ -1,6 +1,7 @@
 """User formatters for Linear CLI."""
 
 import json
+from typing import Any
 
 from rich.console import Console
 from rich.table import Table
@@ -8,7 +9,32 @@ from rich.table import Table
 from linear.models import User
 
 
-def format_users_table(users: list[User]) -> None:
+def _display_pagination(
+    console: Console, count: int, pagination_info: dict[str, Any]
+) -> None:
+    """Display pagination information."""
+    if "startIndex" not in pagination_info:
+        console.print(
+            f"\n[dim]Total: {pagination_info.get('totalFetched', count)} user(s)[/dim]"
+        )
+    elif pagination_info.get("hasNextPage"):
+        start = pagination_info.get("startIndex", 1)
+        end = pagination_info.get("endIndex", count)
+        console.print(
+            f"\n[dim]Showing {start}-{end} (more available, use --page to see more)[/dim]"
+        )
+    else:
+        if pagination_info.get("currentPage", 1) > 1:
+            start = pagination_info.get("startIndex", 1)
+            end = pagination_info.get("endIndex", count)
+            console.print(f"\n[dim]Showing {start}-{end}[/dim]")
+        else:
+            console.print(f"\n[dim]Total: {count} user(s)[/dim]")
+
+
+def format_users_table(
+    users: list[User], pagination_info: dict[str, Any] | None = None
+) -> None:
     """Format users as a rich table.
 
     Args:
@@ -62,7 +88,12 @@ def format_users_table(users: list[User]) -> None:
         )
 
     console.print(table)
-    console.print(f"\n[dim]Total: {len(users)} user(s)[/dim]")
+
+    # Display pagination info
+    if pagination_info:
+        _display_pagination(console, len(users), pagination_info)
+    else:
+        console.print(f"\n[dim]Total: {len(users)} user(s)[/dim]")
 
 
 def format_users_json(users: list[User]) -> None:

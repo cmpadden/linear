@@ -1,6 +1,6 @@
 """Team-related API methods for Linear GraphQL API."""
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from pydantic import ValidationError
 
@@ -20,23 +20,28 @@ def list_teams(
     self: "LinearClient",
     limit: int = 50,
     include_archived: bool = False,
-) -> list[Team]:
+    after: str | None = None,
+    fetch_all: bool = False,
+) -> tuple[list[Team], dict[str, Any]]:
     """List teams in the workspace.
 
     Args:
-        limit: Maximum number of teams to return (default: 50)
+        limit: Maximum number of teams to return per page (default: 50)
         include_archived: Include archived teams (default: False)
+        after: Cursor for pagination (fetches items after this cursor)
+        fetch_all: If True, automatically fetch all pages (default: False)
 
     Returns:
-        List of Team objects
+        Tuple of (list of Team objects, pagination metadata dict)
+        Pagination metadata contains: hasNextPage, endCursor, totalFetched
 
     Raises:
         LinearClientError: If the query fails or data validation fails
     """
     # GraphQL query
     query = """
-    query Teams($filter: TeamFilter, $first: Int, $includeArchived: Boolean) {
-      teams(filter: $filter, first: $first, includeArchived: $includeArchived) {
+    query Teams($filter: TeamFilter, $first: Int, $after: String, $includeArchived: Boolean) {
+      teams(filter: $filter, first: $first, after: $after, includeArchived: $includeArchived) {
         nodes {
           id
           name
@@ -74,9 +79,49 @@ def list_teams(
     }
     """
 
+    # Fetch all pages if requested
+    if fetch_all:
+        all_teams: list[Team] = []
+        current_cursor = after
+        page_count = 0
+        max_pages = 100  # Safety limit
+
+        while page_count < max_pages:
+            variables = {
+                "filter": None,
+                "first": min(limit, 250),  # Linear API max per page
+                "after": current_cursor,
+                "includeArchived": include_archived,
+            }
+
+            response = self.query(query, variables)
+
+            try:
+                connection = TeamConnection.model_validate(response.get("teams", {}))
+                all_teams.extend(connection.nodes)
+                page_count += 1
+
+                if not connection.page_info.has_next_page:
+                    break
+
+                current_cursor = connection.page_info.end_cursor
+            except ValidationError as e:
+                raise LinearClientError(
+                    f"Failed to parse teams from API response: {e.errors()[0]['msg']}"
+                )
+
+        pagination_info = {
+            "hasNextPage": False,
+            "endCursor": current_cursor or "",
+            "totalFetched": len(all_teams),
+        }
+        return all_teams, pagination_info
+
+    # Single page fetch
     variables = {
         "filter": None,
         "first": min(limit, 250),  # Linear API max
+        "after": after,
         "includeArchived": include_archived,
     }
 
@@ -84,7 +129,12 @@ def list_teams(
 
     try:
         connection = TeamConnection.model_validate(response.get("teams", {}))
-        return connection.nodes
+        pagination_info = {
+            "hasNextPage": connection.page_info.has_next_page,
+            "endCursor": connection.page_info.end_cursor or "",
+            "totalFetched": len(connection.nodes),
+        }
+        return connection.nodes, pagination_info
     except ValidationError as e:
         raise LinearClientError(
             f"Failed to parse teams from API response: {e.errors()[0]['msg']}"
