@@ -16,6 +16,8 @@ from linear.formatters.issues import (
     format_issue_detail,
     format_issue_json,
     format_json,
+    format_relations_json,
+    format_relations_table,
     format_table,
     format_table_grouped,
 )
@@ -51,6 +53,8 @@ __all__ = [
     "format_json",
     "format_issue_detail",
     "format_issue_json",
+    "format_relations_table",
+    "format_relations_json",
     # Projects
     "format_projects_table",
     "format_projects_json",

@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.0.12] (unreleased)
 
 ### Added
+- **Issue relations management**: Added full support for managing relationships between issues
+  - `linear issues relations list <issue-id>` - List all relations for an issue with type, related issue details, status, and team
+  - `linear issues relations add <issue-id> <related-issue-id>` - Create relation between two issues with `--type` flag (blocks, blocked, related, duplicate)
+  - `linear issues relations remove <issue-id> <relation-id>` - Remove relation from issue (with confirmation prompt, use `--yes` to skip)
+  - Supports both table and JSON output formats via `--format` flag
+  - Relations table shows relation type, related issue identifier, title, status, and team
+  - Automatically resolves issue identifiers (e.g., ENG-123) to UUIDs for all operations
 - **Extended pagination support**: Added cursor-based pagination to projects, teams, and users list commands
   - `linear projects list` - Full pagination support with `--per-page`, `--page`, and `--all` flags
   - `linear teams list` - Full pagination support with `--per-page`, `--page`, and `--all` flags

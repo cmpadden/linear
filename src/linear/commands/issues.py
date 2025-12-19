@@ -27,6 +27,7 @@ from linear.utils import VerboseLogger
 from linear.utils.editor import IssueData, edit_issue_in_editor
 
 app = typer.Typer(help="Manage Linear issues")
+relations_app = typer.Typer(help="Manage issue relations")
 
 
 @app.command("list")
@@ -1959,3 +1960,242 @@ def move_state(
     except Exception as e:
         typer.echo(f"Unexpected error: {e}", err=True)
         sys.exit(1)
+
+
+@relations_app.command("list")
+def list_relations(
+    ctx: typer.Context,
+    issue_id: Annotated[
+        str, typer.Argument(help="Issue ID or identifier (e.g., 'ENG-123')")
+    ],
+    format: Annotated[
+        str, typer.Option("--format", "-f", help="Output format: table, json")
+    ] = "table",
+) -> None:
+    """List all relations for an issue.
+
+    Examples:
+
+      # List relations for an issue
+      linear issues relations list ENG-123
+
+      # Output as JSON
+      linear issues relations list ENG-123 --format json
+    """
+    try:
+        # Extract verbose flag from context
+        verbose = ctx.obj.get("verbose", False) if ctx.obj else False
+        verbose_logger = VerboseLogger(enabled=verbose)
+
+        # Initialize client
+        client = LinearClient(verbose_logger=verbose_logger)
+
+        # Fetch issue to resolve identifier to UUID
+        issue = client.get_issue(issue_id)
+
+        # Fetch relations
+        relations = client.list_issue_relations(issue.id)
+
+        # Format output
+        if format == "json":
+            from linear.formatters import format_relations_json
+
+            format_relations_json(relations)
+        else:  # table
+            from linear.formatters import format_relations_table
+
+            format_relations_table(relations, source_issue_id=issue.id)
+
+    except LinearClientError as e:
+        typer.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except ValidationError as e:
+        typer.echo(f"Data validation error: {e.errors()[0]['msg']}", err=True)
+        sys.exit(1)
+    except Exception as e:
+        typer.echo(f"Unexpected error: {e}", err=True)
+        sys.exit(1)
+
+
+@relations_app.command("add")
+def add_relation(
+    ctx: typer.Context,
+    issue_id: Annotated[
+        str, typer.Argument(help="Source issue ID or identifier (e.g., 'ENG-123')")
+    ],
+    related_issue_id: Annotated[
+        str, typer.Argument(help="Related issue ID or identifier (e.g., 'ENG-456')")
+    ],
+    type: Annotated[
+        str,
+        typer.Option(
+            "--type",
+            "-t",
+            help="Relation type: blocks, blocked, related, duplicate",
+        ),
+    ] = "related",
+) -> None:
+    """Add a relation between two issues.
+
+    Examples:
+
+      # Add a 'related' relation
+      linear issues relations add ENG-123 ENG-456
+
+      # Add a 'blocks' relation
+      linear issues relations add ENG-123 ENG-456 --type blocks
+
+      # Add a 'blocked' relation
+      linear issues relations add ENG-123 ENG-456 --type blocked
+
+      # Add a 'duplicate' relation
+      linear issues relations add ENG-123 ENG-456 --type duplicate
+    """
+    try:
+        # Extract verbose flag from context
+        verbose = ctx.obj.get("verbose", False) if ctx.obj else False
+        verbose_logger = VerboseLogger(enabled=verbose)
+
+        # Initialize client and console
+        client = LinearClient(verbose_logger=verbose_logger)
+        console = Console()
+
+        # Validate relation type
+        valid_types = ["blocks", "blocked", "related", "duplicate"]
+        if type not in valid_types:
+            console.print(
+                f"[red]Error: Invalid relation type '{type}'. Must be one of: {', '.join(valid_types)}[/red]"
+            )
+            sys.exit(1)
+
+        # Fetch issues to resolve identifiers to UUIDs
+        issue = client.get_issue(issue_id)
+        related_issue = client.get_issue(related_issue_id)
+
+        # Show summary
+        console.print("\n[bold]Creating relation:[/bold]")
+        console.print(f"  [bold]From:[/bold] {issue.identifier} - {issue.title}")
+        console.print(
+            f"  [bold]To:[/bold] {related_issue.identifier} - {related_issue.title}"
+        )
+        console.print(f"  [bold]Type:[/bold] {type}")
+
+        # Create relation
+        relation = client.create_issue_relation(issue.id, related_issue.id, type)
+
+        console.print(
+            f"\n[green]Relation created successfully (ID: {relation.id})[/green]"
+        )
+
+    except LinearClientError as e:
+        typer.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except ValidationError as e:
+        typer.echo(f"Data validation error: {e.errors()[0]['msg']}", err=True)
+        sys.exit(1)
+    except Exception as e:
+        typer.echo(f"Unexpected error: {e}", err=True)
+        sys.exit(1)
+
+
+@relations_app.command("remove")
+def remove_relation(
+    ctx: typer.Context,
+    issue_id: Annotated[
+        str, typer.Argument(help="Issue ID or identifier (e.g., 'ENG-123')")
+    ],
+    relation_id: Annotated[
+        str, typer.Argument(help="Relation ID to remove (use 'list' to see IDs)")
+    ],
+    yes: Annotated[
+        bool,
+        typer.Option("--yes", "-y", help="Skip confirmation prompt"),
+    ] = False,
+) -> None:
+    """Remove a relation from an issue.
+
+    Use 'linear issues relations list <issue-id>' to find relation IDs.
+
+    Examples:
+
+      # Remove a relation
+      linear issues relations remove ENG-123 <relation-id>
+
+      # Remove without confirmation
+      linear issues relations remove ENG-123 <relation-id> --yes
+    """
+    try:
+        # Extract verbose flag from context
+        verbose = ctx.obj.get("verbose", False) if ctx.obj else False
+        verbose_logger = VerboseLogger(enabled=verbose)
+
+        # Initialize client and console
+        client = LinearClient(verbose_logger=verbose_logger)
+        console = Console()
+
+        # Fetch issue to validate it exists
+        issue = client.get_issue(issue_id)
+
+        # Fetch relations to validate relation_id exists and belongs to this issue
+        relations = client.list_issue_relations(issue.id)
+
+        # Find the relation
+        target_relation = None
+        for relation in relations:
+            if relation.id == relation_id:
+                target_relation = relation
+                break
+
+        if not target_relation:
+            console.print(
+                f"[red]Error: Relation '{relation_id}' not found for issue {issue.identifier}[/red]"
+            )
+            console.print(
+                f"[dim]Use: linear issues relations list {issue.identifier}[/dim]"
+            )
+            sys.exit(1)
+
+        # Determine which issue to show
+        if target_relation.issue.id == issue.id:
+            related = target_relation.related_issue
+        else:
+            related = target_relation.issue
+
+        # Show summary
+        console.print("\n[bold]Removing relation:[/bold]")
+        console.print(f"  [bold]Issue:[/bold] {issue.identifier} - {issue.title}")
+        console.print(f"  [bold]Related:[/bold] {related.identifier} - {related.title}")
+        console.print(f"  [bold]Type:[/bold] {target_relation.type}")
+
+        # Confirmation (unless --yes flag is used)
+        if not yes:
+            response = Prompt.ask(
+                "\n[yellow]Are you sure you want to remove this relation?[/yellow]",
+                choices=["y", "yes", "n", "no"],
+                default="n",
+                show_choices=True,
+                case_sensitive=False,
+            )
+
+            if response[0].lower() == "n":
+                console.print("[yellow]Removal cancelled.[/yellow]")
+                sys.exit(0)
+
+        # Remove relation
+        client.delete_issue_relation(relation_id)
+
+        console.print("\n[green]Relation removed successfully[/green]")
+
+    except LinearClientError as e:
+        typer.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except ValidationError as e:
+        typer.echo(f"Data validation error: {e.errors()[0]['msg']}", err=True)
+        sys.exit(1)
+    except Exception as e:
+        typer.echo(f"Unexpected error: {e}", err=True)
+        sys.exit(1)
+
+
+# Register relations subcommand
+app.add_typer(relations_app, name="relations")

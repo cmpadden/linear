@@ -1004,3 +1004,243 @@ def unarchive_issue(self: "LinearClient", issue_id: str) -> bool:
         raise LinearClientError("Failed to unarchive issue")
 
     return True
+
+
+def list_issue_relations(
+    self: "LinearClient",
+    issue_id: str,
+) -> list[Any]:
+    """List all relations for an issue.
+
+    Args:
+        issue_id: Issue UUID (not identifier - must be resolved first)
+
+    Returns:
+        List of IssueRelation objects
+
+    Raises:
+        LinearClientError: If the query fails or data validation fails
+    """
+    from linear.models import IssueRelationConnection
+
+    query = """
+    query IssueRelations($id: String!) {
+      issue(id: $id) {
+        relations {
+          nodes {
+            id
+            type
+            createdAt
+            updatedAt
+            issue {
+              id
+              identifier
+              title
+              url
+              priority
+              priorityLabel
+              createdAt
+              updatedAt
+              state {
+                id
+                name
+                type
+                color
+              }
+              team {
+                id
+                name
+                key
+                createdAt
+                updatedAt
+                cyclesEnabled
+                private
+              }
+            }
+            relatedIssue {
+              id
+              identifier
+              title
+              url
+              priority
+              priorityLabel
+              createdAt
+              updatedAt
+              state {
+                id
+                name
+                type
+                color
+              }
+              team {
+                id
+                name
+                key
+                createdAt
+                updatedAt
+                cyclesEnabled
+                private
+              }
+            }
+          }
+        }
+      }
+    }
+    """
+
+    variables = {"id": issue_id}
+    response = self.query(query, variables)
+
+    if not response.get("issue"):
+        raise LinearClientError(f"Issue '{issue_id}' not found")
+
+    try:
+        relations_data = response["issue"].get("relations", {})
+        connection = IssueRelationConnection.model_validate(relations_data)
+        return connection.nodes
+    except ValidationError as e:
+        error_details = e.errors()[0]
+        field_path = " -> ".join(str(loc) for loc in error_details["loc"])
+        raise LinearClientError(
+            f"Failed to parse issue relations: {error_details['msg']} at {field_path}"
+        )
+
+
+def create_issue_relation(
+    self: "LinearClient",
+    issue_id: str,
+    related_issue_id: str,
+    relation_type: str,
+) -> Any:
+    """Create a relation between two issues.
+
+    Args:
+        issue_id: Source issue UUID (not identifier - must be resolved first)
+        related_issue_id: Target issue UUID (not identifier - must be resolved first)
+        relation_type: Type of relation (blocks, blocked, related, duplicate)
+
+    Returns:
+        Created IssueRelation object
+
+    Raises:
+        LinearClientError: If the mutation fails or data validation fails
+    """
+    from linear.models import IssueRelation
+
+    mutation = """
+    mutation IssueRelationCreate($input: IssueRelationCreateInput!) {
+      issueRelationCreate(input: $input) {
+        success
+        issueRelation {
+          id
+          type
+          createdAt
+          updatedAt
+          issue {
+            id
+            identifier
+            title
+            url
+            priority
+            priorityLabel
+            createdAt
+            updatedAt
+            state {
+              id
+              name
+              type
+              color
+            }
+            team {
+              id
+              name
+              key
+              createdAt
+              updatedAt
+              cyclesEnabled
+              private
+            }
+          }
+          relatedIssue {
+            id
+            identifier
+            title
+            url
+            priority
+            priorityLabel
+            createdAt
+            updatedAt
+            state {
+              id
+              name
+              type
+              color
+            }
+            team {
+              id
+              name
+              key
+              createdAt
+              updatedAt
+              cyclesEnabled
+              private
+            }
+          }
+        }
+      }
+    }
+    """
+
+    input_data = {
+        "issueId": issue_id,
+        "relatedIssueId": related_issue_id,
+        "type": relation_type,
+    }
+
+    variables = {"input": input_data}
+    response = self.query(mutation, variables)
+
+    # Check if mutation was successful
+    relation_create = response.get("issueRelationCreate", {})
+    if not relation_create.get("success"):
+        raise LinearClientError("Failed to create issue relation")
+
+    try:
+        return IssueRelation.model_validate(relation_create["issueRelation"])
+    except ValidationError as e:
+        error_details = e.errors()[0]
+        field_path = " -> ".join(str(loc) for loc in error_details["loc"])
+        raise LinearClientError(
+            f"Failed to parse created issue relation: {error_details['msg']} at {field_path}"
+        )
+
+
+def delete_issue_relation(self: "LinearClient", relation_id: str) -> bool:
+    """Delete a relation between issues.
+
+    Args:
+        relation_id: IssueRelation UUID
+
+    Returns:
+        True if successful
+
+    Raises:
+        LinearClientError: If the mutation fails
+    """
+    mutation = """
+    mutation IssueRelationDelete($id: String!) {
+      issueRelationDelete(id: $id) {
+        success
+      }
+    }
+    """
+
+    variables = {"id": relation_id}
+    response = self.query(mutation, variables)
+
+    # Check if mutation was successful
+    relation_delete = response.get("issueRelationDelete", {})
+    if not relation_delete.get("success"):
+        raise LinearClientError("Failed to delete issue relation")
+
+    return True

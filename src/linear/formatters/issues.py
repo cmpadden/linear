@@ -344,3 +344,74 @@ def format_issue_json(issue: Issue) -> None:
     """
     issue_dict = issue.model_dump(mode="json", by_alias=True)
     print(json.dumps(issue_dict, indent=2, default=str))
+
+
+def format_relations_table(relations: list, source_issue_id: str | None = None) -> None:
+    """Format issue relations as a rich table.
+
+    Args:
+        relations: List of IssueRelation objects to display
+        source_issue_id: Optional source issue ID to determine direction
+    """
+    console = Console()
+
+    if not relations:
+        console.print("[yellow]No relations found.[/yellow]")
+        return
+
+    table = Table(
+        show_header=True,
+        header_style="bold cyan",
+        box=None,
+        padding=(0, 1),
+        pad_edge=False,
+    )
+    table.add_column("Type", style="yellow", no_wrap=True)
+    table.add_column("Issue", style="bright_blue", no_wrap=True)
+    table.add_column("Title", style="white")
+    table.add_column("Status", style="green")
+    table.add_column("Team", style="magenta")
+
+    for relation in relations:
+        # Determine which issue to show (the related one, not the source)
+        if source_issue_id and relation.issue.id == source_issue_id:
+            related = relation.related_issue
+        else:
+            related = relation.issue
+
+        # Truncate title if too long
+        title = related.title
+        if len(title) > 50:
+            title = title[:47] + "..."
+
+        table.add_row(
+            relation.type,
+            related.identifier,
+            escape(title),
+            related.state.name,
+            related.team.key,
+        )
+
+    console.print(table)
+    console.print(f"\n[dim]Total: {len(relations)} relation(s)[/dim]")
+
+
+def format_relations_json(relations: list) -> None:
+    """Format issue relations as JSON.
+
+    Args:
+        relations: List of IssueRelation objects to display
+    """
+    relations_data = []
+    for relation in relations:
+        # Use model_dump with by_alias=True to get camelCase field names
+        relation_dict = relation.model_dump(mode="json", by_alias=True)
+        relations_data.append(relation_dict)
+
+    print(
+        json.dumps(
+            {"relations": relations_data, "count": len(relations)},
+            indent=2,
+            default=str,
+        )
+    )

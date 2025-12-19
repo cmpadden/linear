@@ -117,10 +117,36 @@ Comment.model_rebuild()
 Issue.model_rebuild()
 
 
+class IssueRelation(BaseModel):
+    """Represents a relation between two issues."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    id: str
+    type: str
+    created_at: datetime = Field(alias="createdAt")
+    updated_at: datetime = Field(alias="updatedAt")
+    issue: "Issue"
+    related_issue: "Issue" = Field(alias="relatedIssue")
+
+
+# Rebuild IssueRelation to resolve forward references
+IssueRelation.model_rebuild()
+
+
 class IssueConnection(BaseModel):
     """Paginated issue list from GraphQL."""
 
     model_config = ConfigDict(populate_by_name=True)
 
     nodes: list[Issue] = Field(default_factory=list)
+    page_info: PageInfo = Field(default_factory=PageInfo, alias="pageInfo")
+
+
+class IssueRelationConnection(BaseModel):
+    """Paginated issue relation list from GraphQL."""
+
+    model_config = ConfigDict(populate_by_name=True)
+
+    nodes: list[IssueRelation] = Field(default_factory=list)
     page_info: PageInfo = Field(default_factory=PageInfo, alias="pageInfo")
