@@ -194,3 +194,237 @@ def get_cycle(self: "LinearClient", cycle_id: str) -> Cycle:
         raise LinearClientError(
             f"Failed to parse cycle '{cycle_id}': {e.errors()[0]['msg']}"
         )
+
+
+def create_cycle(
+    self: "LinearClient",
+    name: str,
+    team_id: str,
+    starts_at: str,
+    ends_at: str,
+    description: str | None = None,
+) -> Cycle:
+    """Create a new cycle.
+
+    Args:
+        name: Cycle name (required)
+        team_id: Team UUID (required)
+        starts_at: Start date in ISO format (YYYY-MM-DD or ISO 8601)
+        ends_at: End date in ISO format (YYYY-MM-DD or ISO 8601)
+        description: Cycle description
+
+    Returns:
+        Created Cycle object
+
+    Raises:
+        LinearClientError: If the mutation fails or data validation fails
+    """
+    mutation = """
+    mutation CycleCreate($input: CycleCreateInput!) {
+      cycleCreate(input: $input) {
+        success
+        cycle {
+          id
+          number
+          name
+          description
+          startsAt
+          endsAt
+          completedAt
+          archivedAt
+          createdAt
+          updatedAt
+          isActive
+          isFuture
+          isPast
+          isNext
+          isPrevious
+          progress
+          team {
+            id
+            name
+            key
+          }
+        }
+      }
+    }
+    """
+
+    # Build input object
+    input_data: dict[str, str] = {
+        "name": name,
+        "teamId": team_id,
+        "startsAt": starts_at,
+        "endsAt": ends_at,
+    }
+
+    # Add optional fields if provided
+    if description:
+        input_data["description"] = description
+
+    variables = {"input": input_data}
+    response = self.query(mutation, variables)
+
+    # Check if mutation was successful
+    cycle_create = response.get("cycleCreate", {})
+    if not cycle_create.get("success"):
+        raise LinearClientError("Failed to create cycle")
+
+    try:
+        return Cycle.model_validate(cycle_create["cycle"])
+    except ValidationError as e:
+        error_details = e.errors()[0]
+        field_path = " -> ".join(str(loc) for loc in error_details["loc"])
+        raise LinearClientError(
+            f"Failed to parse created cycle: {error_details['msg']} at {field_path}"
+        )
+
+
+def update_cycle(
+    self: "LinearClient",
+    cycle_id: str,
+    name: str | None = None,
+    starts_at: str | None = None,
+    ends_at: str | None = None,
+    description: str | None = None,
+) -> Cycle:
+    """Update an existing cycle.
+
+    Args:
+        cycle_id: Cycle UUID
+        name: New cycle name
+        starts_at: New start date in ISO format (YYYY-MM-DD or ISO 8601)
+        ends_at: New end date in ISO format (YYYY-MM-DD or ISO 8601)
+        description: New cycle description
+
+    Returns:
+        Updated Cycle object
+
+    Raises:
+        LinearClientError: If the mutation fails or data validation fails
+    """
+    mutation = """
+    mutation CycleUpdate($id: String!, $input: CycleUpdateInput!) {
+      cycleUpdate(id: $id, input: $input) {
+        success
+        cycle {
+          id
+          number
+          name
+          description
+          startsAt
+          endsAt
+          completedAt
+          archivedAt
+          createdAt
+          updatedAt
+          isActive
+          isFuture
+          isPast
+          isNext
+          isPrevious
+          progress
+          team {
+            id
+            name
+            key
+          }
+        }
+      }
+    }
+    """
+
+    # Build input object - only include provided fields
+    input_data: dict[str, str] = {}
+
+    if name is not None:
+        input_data["name"] = name
+    if starts_at is not None:
+        input_data["startsAt"] = starts_at
+    if ends_at is not None:
+        input_data["endsAt"] = ends_at
+    if description is not None:
+        input_data["description"] = description
+
+    variables = {
+        "id": cycle_id,
+        "input": input_data,
+    }
+
+    response = self.query(mutation, variables)
+
+    # Check if mutation was successful
+    cycle_update = response.get("cycleUpdate", {})
+    if not cycle_update.get("success"):
+        raise LinearClientError("Failed to update cycle")
+
+    try:
+        return Cycle.model_validate(cycle_update["cycle"])
+    except ValidationError as e:
+        error_details = e.errors()[0]
+        field_path = " -> ".join(str(loc) for loc in error_details["loc"])
+        raise LinearClientError(
+            f"Failed to parse updated cycle: {error_details['msg']} at {field_path}"
+        )
+
+
+def delete_cycle(self: "LinearClient", cycle_id: str) -> bool:
+    """Delete a cycle.
+
+    Args:
+        cycle_id: Cycle UUID
+
+    Returns:
+        True if successful
+
+    Raises:
+        LinearClientError: If the mutation fails
+    """
+    mutation = """
+    mutation CycleDelete($id: String!) {
+      cycleDelete(id: $id) {
+        success
+      }
+    }
+    """
+
+    variables = {"id": cycle_id}
+    response = self.query(mutation, variables)
+
+    # Check if mutation was successful
+    cycle_delete = response.get("cycleDelete", {})
+    if not cycle_delete.get("success"):
+        raise LinearClientError("Failed to delete cycle")
+
+    return True
+
+
+def archive_cycle(self: "LinearClient", cycle_id: str) -> bool:
+    """Archive a cycle.
+
+    Args:
+        cycle_id: Cycle UUID
+
+    Returns:
+        True if successful
+
+    Raises:
+        LinearClientError: If the mutation fails
+    """
+    mutation = """
+    mutation CycleArchive($id: String!) {
+      cycleArchive(id: $id) {
+        success
+      }
+    }
+    """
+
+    variables = {"id": cycle_id}
+    response = self.query(mutation, variables)
+
+    # Check if mutation was successful
+    cycle_archive = response.get("cycleArchive", {})
+    if not cycle_archive.get("success"):
+        raise LinearClientError("Failed to archive cycle")
+
+    return True

@@ -37,6 +37,10 @@ class LinearClient(BaseClient):
     # Cycles
     list_cycles = cycles.list_cycles
     get_cycle = cycles.get_cycle
+    create_cycle = cycles.create_cycle
+    update_cycle = cycles.update_cycle
+    delete_cycle = cycles.delete_cycle
+    archive_cycle = cycles.archive_cycle
 
     # Users
     list_users = users.list_users

@@ -5,7 +5,18 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.0.11] (unreleased)
+## [0.0.12] (unreleased)
+
+### Added
+- **Cycles management**: Added cycle creation, update, deletion, and archival operations
+  - `linear cycles create` - Create new cycle with `--name`, `--team`, `--starts-at`, `--ends-at`, and `--description` flags
+  - `linear cycles update <cycle-id>` - Update cycle name, dates, or description
+  - `linear cycles delete <cycle-id>` - Delete cycle (with confirmation prompt, use `--yes` to skip)
+  - `linear cycles archive <cycle-id>` - Archive cycle (with confirmation prompt, use `--yes` to skip)
+  - Supports both detail and JSON output formats via `--format` flag
+  - Team lookup by ID or key for cycle creation
+
+## [0.0.11]
 
 ### Added
 - **Comments management**: Added full CRUD operations for issue comments
