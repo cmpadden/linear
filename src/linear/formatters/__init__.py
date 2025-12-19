@@ -1,5 +1,11 @@
 """Output formatters for Linear CLI."""
 
+from linear.formatters.comments import (
+    format_comment_detail,
+    format_comment_json,
+    format_json as format_comments_json,
+    format_table as format_comments_table,
+)
 from linear.formatters.cycles import (
     format_cycle_detail,
     format_cycle_json,
@@ -34,6 +40,11 @@ from linear.formatters.users import (
 )
 
 __all__ = [
+    # Comments
+    "format_comments_table",
+    "format_comments_json",
+    "format_comment_detail",
+    "format_comment_json",
     # Issues
     "format_table",
     "format_table_grouped",

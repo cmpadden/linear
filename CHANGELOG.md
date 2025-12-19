@@ -8,6 +8,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.0.11] (unreleased)
 
 ### Added
+- **Comments management**: Added full CRUD operations for issue comments
+  - `linear comments list <issue-id>` - List all comments on an issue
+  - `linear comments create <issue-id>` - Add comment to issue (supports `--body` flag or opens `$EDITOR`)
+  - `linear comments update <comment-id>` - Update comment body (supports `--body` flag or opens `$EDITOR`)
+  - `linear comments delete <comment-id>` - Delete comment (with confirmation prompt, use `--yes` to skip)
+  - Supports both table and JSON output formats via `--format` flag
+  - Comments display author name, timestamp, and body (truncated in table view, full in detail view)
 - **Pagination support**: Added cursor-based pagination for issue list and search commands
   - `--per-page` flag to control number of results per page (max 250, default 50)
   - `--page` flag to fetch a specific page number (starts at 1)

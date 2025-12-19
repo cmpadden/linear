@@ -2,7 +2,7 @@
 
 from .client import LinearClient as BaseClient
 from .client import LinearClientError
-from . import issues, projects, teams, cycles, users, labels
+from . import issues, projects, teams, cycles, users, labels, comments
 
 
 class LinearClient(BaseClient):
@@ -17,6 +17,13 @@ class LinearClient(BaseClient):
     delete_issue = issues.delete_issue
     archive_issue = issues.archive_issue
     unarchive_issue = issues.unarchive_issue
+
+    # Comments
+    list_comments = comments.list_comments
+    get_comment = comments.get_comment
+    create_comment = comments.create_comment
+    update_comment = comments.update_comment
+    delete_comment = comments.delete_comment
 
     # Projects
     list_projects = projects.list_projects

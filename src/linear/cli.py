@@ -6,7 +6,7 @@ import typer
 from typing_extensions import Annotated
 
 from linear import __version__
-from linear.commands import cycles, issues, labels, projects, teams, users
+from linear.commands import comments, cycles, issues, labels, projects, teams, users
 
 
 def version_callback(value: bool) -> None:
@@ -51,6 +51,8 @@ def main_callback(
 # Register command modules
 app.add_typer(issues.app, name="issues")
 app.add_typer(issues.app, name="i", hidden=True)
+
+app.add_typer(comments.app, name="comments")
 
 app.add_typer(projects.app, name="projects")
 app.add_typer(projects.app, name="p", hidden=True)

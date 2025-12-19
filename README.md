@@ -71,6 +71,36 @@ linear issues create [prompt] [OPTIONS]
 - `--label/-l <label>` - Add label (repeatable)
 - `--format/-f <format>` - Output format: `detail` (default), `json`
 
+### Comments
+
+```bash
+# List comments on an issue
+linear comments list <issue-id> [OPTIONS]
+
+# Create a new comment
+linear comments create <issue-id> [OPTIONS]
+
+# Update an existing comment
+linear comments update <comment-id> [OPTIONS]
+
+# Delete a comment
+linear comments delete <comment-id> [OPTIONS]
+```
+
+**List options:**
+- `--format/-f <format>` - Output format: `table` (default), `json`
+
+**Create options:**
+- `--body/-b <text>` - Comment body in markdown (if not provided, opens `$EDITOR`)
+- `--format/-f <format>` - Output format: `detail` (default), `json`
+
+**Update options:**
+- `--body/-b <text>` - New comment body in markdown (if not provided, opens `$EDITOR`)
+- `--format/-f <format>` - Output format: `detail` (default), `json`
+
+**Delete options:**
+- `--yes/-y` - Skip confirmation prompt
+
 ### Projects
 
 ```bash

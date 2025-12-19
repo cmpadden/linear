@@ -1,6 +1,8 @@
 """Pydantic models for Linear entities."""
 
 from .base import Organization, PageInfo
+from .comments import Comment as CommentModel
+from .comments import CommentConnection, CommentUser
 from .cycles import Cycle, CycleConnection
 from .issues import Attachment, Comment, Issue, IssueConnection, WorkflowState
 from .labels import Label, LabelConnection
@@ -12,9 +14,13 @@ __all__ = [
     # Base
     "PageInfo",
     "Organization",
+    # Comments
+    "Comment",
+    "CommentModel",
+    "CommentUser",
+    "CommentConnection",
     # Issues
     "WorkflowState",
-    "Comment",
     "Attachment",
     "Issue",
     "IssueConnection",
