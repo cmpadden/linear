@@ -254,10 +254,10 @@ def search_issues(
     after: str | None = None,
     fetch_all: bool = False,
 ) -> tuple[list[Issue], dict[str, Any]]:
-    """Search issues by title.
+    """Search issues by title and description.
 
     Args:
-        query: Search query (searches issue titles, case-insensitive)
+        query: Search query (searches issue titles and descriptions, case-insensitive)
         limit: Maximum number of issues to return per page (default: 50)
         include_archived: Include archived issues (default: False)
         sort: Sort field: created, updated, priority (default: updated)
@@ -271,8 +271,13 @@ def search_issues(
     Raises:
         LinearClientError: If the query fails or data validation fails
     """
-    # Build filter with title search
-    filters = {"title": {"containsIgnoreCase": query}}
+    # Build filter with title and description search (OR logic)
+    filters = {
+        "or": [
+            {"title": {"containsIgnoreCase": query}},
+            {"description": {"containsIgnoreCase": query}},
+        ]
+    }
 
     # Determine order by
     order_by_map = {

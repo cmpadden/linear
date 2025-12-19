@@ -37,6 +37,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Supports both detail and JSON output formats via `--format` flag
   - Team lookup by ID or key for cycle creation
 
+### Changed
+- **Enhanced issue search**: `linear issues search` now searches both title and description fields (previously title only) using OR logic for more comprehensive results (2025-12-19)
+
 ## [0.0.11]
 
 ### Added

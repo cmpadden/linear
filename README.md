@@ -34,7 +34,7 @@ linear issues list [OPTIONS]
 # View details of a specific issue
 linear issues view <issue-id> [OPTIONS]
 
-# Search issues by title
+# Search issues by title and description
 linear issues search <query> [OPTIONS]
 
 # Create a new issue (natural language prompt or interactive)
