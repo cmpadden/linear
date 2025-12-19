@@ -2,32 +2,21 @@
 
 # Linear CLI
 
-A command-line interface for interacting with [Linear](https://linear.app) - list issues, view project details, and manage your workflow from the terminal.
+A command-line interface for interacting with [Linear](https://linear.app).
 
 ## Getting started
 
 ```bash
- $ export LINEAR_API_KEY="<linear-api-key>"  # https://linear.app/settings/api
+$ export LINEAR_API_KEY="<linear-api-key>"  # https://linear.app/settings/api
 
- $ alias linear="uvx --from linear-app linear"
-
- $ linear issues create "Implement a views sub-command, assign to me on ENG team"
-
-   Issue Summary:
-     Title: Implement a views sub-command
-     Description: Implement a views sub-command for the linear CLI
-     Assignee: colton@acme.com
-     Team: ENG
-     Priority: None
-
-   Create this issue? [y/n] (y):
+$ alias linear="uvx --from linear-app linear"
 ```
 
 ## Documentation
 
 For complete CLI command reference with all available commands, options, and examples, see [DOCUMENTATION.md](./DOCUMENTATION.md).
 
-**Quick command reference:**
+**Quick reference:**
 - `linear issues` - Manage issues (list, create, view, update, search, delete, archive, etc.)
 - `linear projects` - Manage projects (list, view, create, update)
 - `linear teams` - Manage teams (list, view)
