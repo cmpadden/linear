@@ -14,3 +14,6 @@ env/
 build/
 dist/
 *.egg-info/
+
+# Local context files
+PLAN.md
