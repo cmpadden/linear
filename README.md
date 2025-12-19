@@ -23,214 +23,26 @@ A command-line interface for interacting with [Linear](https://linear.app) - lis
    Create this issue? [y/n] (y):
 ```
 
-## Available Commands
+## Documentation
 
-### Issues
+For complete CLI command reference with all available commands, options, and examples, see [DOCUMENTATION.md](./DOCUMENTATION.md).
 
-```bash
-# List issues with filters
-linear issues list [OPTIONS]
+**Quick command reference:**
+- `linear issues` - Manage issues (list, create, view, update, search, delete, archive, etc.)
+- `linear projects` - Manage projects (list, view, create, update)
+- `linear teams` - Manage teams (list, view)
+- `linear cycles` - Manage cycles (list, view)
+- `linear users` - Manage users (list, view)
+- `linear labels` - Manage labels (list)
+- `linear roadmaps` - Manage roadmaps (list, view, create, update)
+- `linear comments` - Manage issue comments (list, create, update, delete)
+- `linear attachments` - Manage issue attachments (list, upload, delete)
 
-# View details of a specific issue
-linear issues view <issue-id> [OPTIONS]
-
-# Search issues by title and description
-linear issues search <query> [OPTIONS]
-
-# Create a new issue (natural language prompt or interactive)
-linear issues create [prompt] [OPTIONS]
-```
-
-**List options:**
-- `--assignee <email>` - Filter by assignee (use "me" or "self" for yourself)
-- `--status <status>` - Filter by status (e.g., "in progress", "done")
-- `--priority <0-4>` - Filter by priority
-- `--team <team>` - Filter by team name or key
-- `--project <name>` - Filter by project name
-- `--label <label>` - Filter by label (repeatable)
-- `--limit <n>` - Number of results (default: 50)
-- `--sort <field>` - Sort results
-- `--format <format>` - Output format: `table` (default), `json`
-
-**View options:**
-- `--web/-w` - Open issue in browser
-- `--format/-f <format>` - Output format: `detail` (default), `json`
-
-**Search options:**
-- `--limit <n>` - Number of results (default: 50)
-- `--sort <field>` - Sort results
-- `--format/-f <format>` - Output format: `table` (default), `json`
-
-**Create options:**
-- `--title <text>` - Issue title (skips AI parsing, required for structured mode)
-- `--team/-t <team>` - Team key (e.g., "ENG")
-- `--description/-d <text>` - Issue description
-- `--assignee/-a <email>` - Assign to user
-- `--priority/-p <0-4>` - Priority level
-- `--project <name>` - Project name
-- `--label/-l <label>` - Add label (repeatable)
-- `--format/-f <format>` - Output format: `detail` (default), `json`
-
-### Comments
-
-```bash
-# List comments on an issue
-linear comments list <issue-id> [OPTIONS]
-
-# Create a new comment
-linear comments create <issue-id> [OPTIONS]
-
-# Update an existing comment
-linear comments update <comment-id> [OPTIONS]
-
-# Delete a comment
-linear comments delete <comment-id> [OPTIONS]
-```
-
-**List options:**
-- `--format/-f <format>` - Output format: `table` (default), `json`
-
-**Create options:**
-- `--body/-b <text>` - Comment body in markdown (if not provided, opens `$EDITOR`)
-- `--format/-f <format>` - Output format: `detail` (default), `json`
-
-**Update options:**
-- `--body/-b <text>` - New comment body in markdown (if not provided, opens `$EDITOR`)
-- `--format/-f <format>` - Output format: `detail` (default), `json`
-
-**Delete options:**
-- `--yes/-y` - Skip confirmation prompt
-
-### Projects
-
-```bash
-# List projects
-linear projects list [OPTIONS]
-
-# View details of a specific project
-linear projects view <project-id> [OPTIONS]
-```
-
-**List options:**
-- `--state <state>` - Filter by state (planned, started, paused, completed, canceled)
-- `--team <team>` - Filter by team name or key
-- `--limit <n>` - Number of results (default: 50)
-- `--include-archived` - Include archived projects
-- `--format/-f <format>` - Output format: `table` (default), `json`
-
-**View options:**
-- `--format/-f <format>` - Output format: `detail` (default), `json`
-
-### Teams
-
-```bash
-# List all teams
-linear teams list [OPTIONS]
-
-# View details of a specific team
-linear teams view <team-id> [OPTIONS]
-```
-
-**List options:**
-- `--limit <n>` - Number of results (default: 50)
-- `--include-archived` - Include archived teams
-- `--format/-f <format>` - Output format: `table` (default), `json`
-
-**View options:**
-- `--format/-f <format>` - Output format: `detail` (default), `json`
-
-Note: Team ID can be a team key (e.g., "ENG") or team ID.
-
-### Cycles
-
-```bash
-# List cycles
-linear cycles list [OPTIONS]
-
-# View details of a specific cycle
-linear cycles view <cycle-id> [OPTIONS]
-```
-
-**List options:**
-- `--team/-t <team>` - Filter by team name or key
-- `--active/-a` - Show only active cycles
-- `--future` - Show only future cycles
-- `--past` - Show only past cycles
-- `--limit/-l <n>` - Number of results (default: 50)
-- `--include-archived` - Include archived cycles
-- `--format/-f <format>` - Output format: `table` (default), `json`
-
-**View options:**
-- `--format/-f <format>` - Output format: `detail` (default), `json`
-
-### Users
-
-```bash
-# List workspace users
-linear users list [OPTIONS]
-
-# View details of a specific user
-linear users view <user-id> [OPTIONS]
-```
-
-**List options:**
-- `--active-only` - Show only active users (default: true)
-- `--include-disabled` - Include disabled users
-- `--limit/-l <n>` - Number of results (default: 50)
-- `--format/-f <format>` - Output format: `table` (default), `json`
-
-**View options:**
-- `--format/-f <format>` - Output format: `detail` (default), `json`
-
-Note: User ID can be an email address or user ID.
-
-### Labels
-
-```bash
-# List issue labels
-linear labels list [OPTIONS]
-```
-
-**List options:**
-- `--team/-t <team>` - Filter by team ID or key
-- `--limit/-l <n>` - Number of results (default: 50)
-- `--include-archived` - Include archived labels
-- `--format/-f <format>` - Output format: `table` (default), `json`
-
-### Common Patterns
-
-**Global Options:**
-These options can be used with any command:
-- `--verbose` / `-v` - Show verbose output including GraphQL queries, variables, and response times (output to stderr)
-- `--version` / `-V` - Show CLI version and exit
-
-Example:
-```bash
-# Show GraphQL queries and timing for debugging
-linear --verbose issues list --limit 5
-
-# Check CLI version
-linear --version
-```
-
-**Command Aliases:**
-You can use short aliases for all command groups:
-- `linear i` instead of `linear issues`
-- `linear p` instead of `linear projects`
-- `linear t` instead of `linear teams`
-- `linear c` instead of `linear cycles`
-- `linear u` instead of `linear users`
-- `linear l` instead of `linear labels`
-
-**Output Formats:**
-- `table` - Human-readable table format (default for list commands)
-- `json` - JSON output for scripting and automation
-- `detail` - Detailed view (default for view commands)
-
-**Common Flags:**
-- Most list commands support `--limit` to control result count
-- Most list commands support `--include-archived` to show archived items
-- All commands support `--format/-f` to change output format
+**Common patterns:**
+- Use `--help` on any command for details: `linear issues list --help`
+- Most list commands support `--format json` for scripting
+- Command aliases available: `linear i` = `linear issues`, `linear p` = `linear projects`, etc.
+- Global options: `--verbose` (show GraphQL queries), `--version` (show CLI version)
 
 ## Contributing
 

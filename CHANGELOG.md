@@ -8,6 +8,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.0.12] (unreleased)
 
 ### Added
+- **Comprehensive CLI documentation**: Added auto-generated documentation in DOCUMENTATION.md
+  - Complete command reference with all available commands, options, and examples
+  - Generated from Typer app structure using built-in `typer utils docs` command
+  - Documentation generation script available at `scripts/generate_documentation.sh`
+  - Includes all command groups: issues, projects, teams, cycles, users, labels, roadmaps, comments, attachments
+  - Shows command aliases (e.g., `i` for `issues`, `p` for `projects`)
+  - All examples from command docstrings preserved in generated documentation
+  - Accessible via `make docs` command for easy regeneration
 - **Roadmaps management**: Added full support for managing Linear roadmaps
   - `linear roadmaps list` - List roadmaps with table and JSON output formats
   - `linear roadmaps view <roadmap-id>` - View roadmap details by ID or slug
@@ -53,6 +61,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Team lookup by ID or key for cycle creation
 
 ### Changed
+- **Simplified README**: Removed detailed command reference from README.md, replaced with link to comprehensive DOCUMENTATION.md
+  - README now focuses on getting started and quick reference
+  - All detailed command documentation moved to auto-generated DOCUMENTATION.md
+  - Avoids duplication and keeps documentation in sync with code
 - **Enhanced issue search**: `linear issues search` now searches both title and description fields (previously title only) using OR logic for more comprehensive results (2025-12-19)
 - **Enforce absolute imports**: Enabled TID252 rule to ban all relative imports in favor of absolute imports (e.g., `from linear.models import Issue`)
 

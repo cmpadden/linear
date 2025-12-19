@@ -1,4 +1,4 @@
-.PHONY: help install format lint ty check build publish test clean pre-commit ruff
+.PHONY: help install format lint ty check build publish test clean pre-commit ruff docs
 
 help:
 	@echo "Linear CLI - Development Commands"
@@ -8,6 +8,7 @@ help:
 	@echo "  ty            Run ty type checker"
 	@echo "  ruff          Format code with ruff"
 	@echo "  check         Run all checks (format, lint, ty)"
+	@echo "  docs          Generate CLI documentation (DOCUMENTATION.md)"
 	@echo "  build         Build distributions (wheel + sdist)"
 	@echo "  publish       Prepare release and guide GitHub release creation"
 	@echo "  test          Run tests (placeholder)"
@@ -29,6 +30,9 @@ ty:
 
 check: ruff ty
 	@echo "✓ All checks passed"
+
+docs:
+	@bash scripts/generate_documentation.sh
 
 test:
 	@echo "No tests configured yet"

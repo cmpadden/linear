@@ -35,4 +35,8 @@
   - Use categories: Added, Changed, Fixed, Deprecated, Removed, Security
   - Follow [Keep a Changelog](https://keepachangelog.com/) format
 - **README.md**: Update for new commands, flags, or significant behavior changes
+- **DOCUMENTATION.md**: Auto-generated CLI reference (DO NOT EDIT MANUALLY)
+  - Generated from Typer app structure and command docstrings
+  - Regenerate with: `make docs` or `bash scripts/generate_documentation.sh`
+  - To update docs: edit docstrings in `src/linear/commands/*.py` files
 - **PLAN.md**: Mark features as complete with date when implemented
