@@ -14,6 +14,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Response times measured in milliseconds
   - All verbose output sent to stderr to keep stdout clean for piping and automation
   - Works with all commands across issues, projects, teams, cycles, users, and labels
+- **Issue deletion**: Added `linear issues delete <issue-id>` command to trash/delete issues
+  - Shows issue details before deletion for confirmation
+  - Supports `--yes` / `-y` flag to skip confirmation prompt
+  - Accepts both issue identifiers (e.g., `ENG-123`) and UUIDs
 
 ### Changed
 - **Version flag**: Changed version flag shorthand from `-v` to `-V` to avoid conflict with the new `--verbose` flag

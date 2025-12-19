@@ -807,3 +807,34 @@ def update_issue(
         raise LinearClientError(
             f"Failed to parse updated issue: {error_details['msg']} at {field_path}"
         )
+
+
+def delete_issue(self: "LinearClient", issue_id: str) -> bool:
+    """Delete (trash) an issue.
+
+    Args:
+        issue_id: Issue UUID (not identifier - must be resolved first)
+
+    Returns:
+        True if successful
+
+    Raises:
+        LinearClientError: If the mutation fails
+    """
+    mutation = """
+    mutation IssueDelete($id: String!) {
+      issueDelete(id: $id) {
+        success
+      }
+    }
+    """
+
+    variables = {"id": issue_id}
+    response = self.query(mutation, variables)
+
+    # Check if mutation was successful
+    issue_delete = response.get("issueDelete", {})
+    if not issue_delete.get("success"):
+        raise LinearClientError("Failed to delete issue")
+
+    return True
