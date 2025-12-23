@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.0.13] (unreleased)
 
+### Added
+- **Documentation generation command**: Added `linear docs` command to generate CLI documentation programmatically
+  - Replaces shell script approach with native Python implementation using Typer's API
+  - Prints Markdown documentation to stdout for easy piping and redirection
+  - Can be used via `make docs` (saves to DOCUMENTATION.md) or directly via `linear docs` (prints to stdout)
+  - Uses `typer.cli.get_docs_for_click` to generate Markdown documentation from CLI structure
+
 ## [0.0.12]
 
 ### Added

@@ -32,7 +32,8 @@ check: ruff ty
 	@echo "✓ All checks passed"
 
 docs:
-	@bash scripts/generate_documentation.sh
+	@uv run linear docs > DOCUMENTATION.md
+	@echo "Successfully generated DOCUMENTATION.md"
 
 test:
 	@echo "No tests configured yet"

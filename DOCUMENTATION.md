@@ -18,6 +18,7 @@ $ linear [OPTIONS] COMMAND [ARGS]...
 
 **Commands**:
 
+* `docs`: Generate CLI documentation in Markdown...
 * `issues`: Manage Linear issues
 * `i`: Manage Linear issues
 * `attachments`: Manage issue attachments
@@ -34,6 +35,23 @@ $ linear [OPTIONS] COMMAND [ARGS]...
 * `l`: Manage Linear labels
 * `roadmaps`: Manage Linear roadmaps
 * `r`: Manage Linear roadmaps
+
+## `linear docs`
+
+Generate CLI documentation in Markdown format.
+
+This command generates comprehensive documentation for all CLI commands
+and prints it to stdout.
+
+**Usage**:
+
+```console
+$ linear docs [OPTIONS]
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
 
 ## `linear issues`
 
@@ -3001,3 +3019,4 @@ $ linear r update [OPTIONS] ROADMAP_ID
 * `--owner-id TEXT`: New owner user ID
 * `-e, --editor`: Open editor for description
 * `--help`: Show this message and exit.
+

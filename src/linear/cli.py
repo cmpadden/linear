@@ -85,6 +85,23 @@ app.add_typer(roadmaps.app, name="roadmaps")
 app.add_typer(roadmaps.app, name="r", hidden=True)
 
 
+@app.command()
+def docs(ctx: typer.Context) -> None:
+    """Generate comprehensive CLI documentation in Markdown format to stdout."""
+    from typer.cli import get_docs_for_click
+
+    click_obj = typer.main.get_command(app)
+
+    docs = get_docs_for_click(
+        obj=click_obj,
+        ctx=ctx,
+        name="linear",
+        title="Linear CLI Documentation",
+    )
+
+    typer.echo(docs.strip())
+
+
 def main() -> None:
     """Entry point for the CLI."""
     app()
