@@ -1458,3 +1458,77 @@ def delete_issue_relation(self: "LinearClient", relation_id: str) -> bool:
         raise LinearClientError("Failed to delete issue relation")
 
     return True
+
+
+def duplicate_issue(
+    self: "LinearClient",
+    issue_id: str,
+    create_relation: bool = False,
+) -> Issue:
+    """Duplicate an issue by creating a copy with the same fields.
+
+    Args:
+        issue_id: Source issue ID or identifier
+        create_relation: If True, create a 'duplicate' relation between issues
+
+    Returns:
+        Newly created Issue object
+
+    Raises:
+        LinearClientError: If source issue not found or creation fails
+    """
+    # Fetch the source issue
+    source_issue = get_issue(self, issue_id)
+
+    # Extract copyable fields from source
+    # Title with "Copy of " prefix to distinguish the duplicate
+    title = f"Copy of {source_issue.title}"
+    description = source_issue.description
+    priority = source_issue.priority
+    team_id = source_issue.team.id
+
+    # Team ID should always exist for an issue, but type system requires check
+    if not team_id:
+        raise LinearClientError(f"Issue '{issue_id}' has no team ID")
+
+    # Extract label IDs from labels list
+    label_ids = None
+    if source_issue.labels:
+        label_ids = [label.id for label in source_issue.labels]
+
+    # Extract optional fields (only if they exist)
+    project_id = source_issue.project.id if source_issue.project else None
+    state_id = source_issue.state.id if source_issue.state else None
+    estimate = source_issue.estimate
+    # Convert datetime to ISO string format for due_date
+    due_date = source_issue.due_date.isoformat() if source_issue.due_date else None
+    parent_id = source_issue.parent.id if source_issue.parent else None
+    cycle_id = source_issue.cycle.id if source_issue.cycle else None
+
+    # Create the duplicate issue
+    # Note: assignee is intentionally NOT copied - new issue starts unassigned
+    new_issue = create_issue(
+        self,
+        title=title,
+        team_id=team_id,
+        description=description,
+        priority=priority,
+        label_ids=label_ids,
+        project_id=project_id,
+        state_id=state_id,
+        estimate=estimate,
+        due_date=due_date,
+        parent_id=parent_id,
+        cycle_id=cycle_id,
+    )
+
+    # Optionally create a duplicate relation
+    if create_relation:
+        create_issue_relation(
+            self,
+            issue_id=source_issue.id,
+            related_issue_id=new_issue.id,
+            relation_type="duplicate",
+        )
+
+    return new_issue

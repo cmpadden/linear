@@ -26,6 +26,7 @@ class LinearClient(BaseClient):
     delete_issue = issues.delete_issue
     archive_issue = issues.archive_issue
     unarchive_issue = issues.unarchive_issue
+    duplicate_issue = issues.duplicate_issue
     list_issue_relations = issues.list_issue_relations
     create_issue_relation = issues.create_issue_relation
     delete_issue_relation = issues.delete_issue_relation

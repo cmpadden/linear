@@ -2062,6 +2062,125 @@ def unarchive_issue(
         sys.exit(1)
 
 
+@app.command("duplicate")
+def duplicate_issue(
+    ctx: typer.Context,
+    issue_id: Annotated[
+        str, typer.Argument(help="Issue ID or identifier to duplicate")
+    ],
+    yes: Annotated[bool, typer.Option("--yes", "-y", help="Skip confirmation")] = False,
+    link: Annotated[
+        bool, typer.Option("--link", help="Create duplicate relation between issues")
+    ] = False,
+    format_type: Annotated[
+        str, typer.Option("--format", "-f", help="Output format: detail, json")
+    ] = "detail",
+) -> None:
+    """Duplicate an issue by creating a copy.
+
+    Creates a new issue with the same fields as the source issue (title, description,
+    priority, labels, project, state, estimate, due date). The new issue will be
+    unassigned. Use --link to also create a duplicate relation.
+
+    Examples:
+
+      # Duplicate an issue with confirmation
+      linear issues duplicate ENG-123
+
+      # Duplicate without confirmation
+      linear issues duplicate ENG-123 --yes
+
+      # Duplicate and create a relation link
+      linear issues duplicate ENG-123 --link --yes
+
+      # Duplicate and show as JSON
+      linear issues duplicate abc123-uuid --format json
+    """
+    try:
+        # Extract verbose flag from context
+        verbose = ctx.obj.get("verbose", False) if ctx.obj else False
+        verbose_logger = VerboseLogger(enabled=verbose)
+
+        # Initialize
+        client = LinearClient(verbose_logger=verbose_logger)
+        console = Console()
+
+        # Fetch the source issue first to get details
+        try:
+            source_issue = client.get_issue(issue_id)
+        except LinearClientError as e:
+            console.print(f"[red]Error: {e}[/red]")
+            console.print(
+                f"[dim]Make sure '{issue_id}' is a valid issue identifier or ID[/dim]"
+            )
+            raise typer.Exit(1)
+
+        # Show source issue details
+        console.print("\n[bold]Source issue to duplicate:[/bold]")
+        console.print(f"  [bold]Identifier:[/bold] {source_issue.identifier}")
+        console.print(f"  [bold]Title:[/bold] {source_issue.title}")
+        console.print(f"  [bold]Team:[/bold] {source_issue.team.key}")
+        console.print(f"  [bold]State:[/bold] {source_issue.state.name}")
+
+        if source_issue.priority is not None:
+            console.print(f"  [bold]Priority:[/bold] {source_issue.priority_label}")
+
+        if source_issue.labels:
+            labels = ", ".join([label.name for label in source_issue.labels])
+            console.print(f"  [bold]Labels:[/bold] {labels}")
+
+        if source_issue.project:
+            console.print(f"  [bold]Project:[/bold] {source_issue.project.name}")
+
+        console.print(
+            "\n[dim]The new issue will have the same fields but will be unassigned.[/dim]"
+        )
+
+        # Confirmation (unless --yes flag is used)
+        if not yes:
+            response = Prompt.ask(
+                "\n[yellow]Create a duplicate of this issue?[/yellow]",
+                choices=["y", "yes", "n", "no"],
+                default="n",
+                show_choices=True,
+                case_sensitive=False,
+            )
+
+            if response[0].lower() == "n":
+                console.print("[yellow]Duplication cancelled.[/yellow]")
+                sys.exit(0)
+
+        # Duplicate the issue
+        try:
+            new_issue = client.duplicate_issue(
+                issue_id=source_issue.id, create_relation=link
+            )
+            console.print(
+                f"\n[green]Issue duplicated successfully: {new_issue.identifier}[/green]"
+            )
+
+            # Show the new issue details
+            console.print()
+            if format_type == "json":
+                format_issue_json(new_issue)
+            else:  # detail
+                format_issue_detail(new_issue)
+
+        except LinearClientError as e:
+            console.print(f"[red]Error: {e}[/red]")
+            raise typer.Exit(1)
+
+    except LinearClientError as e:
+        typer.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except ValidationError as e:
+        typer.echo(f"Data validation error: {e.errors()[0]['msg']}", err=True)
+        sys.exit(1)
+    except Exception as e:
+        typer.echo(f"Unexpected error: {e}", err=True)
+        sys.exit(1)
+
+
 @app.command("move-state")
 def move_state(
     ctx: typer.Context,
