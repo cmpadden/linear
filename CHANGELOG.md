@@ -8,6 +8,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [0.0.14] (unreleased)
 
 ### Added
+- **Enhanced filtering & search**: Added query string filtering and date range filtering for issues (2026-01-16)
+  - **Date range filters**: Added `--created-after`, `--created-before`, `--updated-after`, and `--updated-before` flags
+    - Accepts user-friendly YYYY-MM-DD format (e.g., `--created-after 2025-01-01`)
+    - Automatically converts to ISO 8601 with proper time boundaries
+    - Works with both `linear issues list` and `linear issues search` commands
+    - Examples:
+      - `linear issues list --created-after 2025-01-01` - Issues created this year
+      - `linear issues list --updated-before 2024-12-31` - Issues not updated this year
+      - `linear issues search "bug" --created-after 2025-01-01 --team ENG` - Search bugs created this year in ENG team
+  - **Query string filter**: Added `--filter` flag with powerful query string syntax
+    - Supports AND/OR operators for complex filtering: `--filter "team:ENG OR team:DESIGN AND priority:1"`
+    - Supports parentheses for explicit grouping: `--filter "(team:ENG OR team:DESIGN) AND status:todo"`
+    - Supports all filter fields: team, status, assignee, creator, priority, project, label
+    - Date filters within query: `--filter "created-after:2025-01-01 AND team:ENG"`
+    - Accepts both `YYYY-MM-DD` and `YYYYMMDD` date formats
+    - Works with both `linear issues list` and `linear issues search` commands
+    - Can be combined with simple flags (e.g., `--team ENG --filter "priority:1 OR priority:2"`)
+    - Examples:
+      - `linear issues list --filter "team:ENG OR team:DESIGN"` - Issues in ENG or DESIGN teams
+      - `linear issues list --filter "status:todo OR status:\"in progress\""` - Issues that are todo or in progress (quotes for multi-word values)
+      - `linear issues list --filter "(team:ENG OR team:DESIGN) AND priority:1"` - High priority issues in either team
+      - `linear issues search "bug" --filter "team:ENG OR team:PLATFORM AND created-after:20250101"` - Search bugs across multiple teams from this year
+      - `linear issues list --filter "(team:ENG OR team:DESIGN) AND (status:todo OR status:\"in progress\") AND created-after:2025-01-01"` - Active work across multiple teams created this year
 - **Projects CRUD operations**: Added create, update, delete, archive, and unarchive operations for projects
   - `linear projects create` - Create new project with `--name`, `--team` (multiple), `--description`, `--lead`, `--state`, `--start-date`, `--target-date`, `--color`, and `--icon` flags
   - `linear projects update <project-id>` - Update project fields (name, description, teams, lead, state, dates, color, icon)

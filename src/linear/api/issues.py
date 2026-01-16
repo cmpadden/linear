@@ -16,6 +16,32 @@ class LinearClientError(Exception):
     pass
 
 
+def _to_iso_datetime(date_str: str, start_of_day: bool = True) -> str:
+    """Convert YYYY-MM-DD to ISO 8601 datetime.
+
+    Args:
+        date_str: Date in YYYY-MM-DD format
+        start_of_day: If True, use 00:00:00; if False, use 23:59:59
+
+    Returns:
+        ISO 8601 datetime string (e.g., "2025-01-01T00:00:00Z")
+
+    Raises:
+        LinearClientError: If date format is invalid
+    """
+    from datetime import datetime
+
+    try:
+        date = datetime.fromisoformat(date_str)
+    except ValueError:
+        raise LinearClientError(f"Invalid date format: {date_str}. Use YYYY-MM-DD")
+
+    if start_of_day:
+        return f"{date.date()}T00:00:00Z"
+    else:
+        return f"{date.date()}T23:59:59Z"
+
+
 def list_issues(
     self: "LinearClient",
     assignee: str | None = None,
@@ -25,6 +51,14 @@ def list_issues(
     team: str | None = None,
     priority: int | None = None,
     labels: list[str] | None = None,
+    # Date range filters
+    created_after: str | None = None,
+    created_before: str | None = None,
+    updated_after: str | None = None,
+    updated_before: str | None = None,
+    # Query string filter
+    filter_query: str | None = None,
+    # Pagination and sorting
     limit: int = 50,
     include_archived: bool = False,
     sort: str = "updated",
@@ -41,6 +75,11 @@ def list_issues(
         team: Filter by team key (e.g., ENG, DESIGN)
         priority: Filter by priority (0-4)
         labels: Filter by label names
+        created_after: Filter issues created after date (YYYY-MM-DD)
+        created_before: Filter issues created before date (YYYY-MM-DD)
+        updated_after: Filter issues updated after date (YYYY-MM-DD)
+        updated_before: Filter issues updated before date (YYYY-MM-DD)
+        filter_query: Query string for complex filters (e.g., "team:ENG OR team:DESIGN AND priority:1")
         limit: Maximum number of issues to return per page (default: 50)
         include_archived: Include archived issues (default: False)
         sort: Sort field: created, updated, priority (default: updated)
@@ -57,31 +96,74 @@ def list_issues(
     # Build filter object
     filters = {}
 
+    # If filter_query is provided, parse it and use as the base filter
+    if filter_query:
+        from linear.query_parser import parse_query, QueryParseError
+
+        try:
+            filters = parse_query(filter_query)
+        except QueryParseError as e:
+            raise LinearClientError(f"Invalid filter query: {e}")
+
+    # If simple filters are provided, add them (they AND with filter_query if both exist)
+    simple_filters = {}
+
     if assignee:
-        filters["assignee"] = {"email": {"eq": assignee}}
+        simple_filters["assignee"] = {"email": {"eq": assignee}}
 
     if creator:
-        filters["creator"] = {"email": {"eq": creator}}
+        simple_filters["creator"] = {"email": {"eq": creator}}
 
     if project:
         # Support both UUID and name matching
         if len(project) == 36 and "-" in project:  # Simple UUID check
-            filters["project"] = {"id": {"eq": project}}
+            simple_filters["project"] = {"id": {"eq": project}}
         else:
-            filters["project"] = {"name": {"contains": project}}
+            simple_filters["project"] = {"name": {"contains": project}}
 
     if status:
-        filters["state"] = {"name": {"eqIgnoreCase": status}}
+        simple_filters["state"] = {"name": {"eqIgnoreCase": status}}
 
     if team:
         # Filter by team key only (keys are unique identifiers)
-        filters["team"] = {"key": {"eqIgnoreCase": team}}
+        simple_filters["team"] = {"key": {"eqIgnoreCase": team}}
 
     if priority is not None:
-        filters["priority"] = {"eq": priority}
+        simple_filters["priority"] = {"eq": priority}
 
     if labels:
-        filters["labels"] = {"name": {"in": labels}}
+        simple_filters["labels"] = {"name": {"in": labels}}
+
+    # Date range filters
+    if created_after:
+        simple_filters["createdAt"] = simple_filters.get("createdAt", {})
+        simple_filters["createdAt"]["gte"] = _to_iso_datetime(
+            created_after, start_of_day=True
+        )
+
+    if created_before:
+        simple_filters["createdAt"] = simple_filters.get("createdAt", {})
+        simple_filters["createdAt"]["lt"] = _to_iso_datetime(
+            created_before, start_of_day=False
+        )
+
+    if updated_after:
+        simple_filters["updatedAt"] = simple_filters.get("updatedAt", {})
+        simple_filters["updatedAt"]["gte"] = _to_iso_datetime(
+            updated_after, start_of_day=True
+        )
+
+    if updated_before:
+        simple_filters["updatedAt"] = simple_filters.get("updatedAt", {})
+        simple_filters["updatedAt"]["lt"] = _to_iso_datetime(
+            updated_before, start_of_day=False
+        )
+
+    # Combine filter_query with simple filters if both exist
+    if filters and simple_filters:
+        filters = {"and": [filters, simple_filters]}
+    elif simple_filters:
+        filters = simple_filters
 
     # Determine order by
     order_by_map = {
@@ -263,16 +345,44 @@ def list_issues(
 def search_issues(
     self: "LinearClient",
     query: str,
+    # Additional filters (same as list_issues)
+    assignee: str | None = None,
+    creator: str | None = None,
+    project: str | None = None,
+    status: str | None = None,
+    team: str | None = None,
+    priority: int | None = None,
+    labels: list[str] | None = None,
+    # Date range filters
+    created_after: str | None = None,
+    created_before: str | None = None,
+    updated_after: str | None = None,
+    updated_before: str | None = None,
+    # Query string filter
+    filter_query: str | None = None,
+    # Pagination and sorting
     limit: int = 50,
     include_archived: bool = False,
     sort: str = "updated",
     after: str | None = None,
     fetch_all: bool = False,
 ) -> tuple[list[Issue], dict[str, Any]]:
-    """Search issues by title and description.
+    """Search issues by title and description with optional additional filters.
 
     Args:
         query: Search query (searches issue titles and descriptions, case-insensitive)
+        assignee: Filter by assignee email
+        creator: Filter by issue creator email
+        project: Filter by project name
+        status: Filter by issue status/state
+        team: Filter by team key (e.g., ENG, DESIGN)
+        priority: Filter by priority (0-4)
+        labels: Filter by label names
+        created_after: Filter issues created after date (YYYY-MM-DD)
+        created_before: Filter issues created before date (YYYY-MM-DD)
+        updated_after: Filter issues updated after date (YYYY-MM-DD)
+        updated_before: Filter issues updated before date (YYYY-MM-DD)
+        filter_query: Query string for complex filters (e.g., "team:ENG OR team:DESIGN AND priority:1")
         limit: Maximum number of issues to return per page (default: 50)
         include_archived: Include archived issues (default: False)
         sort: Sort field: created, updated, priority (default: updated)
@@ -286,13 +396,87 @@ def search_issues(
     Raises:
         LinearClientError: If the query fails or data validation fails
     """
-    # Build filter with title and description search (OR logic)
-    filters = {
+    # Build base search filter (title OR description)
+    search_filter = {
         "or": [
             {"title": {"containsIgnoreCase": query}},
             {"description": {"containsIgnoreCase": query}},
         ]
     }
+
+    # If filter_query is provided, parse it
+    query_filter = {}
+    if filter_query:
+        from linear.query_parser import parse_query, QueryParseError
+
+        try:
+            query_filter = parse_query(filter_query)
+        except QueryParseError as e:
+            raise LinearClientError(f"Invalid filter query: {e}")
+
+    # Build simple filters
+    simple_filters = {}
+
+    if assignee:
+        simple_filters["assignee"] = {"email": {"eq": assignee}}
+
+    if creator:
+        simple_filters["creator"] = {"email": {"eq": creator}}
+
+    if project:
+        if len(project) == 36 and "-" in project:
+            simple_filters["project"] = {"id": {"eq": project}}
+        else:
+            simple_filters["project"] = {"name": {"contains": project}}
+
+    if status:
+        simple_filters["state"] = {"name": {"eqIgnoreCase": status}}
+
+    if team:
+        simple_filters["team"] = {"key": {"eqIgnoreCase": team}}
+
+    if priority is not None:
+        simple_filters["priority"] = {"eq": priority}
+
+    if labels:
+        simple_filters["labels"] = {"name": {"in": labels}}
+
+    # Date range filters
+    if created_after:
+        simple_filters["createdAt"] = simple_filters.get("createdAt", {})
+        simple_filters["createdAt"]["gte"] = _to_iso_datetime(
+            created_after, start_of_day=True
+        )
+
+    if created_before:
+        simple_filters["createdAt"] = simple_filters.get("createdAt", {})
+        simple_filters["createdAt"]["lt"] = _to_iso_datetime(
+            created_before, start_of_day=False
+        )
+
+    if updated_after:
+        simple_filters["updatedAt"] = simple_filters.get("updatedAt", {})
+        simple_filters["updatedAt"]["gte"] = _to_iso_datetime(
+            updated_after, start_of_day=True
+        )
+
+    if updated_before:
+        simple_filters["updatedAt"] = simple_filters.get("updatedAt", {})
+        simple_filters["updatedAt"]["lt"] = _to_iso_datetime(
+            updated_before, start_of_day=False
+        )
+
+    # Combine all filters with AND logic
+    all_filters = [search_filter]
+    if query_filter:
+        all_filters.append(query_filter)
+    if simple_filters:
+        all_filters.append(simple_filters)
+
+    if len(all_filters) == 1:
+        filters = all_filters[0]
+    else:
+        filters = {"and": all_filters}
 
     # Determine order by
     order_by_map = {

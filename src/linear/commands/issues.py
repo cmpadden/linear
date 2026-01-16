@@ -42,6 +42,14 @@ def _list_issues_impl(
     team: str | None = None,
     priority: int | None = None,
     labels: list[str] | None = None,
+    # Date range filters
+    created_after: str | None = None,
+    created_before: str | None = None,
+    updated_after: str | None = None,
+    updated_before: str | None = None,
+    # Query string filter
+    filter_query: str | None = None,
+    # Pagination and format
     per_page: int = 50,
     page: int | None = None,
     all: bool = False,
@@ -106,6 +114,11 @@ def _list_issues_impl(
                     team=team,
                     priority=priority,
                     labels=labels,
+                    created_after=created_after,
+                    created_before=created_before,
+                    updated_after=updated_after,
+                    updated_before=updated_before,
+                    filter_query=filter_query,
                     limit=per_page,
                     include_archived=include_archived,
                     sort=order_by,
@@ -131,6 +144,11 @@ def _list_issues_impl(
             team=team,
             priority=priority,
             labels=labels,
+            created_after=created_after,
+            created_before=created_before,
+            updated_after=updated_after,
+            updated_before=updated_before,
+            filter_query=filter_query,
             limit=per_page,
             include_archived=include_archived,
             sort=order_by,
@@ -217,6 +235,39 @@ def list_issues(
         Optional[list[str]],
         typer.Option("--label", "-l", help="Filter by label (repeatable)"),
     ] = None,
+    # Date range filters
+    created_after: Annotated[
+        Optional[str],
+        typer.Option(
+            "--created-after", help="Show issues created after date (YYYY-MM-DD)"
+        ),
+    ] = None,
+    created_before: Annotated[
+        Optional[str],
+        typer.Option(
+            "--created-before", help="Show issues created before date (YYYY-MM-DD)"
+        ),
+    ] = None,
+    updated_after: Annotated[
+        Optional[str],
+        typer.Option(
+            "--updated-after", help="Show issues updated after date (YYYY-MM-DD)"
+        ),
+    ] = None,
+    updated_before: Annotated[
+        Optional[str],
+        typer.Option(
+            "--updated-before", help="Show issues updated before date (YYYY-MM-DD)"
+        ),
+    ] = None,
+    # Query string filter
+    filter: Annotated[
+        Optional[str],
+        typer.Option(
+            "--filter",
+            help='Complex filter query (e.g., "team:ENG OR team:DESIGN AND priority:1")',
+        ),
+    ] = None,
     per_page: Annotated[
         int, typer.Option("--per-page", help="Number of issues per page (max 250)")
     ] = 50,
@@ -299,6 +350,11 @@ def list_issues(
         team=team,
         priority=priority,
         labels=label,
+        created_after=created_after,
+        created_before=created_before,
+        updated_after=updated_after,
+        updated_before=updated_before,
+        filter_query=filter,
         per_page=per_page,
         page=page,
         all=all,
@@ -373,7 +429,72 @@ def view_issue(
 @app.command("search")
 def search_issues(
     ctx: typer.Context,
-    query: Annotated[str, typer.Argument(help="Search query (searches issue titles)")],
+    query: Annotated[
+        str,
+        typer.Argument(help="Search query (searches issue titles and descriptions)"),
+    ],
+    # Additional filters
+    assignee: Annotated[
+        Optional[str],
+        typer.Option("--assignee", "-a", help="Filter by assignee email"),
+    ] = None,
+    creator: Annotated[
+        Optional[str],
+        typer.Option("--creator", "-c", help="Filter by issue creator email"),
+    ] = None,
+    project: Annotated[
+        Optional[str],
+        typer.Option("--project", "-p", help="Filter by project name"),
+    ] = None,
+    status: Annotated[
+        Optional[str],
+        typer.Option("--status", "-s", help="Filter by status"),
+    ] = None,
+    team: Annotated[
+        Optional[str],
+        typer.Option("--team", "-t", help="Filter by team key"),
+    ] = None,
+    priority: Annotated[
+        Optional[int],
+        typer.Option("--priority", help="Filter by priority (0-4)"),
+    ] = None,
+    label: Annotated[
+        Optional[list[str]],
+        typer.Option("--label", "-l", help="Filter by label (repeatable)"),
+    ] = None,
+    # Date range filters
+    created_after: Annotated[
+        Optional[str],
+        typer.Option(
+            "--created-after", help="Show issues created after date (YYYY-MM-DD)"
+        ),
+    ] = None,
+    created_before: Annotated[
+        Optional[str],
+        typer.Option(
+            "--created-before", help="Show issues created before date (YYYY-MM-DD)"
+        ),
+    ] = None,
+    updated_after: Annotated[
+        Optional[str],
+        typer.Option(
+            "--updated-after", help="Show issues updated after date (YYYY-MM-DD)"
+        ),
+    ] = None,
+    updated_before: Annotated[
+        Optional[str],
+        typer.Option(
+            "--updated-before", help="Show issues updated before date (YYYY-MM-DD)"
+        ),
+    ] = None,
+    # Query string filter
+    filter: Annotated[
+        Optional[str],
+        typer.Option(
+            "--filter",
+            help='Complex filter query (e.g., "team:ENG OR team:DESIGN AND priority:1")',
+        ),
+    ] = None,
     per_page: Annotated[
         int, typer.Option("--per-page", help="Number of issues per page (max 250)")
     ] = 50,
@@ -439,6 +560,18 @@ def search_issues(
         # Search issues
         issues, pagination_info = client.search_issues(
             query=query,
+            assignee=assignee,
+            creator=creator,
+            project=project,
+            status=status,
+            team=team,
+            priority=priority,
+            labels=label,
+            created_after=created_after,
+            created_before=created_before,
+            updated_after=updated_after,
+            updated_before=updated_before,
+            filter_query=filter,
             limit=per_page,
             include_archived=include_archived,
             sort=order_by,
