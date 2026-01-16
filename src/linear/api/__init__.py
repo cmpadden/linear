@@ -40,6 +40,11 @@ class LinearClient(BaseClient):
     # Projects
     list_projects = projects.list_projects
     get_project = projects.get_project
+    create_project = projects.create_project
+    update_project = projects.update_project
+    delete_project = projects.delete_project
+    archive_project = projects.archive_project
+    unarchive_project = projects.unarchive_project
 
     # Teams
     list_teams = teams.list_teams

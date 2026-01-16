@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.0.14] (unreleased)
 
+### Added
+- **Projects CRUD operations**: Added create, update, delete, archive, and unarchive operations for projects
+  - `linear projects create` - Create new project with `--name`, `--team` (multiple), `--description`, `--lead`, `--state`, `--start-date`, `--target-date`, `--color`, and `--icon` flags
+  - `linear projects update <project-id>` - Update project fields (name, description, teams, lead, state, dates, color, icon)
+  - `linear projects delete <project-id>` - Delete project (with confirmation prompt, use `--yes` to skip)
+  - `linear projects archive <project-id>` - Archive project (with confirmation prompt, use `--yes` to skip)
+  - `linear projects unarchive <project-id>` - Unarchive project (with confirmation prompt, use `--yes` to skip)
+  - Supports multiple teams via multiple `--team` flags
+  - Supports lead assignment via user email or ID lookup
+  - State validation for valid project states (planned, started, paused, completed, canceled)
+  - Supports both detail and JSON output formats via `--format` flag
+
 ### Changed
 - **Default issue list behavior**: `linear issues list` now shows issues assigned to the current user by default (like "My Issues" in Linear's web app)
   - Removed `linear issues` callback shortcut (now shows help text instead)
