@@ -5,7 +5,30 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.0.14]
+## [0.0.16] Unreleased
+
+### Added
+- **Issue duplication**: Added `linear issues duplicate` command to clone existing issues (2026-01-16)
+  - Creates a new issue with copied fields from source issue: title, description, priority, labels, project, state, estimate, due date, parent, and cycle
+  - Title is automatically prefixed with "Copy of " to distinguish the duplicate
+  - New issue is unassigned by default (assignee is not copied)
+  - Comments, attachments, and subscribers are not copied (these remain unique to the original issue)
+  - Supports `--yes` / `-y` flag to skip confirmation prompt
+  - Supports `--link` flag to create a duplicate relation between source and new issue
+  - Supports `--format` flag for detail or JSON output
+  - Examples:
+    - `linear issues duplicate ENG-123` - Duplicate issue with confirmation
+    - `linear issues duplicate ENG-123 --yes` - Skip confirmation prompt
+    - `linear issues duplicate ENG-123 --link --yes` - Create duplicate and link with relation
+    - `linear issues duplicate abc123-uuid --format json` - Output as JSON
+
+### Fixed
+- **Type checking**: Fixed type errors in `duplicate_issue` implementation (2026-01-16)
+  - Fixed labels access to use direct list instead of connection nodes
+  - Added datetime to ISO string conversion for due_date field
+  - Added team_id null check to satisfy type system requirements
+
+## [0.0.15]
 
 ### Added
 - **Enhanced filtering & search**: Added query string filtering and date range filtering for issues (2026-01-16) ([6ef1956](https://github.com/cmpadden/linear/commit/6ef1956))
@@ -59,6 +82,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   - Applies to: `linear issues`, `linear projects`, `linear teams`, `linear users`, `linear cycles`, `linear labels`, `linear comments`, `linear attachments`, `linear roadmaps`, `linear issues relations`
   - Shows available subcommands and usage examples instead of "Missing command" error
   - Makes CLI more discoverable and user-friendly
+
+## [0.0.14]
+
+### Changed
+- **Default issue list behavior**: Initial implementation of `linear issues list` defaulting to show assigned issues (2026-01-16) ([102242c](https://github.com/cmpadden/linear/commit/102242c))
+  - Changed `linear issues list` to show "My Issues" by default
+  - This was later refined in v0.0.15 with additional flags and behavior
 
 ## [0.0.13]
 
