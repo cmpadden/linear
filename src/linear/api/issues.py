@@ -19,6 +19,7 @@ class LinearClientError(Exception):
 def list_issues(
     self: "LinearClient",
     assignee: str | None = None,
+    creator: str | None = None,
     project: str | None = None,
     status: str | None = None,
     team: str | None = None,
@@ -34,6 +35,7 @@ def list_issues(
 
     Args:
         assignee: Filter by assignee email
+        creator: Filter by issue creator email
         project: Filter by project name
         status: Filter by issue status/state
         team: Filter by team key (e.g., ENG, DESIGN)
@@ -57,6 +59,9 @@ def list_issues(
 
     if assignee:
         filters["assignee"] = {"email": {"eq": assignee}}
+
+    if creator:
+        filters["creator"] = {"email": {"eq": creator}}
 
     if project:
         # Support both UUID and name matching
@@ -108,6 +113,16 @@ def list_issues(
             color
           }
           assignee {
+            id
+            name
+            displayName
+            email
+            active
+            admin
+            createdAt
+            updatedAt
+          }
+          creator {
             id
             name
             displayName
@@ -309,6 +324,16 @@ def search_issues(
             color
           }
           assignee {
+            id
+            name
+            displayName
+            email
+            active
+            admin
+            createdAt
+            updatedAt
+          }
+          creator {
             id
             name
             displayName

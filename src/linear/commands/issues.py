@@ -26,8 +26,152 @@ from linear.formatters import (
 from linear.utils import VerboseLogger
 from linear.utils.editor import IssueData, edit_issue_in_editor
 
-app = typer.Typer(help="Manage Linear issues")
+app = typer.Typer(
+    help="Manage Linear issues. Run 'linear issues list' to see your assigned issues."
+)
 relations_app = typer.Typer(help="Manage issue relations")
+
+
+def _list_issues_impl(
+    ctx: typer.Context,
+    assignee: str | None = None,
+    creator: str | None = None,
+    project: str | None = None,
+    status: str | None = None,
+    team: str | None = None,
+    priority: int | None = None,
+    labels: list[str] | None = None,
+    per_page: int = 50,
+    page: int | None = None,
+    all: bool = False,
+    limit: int | None = None,
+    include_archived: bool = False,
+    format: str = "table",
+    order_by: str = "updated",
+    group_by: str | None = "cycle",
+) -> None:
+    """Core implementation for listing issues (shared between default and list commands)."""
+    try:
+        # Extract verbose flag from context
+        verbose = ctx.obj.get("verbose", False) if ctx.obj else False
+        verbose_logger = VerboseLogger(enabled=verbose)
+
+        # Initialize client
+        client = LinearClient(verbose_logger=verbose_logger)
+
+        # Handle deprecated --limit flag
+        if limit is not None:
+            console = Console()
+            console.print(
+                "[yellow]Warning: --limit is deprecated, use --per-page instead[/yellow]"
+            )
+            per_page = limit
+
+        # Validate per_page
+        if per_page > 250:
+            console = Console()
+            console.print("[red]Error: --per-page cannot exceed 250[/red]")
+            sys.exit(1)
+
+        # Resolve 'me' or 'self' to current user's email
+        if assignee and assignee.lower() in ("me", "self"):
+            viewer_response = client.get_viewer()
+            viewer = viewer_response.get("viewer", {})
+            assignee = viewer.get("email")
+
+        # Resolve 'me' or 'self' for creator to current user's email
+        if creator and creator.lower() in ("me", "self"):
+            if assignee and assignee.lower() in ("me", "self"):
+                # Reuse the viewer data if we already fetched it
+                creator = assignee
+            else:
+                viewer_response = client.get_viewer()
+                viewer = viewer_response.get("viewer", {})
+                creator = viewer.get("email")
+
+        # Calculate cursor for pagination
+        after_cursor: str | None = None
+        if page and page > 1:
+            # For now, we need to iterate through pages to get the cursor
+            # This is a limitation of cursor-based pagination
+            # In a real implementation, we might want to cache cursors
+            current_page = 1
+            while current_page < page:
+                _, page_info = client.list_issues(
+                    assignee=assignee,
+                    creator=creator,
+                    project=project,
+                    status=status,
+                    team=team,
+                    priority=priority,
+                    labels=labels,
+                    limit=per_page,
+                    include_archived=include_archived,
+                    sort=order_by,
+                    after=after_cursor,
+                    fetch_all=False,
+                )
+                cursor_value = page_info.get("endCursor")
+                if not cursor_value or cursor_value == "":
+                    console = Console()
+                    console.print(
+                        f"[yellow]Page {page} does not exist (only {current_page} page(s) available)[/yellow]"
+                    )
+                    sys.exit(1)
+                after_cursor = str(cursor_value) if cursor_value else None
+                current_page += 1
+
+        # Fetch issues
+        issues, pagination_info = client.list_issues(
+            assignee=assignee,
+            creator=creator,
+            project=project,
+            status=status,
+            team=team,
+            priority=priority,
+            labels=labels,
+            limit=per_page,
+            include_archived=include_archived,
+            sort=order_by,
+            after=after_cursor,
+            fetch_all=all,
+        )
+
+        # Enhance pagination info for display
+        display_pagination_info: dict[str, str | bool | int] = dict(pagination_info)
+        if not all:
+            start_index = ((page or 1) - 1) * per_page + 1
+            end_index = start_index + len(issues) - 1
+            display_pagination_info["startIndex"] = start_index
+            display_pagination_info["endIndex"] = end_index
+            display_pagination_info["currentPage"] = page or 1
+            display_pagination_info["perPage"] = per_page
+
+        # Format output
+        if format == "json":
+            format_json(issues)
+        else:  # table
+            if group_by in ["cycle", "project", "team"]:
+                from typing import cast, Literal
+                from linear.formatters import format_table_grouped
+
+                format_table_grouped(
+                    issues,
+                    cast(Literal["cycle", "project", "team"], group_by),
+                    display_pagination_info,
+                )
+            else:
+                format_table(issues, display_pagination_info)
+
+    except LinearClientError as e:
+        typer.echo(f"Error: {e}", err=True)
+        sys.exit(1)
+    except ValidationError as e:
+        typer.echo(f"Data validation error: {e.errors()[0]['msg']}", err=True)
+        sys.exit(1)
+    except Exception as e:
+        typer.echo(f"Unexpected error: {e}", err=True)
+        sys.exit(1)
 
 
 @app.command("list")
@@ -41,6 +185,20 @@ def list_issues(
             help="Filter by assignee email (use 'me' or 'self' for yourself)",
         ),
     ] = None,
+    creator: Annotated[
+        Optional[str],
+        typer.Option(
+            "--creator",
+            "-c",
+            help="Filter by issue creator email (use 'me' or 'self' for yourself)",
+        ),
+    ] = None,
+    no_assignee: Annotated[
+        bool,
+        typer.Option(
+            "--no-assignee", help="Show all issues (disable default 'my issues' filter)"
+        ),
+    ] = False,
     project: Annotated[
         Optional[str], typer.Option("--project", "-p", help="Filter by project name")
     ] = None,
@@ -87,143 +245,68 @@ def list_issues(
         ),
     ] = "cycle",
 ) -> None:
-    """List Linear issues with optional filters.
+    """List Linear issues.
+
+    By default, shows issues assigned to you (like "My Issues" in Linear's web app).
+    Use --no-assignee to see all issues, or provide explicit filters.
 
     Examples:
 
-      # List all issues
+      # List your assigned issues (default)
       linear issues list
 
-      # List your own issues
-      linear issues list --assignee me
+      # List all issues in workspace
+      linear issues list --no-assignee
 
-      # Filter by assignee
+      # List issues you created (manager view: see delegated work)
+      linear issues list --creator me
+
+      # List your team's issues (disable default assignee filter)
+      linear issues list --team ENG --no-assignee
+
+      # List your assigned issues in a specific team
+      linear issues list --team ENG
+
+      # Filter by status
+      linear issues list --status "in progress"
+
+      # Explicitly filter by different assignee
       linear issues list --assignee user@example.com
 
-      # Filter by multiple criteria
-      linear issues list --status "in progress" --priority 1 --per-page 10
+      # Combine filters
+      linear issues list --creator me --status "in progress"
 
       # Fetch all results
       linear issues list --all
 
-      # Pagination
-      linear issues list --page 2 --per-page 25
-
       # Output as JSON
       linear issues list --format json
 
-       # Filter by labels
-       linear issues list --label bug --label urgent
+      # Filter by labels
+      linear issues list --label bug --label urgent
     """
-    try:
-        # Extract verbose flag from context
-        verbose = ctx.obj.get("verbose", False) if ctx.obj else False
-        verbose_logger = VerboseLogger(enabled=verbose)
+    # Apply default assignee filter unless explicitly disabled or overridden
+    if assignee is None and not no_assignee:
+        assignee = "me"
 
-        # Initialize client
-        client = LinearClient(verbose_logger=verbose_logger)
-
-        # Handle deprecated --limit flag
-        if limit is not None:
-            console = Console()
-            console.print(
-                "[yellow]Warning: --limit is deprecated, use --per-page instead[/yellow]"
-            )
-            per_page = limit
-
-        # Validate per_page
-        if per_page > 250:
-            console = Console()
-            console.print("[red]Error: --per-page cannot exceed 250[/red]")
-            sys.exit(1)
-
-        # Resolve 'me' or 'self' to current user's email
-        if assignee and assignee.lower() in ("me", "self"):
-            viewer_response = client.get_viewer()
-            viewer = viewer_response.get("viewer", {})
-            assignee = viewer.get("email")
-
-        # Calculate cursor for pagination
-        after_cursor: str | None = None
-        if page and page > 1:
-            # For now, we need to iterate through pages to get the cursor
-            # This is a limitation of cursor-based pagination
-            # In a real implementation, we might want to cache cursors
-            current_page = 1
-            while current_page < page:
-                _, page_info = client.list_issues(
-                    assignee=assignee,
-                    project=project,
-                    status=status,
-                    team=team,
-                    priority=priority,
-                    labels=label,
-                    limit=per_page,
-                    include_archived=include_archived,
-                    sort=order_by,
-                    after=after_cursor,
-                    fetch_all=False,
-                )
-                cursor_value = page_info.get("endCursor")
-                if not cursor_value or cursor_value == "":
-                    console = Console()
-                    console.print(
-                        f"[yellow]Page {page} does not exist (only {current_page} page(s) available)[/yellow]"
-                    )
-                    sys.exit(1)
-                after_cursor = str(cursor_value) if cursor_value else None
-                current_page += 1
-
-        # Fetch issues
-        issues, pagination_info = client.list_issues(
-            assignee=assignee,
-            project=project,
-            status=status,
-            team=team,
-            priority=priority,
-            labels=label,
-            limit=per_page,
-            include_archived=include_archived,
-            sort=order_by,
-            after=after_cursor,
-            fetch_all=all,
-        )
-
-        # Enhance pagination info for display
-        display_pagination_info: dict[str, str | bool | int] = dict(pagination_info)
-        if not all:
-            start_index = ((page or 1) - 1) * per_page + 1
-            end_index = start_index + len(issues) - 1
-            display_pagination_info["startIndex"] = start_index
-            display_pagination_info["endIndex"] = end_index
-            display_pagination_info["currentPage"] = page or 1
-            display_pagination_info["perPage"] = per_page
-
-        # Format output
-        if format == "json":
-            format_json(issues)
-        else:  # table
-            if group_by in ["cycle", "project", "team"]:
-                from typing import cast, Literal
-                from linear.formatters import format_table_grouped
-
-                format_table_grouped(
-                    issues,
-                    cast(Literal["cycle", "project", "team"], group_by),
-                    display_pagination_info,
-                )
-            else:
-                format_table(issues, display_pagination_info)
-
-    except LinearClientError as e:
-        typer.echo(f"Error: {e}", err=True)
-        sys.exit(1)
-    except ValidationError as e:
-        typer.echo(f"Data validation error: {e.errors()[0]['msg']}", err=True)
-        sys.exit(1)
-    except Exception as e:
-        typer.echo(f"Unexpected error: {e}", err=True)
-        sys.exit(1)
+    _list_issues_impl(
+        ctx=ctx,
+        assignee=assignee,
+        creator=creator,
+        project=project,
+        status=status,
+        team=team,
+        priority=priority,
+        labels=label,
+        per_page=per_page,
+        page=page,
+        all=all,
+        limit=limit,
+        include_archived=include_archived,
+        format=format,
+        order_by=order_by,
+        group_by=group_by,
+    )
 
 
 @app.command("view")
