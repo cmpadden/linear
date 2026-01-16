@@ -7,9 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.0.14] (unreleased)
 
-## [0.0.13]
+### Changed
+- **Default issue list behavior**: `linear issues list` now shows issues assigned to the current user by default (like "My Issues" in Linear's web app)
+  - Removed `linear issues` callback shortcut (now shows help text instead)
+  - `linear issues list` defaults to showing your assigned issues
+  - Added `--no-assignee` flag to `linear issues list` to show all issues (opt-in)
+  - Explicit `--assignee` filter overrides the default behavior
+  - Examples:
+    - `linear issues list` - Shows your assigned issues (default)
+    - `linear issues list --no-assignee` - Shows all issues
+    - `linear issues list --team ENG` - Shows your assigned issues in ENG team
+    - `linear issues list --team ENG --no-assignee` - Shows all issues in ENG team
 
-* Default `linear issues list` to display "My Issues"
+### Improved
+- **Better command group UX**: All command groups now show help text instead of error when invoked without a subcommand
+  - Applies to: `linear issues`, `linear projects`, `linear teams`, `linear users`, `linear cycles`, `linear labels`, `linear comments`, `linear attachments`, `linear roadmaps`, `linear issues relations`
+  - Shows available subcommands and usage examples instead of "Missing command" error
+  - Makes CLI more discoverable and user-friendly
+
+## [0.0.13]
 
 ### Added
 - **Documentation generation command**: Added `linear docs` command to generate CLI documentation programmatically

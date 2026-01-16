@@ -27,9 +27,10 @@ from linear.utils import VerboseLogger
 from linear.utils.editor import IssueData, edit_issue_in_editor
 
 app = typer.Typer(
-    help="Manage Linear issues. Run 'linear issues list' to see your assigned issues."
+    help="Manage Linear issues. Run 'linear issues list' to see your assigned issues.",
+    no_args_is_help=True,
 )
-relations_app = typer.Typer(help="Manage issue relations")
+relations_app = typer.Typer(help="Manage issue relations", no_args_is_help=True)
 
 
 def _list_issues_impl(

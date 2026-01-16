@@ -20,7 +20,7 @@ from linear.formatters import (
 )
 from linear.utils import VerboseLogger
 
-app = typer.Typer(help="Manage Linear roadmaps")
+app = typer.Typer(help="Manage Linear roadmaps", no_args_is_help=True)
 
 
 def _open_editor(initial_text: str = "") -> str | None:

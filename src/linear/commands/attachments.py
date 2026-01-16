@@ -11,7 +11,7 @@ from linear.api import LinearClient, LinearClientError
 from linear.formatters import attachments as attachments_formatter
 from linear.utils import VerboseLogger
 
-app = typer.Typer(help="Manage issue attachments")
+app = typer.Typer(help="Manage issue attachments", no_args_is_help=True)
 
 
 @app.command("list")

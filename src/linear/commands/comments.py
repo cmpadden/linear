@@ -20,7 +20,7 @@ from linear.formatters import (
 )
 from linear.utils import VerboseLogger
 
-app = typer.Typer(help="Manage Linear comments")
+app = typer.Typer(help="Manage Linear comments", no_args_is_help=True)
 
 
 @app.command("list")
