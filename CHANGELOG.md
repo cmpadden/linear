@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.0.16] Unreleased
 
+### Changed
+- **Issue assignee filtering**: `linear issues list --no-assignee` now correctly filters to unassigned issues (2026-04-09)
+  - Added `--all-assignees` to disable the default "my issues" filter and show issues regardless of assignee
+  - `--no-assignee` now maps to Linear's null assignee filter instead of showing assigned issues
+  - Added validation for conflicting assignee flags
+
 ### Added
 - **Issue duplication**: Added `linear issues duplicate` command to clone existing issues (2026-01-16)
   - Creates a new issue with copied fields from source issue: title, description, priority, labels, project, state, estimate, due date, parent, and cycle

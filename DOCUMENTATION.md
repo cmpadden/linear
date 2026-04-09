@@ -18,9 +18,9 @@ $ linear [OPTIONS] COMMAND [ARGS]...
 
 **Commands**:
 
-* `docs`: Generate CLI documentation in Markdown...
-* `issues`: Manage Linear issues
-* `i`: Manage Linear issues
+* `docs`: Generate comprehensive CLI documentation...
+* `issues`: Manage Linear issues.
+* `i`: Manage Linear issues.
 * `attachments`: Manage issue attachments
 * `comments`: Manage Linear comments
 * `projects`: Manage Linear projects
@@ -38,10 +38,7 @@ $ linear [OPTIONS] COMMAND [ARGS]...
 
 ## `linear docs`
 
-Generate CLI documentation in Markdown format.
-
-This command generates comprehensive documentation for all CLI commands
-and prints it to stdout.
+Generate comprehensive CLI documentation in Markdown format to stdout.
 
 **Usage**:
 
@@ -55,7 +52,7 @@ $ linear docs [OPTIONS]
 
 ## `linear issues`
 
-Manage Linear issues
+Manage Linear issues. Run &#x27;linear issues list&#x27; to see your assigned issues.
 
 **Usage**:
 
@@ -69,7 +66,7 @@ $ linear issues [OPTIONS] COMMAND [ARGS]...
 
 **Commands**:
 
-* `list`: List Linear issues with optional filters.
+* `list`: List Linear issues.
 * `view`: Get details of a specific Linear issue.
 * `search`: Search Linear issues by title.
 * `create`: Create a new Linear issue.
@@ -77,38 +74,58 @@ $ linear issues [OPTIONS] COMMAND [ARGS]...
 * `delete`: Delete (trash) a Linear issue.
 * `archive`: Archive a Linear issue.
 * `unarchive`: Unarchive a Linear issue.
+* `duplicate`: Duplicate an issue by creating a copy.
 * `move-state`: Move an issue to a different workflow state.
 * `relations`: Manage issue relations
 
 ### `linear issues list`
 
-List Linear issues with optional filters.
+List Linear issues.
+
+By default, shows issues assigned to you (like &quot;My Issues&quot; in Linear&#x27;s web app).
+Use --all-assignees to see all issues, or --no-assignee to show only unassigned
+issues.
 
 Examples:
 
-  # List all issues
+  # List your assigned issues (default)
   linear issues list
 
-  # List your own issues
-  linear issues list --assignee me
+  # List unassigned issues
+  linear issues list --no-assignee
 
-  # Filter by assignee
+  # List all issues in workspace
+  linear issues list --all-assignees
+
+  # List issues you created (manager view: see delegated work)
+  linear issues list --creator me
+
+  # List your team&#x27;s unassigned issues
+  linear issues list --team ENG --no-assignee
+
+  # List all issues in your team
+  linear issues list --team ENG --all-assignees
+
+  # List your assigned issues in a specific team
+  linear issues list --team ENG
+
+  # Filter by status
+  linear issues list --status &quot;in progress&quot;
+
+  # Explicitly filter by different assignee
   linear issues list --assignee user@example.com
 
-  # Filter by multiple criteria
-  linear issues list --status &quot;in progress&quot; --priority 1 --per-page 10
+  # Combine filters
+  linear issues list --creator me --status &quot;in progress&quot;
 
   # Fetch all results
   linear issues list --all
 
-  # Pagination
-  linear issues list --page 2 --per-page 25
-
   # Output as JSON
   linear issues list --format json
 
-   # Filter by labels
-   linear issues list --label bug --label urgent
+  # Filter by labels
+  linear issues list --label bug --label urgent
 
 **Usage**:
 
@@ -119,11 +136,19 @@ $ linear issues list [OPTIONS]
 **Options**:
 
 * `-a, --assignee TEXT`: Filter by assignee email (use &#x27;me&#x27; or &#x27;self&#x27; for yourself)
+* `-c, --creator TEXT`: Filter by issue creator email (use &#x27;me&#x27; or &#x27;self&#x27; for yourself)
+* `--no-assignee`: Filter to unassigned issues
+* `--all-assignees`: Show issues regardless of assignee (disable default &#x27;my issues&#x27; filter)
 * `-p, --project TEXT`: Filter by project name
 * `-s, --status TEXT`: Filter by status
 * `-t, --team TEXT`: Filter by team key (e.g., ENG, DESIGN)
 * `--priority INTEGER`: Filter by priority (0-4)
 * `-l, --label TEXT`: Filter by label (repeatable)
+* `--created-after TEXT`: Show issues created after date (YYYY-MM-DD)
+* `--created-before TEXT`: Show issues created before date (YYYY-MM-DD)
+* `--updated-after TEXT`: Show issues updated after date (YYYY-MM-DD)
+* `--updated-before TEXT`: Show issues updated before date (YYYY-MM-DD)
+* `--filter TEXT`: Complex filter query (e.g., &quot;team:ENG OR team:DESIGN AND priority:1&quot;)
 * `--per-page INTEGER`: Number of issues per page (max 250)  [default: 50]
 * `--page INTEGER`: Page number to fetch (starts at 1)
 * `--all`: Fetch all results automatically
@@ -191,10 +216,22 @@ $ linear issues search [OPTIONS] QUERY
 
 **Arguments**:
 
-* `QUERY`: Search query (searches issue titles)  [required]
+* `QUERY`: Search query (searches issue titles and descriptions)  [required]
 
 **Options**:
 
+* `-a, --assignee TEXT`: Filter by assignee email
+* `-c, --creator TEXT`: Filter by issue creator email
+* `-p, --project TEXT`: Filter by project name
+* `-s, --status TEXT`: Filter by status
+* `-t, --team TEXT`: Filter by team key
+* `--priority INTEGER`: Filter by priority (0-4)
+* `-l, --label TEXT`: Filter by label (repeatable)
+* `--created-after TEXT`: Show issues created after date (YYYY-MM-DD)
+* `--created-before TEXT`: Show issues created before date (YYYY-MM-DD)
+* `--updated-after TEXT`: Show issues updated after date (YYYY-MM-DD)
+* `--updated-before TEXT`: Show issues updated before date (YYYY-MM-DD)
+* `--filter TEXT`: Complex filter query (e.g., &quot;team:ENG OR team:DESIGN AND priority:1&quot;)
 * `--per-page INTEGER`: Number of issues per page (max 250)  [default: 50]
 * `--all`: Fetch all results automatically
 * `--limit INTEGER`: DEPRECATED: use --per-page instead
@@ -390,6 +427,45 @@ $ linear issues unarchive [OPTIONS] ISSUE_ID
 * `-y, --yes`: Skip confirmation prompt
 * `--help`: Show this message and exit.
 
+### `linear issues duplicate`
+
+Duplicate an issue by creating a copy.
+
+Creates a new issue with the same fields as the source issue (title, description,
+priority, labels, project, state, estimate, due date). The new issue will be
+unassigned. Use --link to also create a duplicate relation.
+
+Examples:
+
+  # Duplicate an issue with confirmation
+  linear issues duplicate ENG-123
+
+  # Duplicate without confirmation
+  linear issues duplicate ENG-123 --yes
+
+  # Duplicate and create a relation link
+  linear issues duplicate ENG-123 --link --yes
+
+  # Duplicate and show as JSON
+  linear issues duplicate abc123-uuid --format json
+
+**Usage**:
+
+```console
+$ linear issues duplicate [OPTIONS] ISSUE_ID
+```
+
+**Arguments**:
+
+* `ISSUE_ID`: Issue ID or identifier to duplicate  [required]
+
+**Options**:
+
+* `-y, --yes`: Skip confirmation
+* `--link`: Create duplicate relation between issues
+* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `--help`: Show this message and exit.
+
 ### `linear issues move-state`
 
 Move an issue to a different workflow state.
@@ -531,7 +607,7 @@ $ linear issues relations remove [OPTIONS] ISSUE_ID RELATION_ID
 
 ## `linear i`
 
-Manage Linear issues
+Manage Linear issues. Run &#x27;linear issues list&#x27; to see your assigned issues.
 
 **Usage**:
 
@@ -545,7 +621,7 @@ $ linear i [OPTIONS] COMMAND [ARGS]...
 
 **Commands**:
 
-* `list`: List Linear issues with optional filters.
+* `list`: List Linear issues.
 * `view`: Get details of a specific Linear issue.
 * `search`: Search Linear issues by title.
 * `create`: Create a new Linear issue.
@@ -553,38 +629,58 @@ $ linear i [OPTIONS] COMMAND [ARGS]...
 * `delete`: Delete (trash) a Linear issue.
 * `archive`: Archive a Linear issue.
 * `unarchive`: Unarchive a Linear issue.
+* `duplicate`: Duplicate an issue by creating a copy.
 * `move-state`: Move an issue to a different workflow state.
 * `relations`: Manage issue relations
 
 ### `linear i list`
 
-List Linear issues with optional filters.
+List Linear issues.
+
+By default, shows issues assigned to you (like &quot;My Issues&quot; in Linear&#x27;s web app).
+Use --all-assignees to see all issues, or --no-assignee to show only unassigned
+issues.
 
 Examples:
 
-  # List all issues
+  # List your assigned issues (default)
   linear issues list
 
-  # List your own issues
-  linear issues list --assignee me
+  # List unassigned issues
+  linear issues list --no-assignee
 
-  # Filter by assignee
+  # List all issues in workspace
+  linear issues list --all-assignees
+
+  # List issues you created (manager view: see delegated work)
+  linear issues list --creator me
+
+  # List your team&#x27;s unassigned issues
+  linear issues list --team ENG --no-assignee
+
+  # List all issues in your team
+  linear issues list --team ENG --all-assignees
+
+  # List your assigned issues in a specific team
+  linear issues list --team ENG
+
+  # Filter by status
+  linear issues list --status &quot;in progress&quot;
+
+  # Explicitly filter by different assignee
   linear issues list --assignee user@example.com
 
-  # Filter by multiple criteria
-  linear issues list --status &quot;in progress&quot; --priority 1 --per-page 10
+  # Combine filters
+  linear issues list --creator me --status &quot;in progress&quot;
 
   # Fetch all results
   linear issues list --all
 
-  # Pagination
-  linear issues list --page 2 --per-page 25
-
   # Output as JSON
   linear issues list --format json
 
-   # Filter by labels
-   linear issues list --label bug --label urgent
+  # Filter by labels
+  linear issues list --label bug --label urgent
 
 **Usage**:
 
@@ -595,11 +691,19 @@ $ linear i list [OPTIONS]
 **Options**:
 
 * `-a, --assignee TEXT`: Filter by assignee email (use &#x27;me&#x27; or &#x27;self&#x27; for yourself)
+* `-c, --creator TEXT`: Filter by issue creator email (use &#x27;me&#x27; or &#x27;self&#x27; for yourself)
+* `--no-assignee`: Filter to unassigned issues
+* `--all-assignees`: Show issues regardless of assignee (disable default &#x27;my issues&#x27; filter)
 * `-p, --project TEXT`: Filter by project name
 * `-s, --status TEXT`: Filter by status
 * `-t, --team TEXT`: Filter by team key (e.g., ENG, DESIGN)
 * `--priority INTEGER`: Filter by priority (0-4)
 * `-l, --label TEXT`: Filter by label (repeatable)
+* `--created-after TEXT`: Show issues created after date (YYYY-MM-DD)
+* `--created-before TEXT`: Show issues created before date (YYYY-MM-DD)
+* `--updated-after TEXT`: Show issues updated after date (YYYY-MM-DD)
+* `--updated-before TEXT`: Show issues updated before date (YYYY-MM-DD)
+* `--filter TEXT`: Complex filter query (e.g., &quot;team:ENG OR team:DESIGN AND priority:1&quot;)
 * `--per-page INTEGER`: Number of issues per page (max 250)  [default: 50]
 * `--page INTEGER`: Page number to fetch (starts at 1)
 * `--all`: Fetch all results automatically
@@ -667,10 +771,22 @@ $ linear i search [OPTIONS] QUERY
 
 **Arguments**:
 
-* `QUERY`: Search query (searches issue titles)  [required]
+* `QUERY`: Search query (searches issue titles and descriptions)  [required]
 
 **Options**:
 
+* `-a, --assignee TEXT`: Filter by assignee email
+* `-c, --creator TEXT`: Filter by issue creator email
+* `-p, --project TEXT`: Filter by project name
+* `-s, --status TEXT`: Filter by status
+* `-t, --team TEXT`: Filter by team key
+* `--priority INTEGER`: Filter by priority (0-4)
+* `-l, --label TEXT`: Filter by label (repeatable)
+* `--created-after TEXT`: Show issues created after date (YYYY-MM-DD)
+* `--created-before TEXT`: Show issues created before date (YYYY-MM-DD)
+* `--updated-after TEXT`: Show issues updated after date (YYYY-MM-DD)
+* `--updated-before TEXT`: Show issues updated before date (YYYY-MM-DD)
+* `--filter TEXT`: Complex filter query (e.g., &quot;team:ENG OR team:DESIGN AND priority:1&quot;)
 * `--per-page INTEGER`: Number of issues per page (max 250)  [default: 50]
 * `--all`: Fetch all results automatically
 * `--limit INTEGER`: DEPRECATED: use --per-page instead
@@ -864,6 +980,45 @@ $ linear i unarchive [OPTIONS] ISSUE_ID
 **Options**:
 
 * `-y, --yes`: Skip confirmation prompt
+* `--help`: Show this message and exit.
+
+### `linear i duplicate`
+
+Duplicate an issue by creating a copy.
+
+Creates a new issue with the same fields as the source issue (title, description,
+priority, labels, project, state, estimate, due date). The new issue will be
+unassigned. Use --link to also create a duplicate relation.
+
+Examples:
+
+  # Duplicate an issue with confirmation
+  linear issues duplicate ENG-123
+
+  # Duplicate without confirmation
+  linear issues duplicate ENG-123 --yes
+
+  # Duplicate and create a relation link
+  linear issues duplicate ENG-123 --link --yes
+
+  # Duplicate and show as JSON
+  linear issues duplicate abc123-uuid --format json
+
+**Usage**:
+
+```console
+$ linear i duplicate [OPTIONS] ISSUE_ID
+```
+
+**Arguments**:
+
+* `ISSUE_ID`: Issue ID or identifier to duplicate  [required]
+
+**Options**:
+
+* `-y, --yes`: Skip confirmation
+* `--link`: Create duplicate relation between issues
+* `-f, --format TEXT`: Output format: detail, json  [default: detail]
 * `--help`: Show this message and exit.
 
 ### `linear i move-state`
@@ -1266,6 +1421,11 @@ $ linear projects [OPTIONS] COMMAND [ARGS]...
 
 * `list`: List Linear projects with optional filters.
 * `view`: Get details of a specific Linear project.
+* `create`: Create a new Linear project.
+* `update`: Update an existing Linear project.
+* `delete`: Delete a Linear project.
+* `archive`: Archive a Linear project.
+* `unarchive`: Unarchive a Linear project.
 
 ### `linear projects list`
 
@@ -1337,6 +1497,161 @@ $ linear projects view [OPTIONS] PROJECT_ID
 * `-f, --format TEXT`: Output format: detail, json  [default: detail]
 * `--help`: Show this message and exit.
 
+### `linear projects create`
+
+Create a new Linear project.
+
+Examples:
+
+  # Create a project with minimal fields
+  linear projects create --name &quot;Q1 Initiative&quot; --team ENG
+
+  # Create with multiple teams
+  linear projects create --name &quot;Cross-team Project&quot; --team ENG --team DESIGN
+
+  # Create with all fields
+  linear projects create --name &quot;Q1 Initiative&quot; --team ENG           --description &quot;Focus area&quot; --state started           --target-date 2026-03-31 --lead user@example.com
+
+**Usage**:
+
+```console
+$ linear projects create [OPTIONS]
+```
+
+**Options**:
+
+* `-n, --name TEXT`: Project name (required)  [required]
+* `-t, --team TEXT`: Team ID or key (can be used multiple times, required)  [required]
+* `-d, --description TEXT`: Project description
+* `-l, --lead TEXT`: Project lead (user email or ID)
+* `--state TEXT`: Project state (planned, started, paused, completed, canceled)
+* `--start-date TEXT`: Start date (YYYY-MM-DD)
+* `--target-date TEXT`: Target date (YYYY-MM-DD)
+* `--color TEXT`: Hex color code
+* `--icon TEXT`: Icon name
+* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `--help`: Show this message and exit.
+
+### `linear projects update`
+
+Update an existing Linear project.
+
+Examples:
+
+  # Update project name
+  linear projects update my-project --name &quot;New Name&quot;
+
+  # Update multiple fields
+  linear projects update my-project --name &quot;New Name&quot; --state completed
+
+  # Update teams (replaces all teams)
+  linear projects update my-project --team ENG --team PLATFORM
+
+**Usage**:
+
+```console
+$ linear projects update [OPTIONS] PROJECT_ID
+```
+
+**Arguments**:
+
+* `PROJECT_ID`: Project ID or slug  [required]
+
+**Options**:
+
+* `-n, --name TEXT`: New project name
+* `-d, --description TEXT`: New project description
+* `-t, --team TEXT`: Team ID or key (can be used multiple times, replaces all teams)
+* `-l, --lead TEXT`: New project lead (user email or ID)
+* `--state TEXT`: New project state (planned, started, paused, completed, canceled)
+* `--start-date TEXT`: New start date (YYYY-MM-DD)
+* `--target-date TEXT`: New target date (YYYY-MM-DD)
+* `--color TEXT`: New hex color code
+* `--icon TEXT`: New icon name
+* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `--help`: Show this message and exit.
+
+### `linear projects delete`
+
+Delete a Linear project.
+
+Examples:
+
+  # Delete project (with confirmation)
+  linear projects delete my-project
+
+  # Delete without confirmation
+  linear projects delete my-project --yes
+
+**Usage**:
+
+```console
+$ linear projects delete [OPTIONS] PROJECT_ID
+```
+
+**Arguments**:
+
+* `PROJECT_ID`: Project ID or slug  [required]
+
+**Options**:
+
+* `-y, --yes`: Skip confirmation prompt
+* `--help`: Show this message and exit.
+
+### `linear projects archive`
+
+Archive a Linear project.
+
+Examples:
+
+  # Archive project (with confirmation)
+  linear projects archive my-project
+
+  # Archive without confirmation
+  linear projects archive my-project --yes
+
+**Usage**:
+
+```console
+$ linear projects archive [OPTIONS] PROJECT_ID
+```
+
+**Arguments**:
+
+* `PROJECT_ID`: Project ID or slug  [required]
+
+**Options**:
+
+* `-y, --yes`: Skip confirmation prompt
+* `--help`: Show this message and exit.
+
+### `linear projects unarchive`
+
+Unarchive a Linear project.
+
+Examples:
+
+  # Unarchive project (with confirmation)
+  linear projects unarchive my-project
+
+  # Unarchive without confirmation
+  linear projects unarchive my-project --yes
+
+**Usage**:
+
+```console
+$ linear projects unarchive [OPTIONS] PROJECT_ID
+```
+
+**Arguments**:
+
+* `PROJECT_ID`: Project ID or slug  [required]
+
+**Options**:
+
+* `-y, --yes`: Skip confirmation prompt
+* `--help`: Show this message and exit.
+
 ## `linear p`
 
 Manage Linear projects
@@ -1355,6 +1670,11 @@ $ linear p [OPTIONS] COMMAND [ARGS]...
 
 * `list`: List Linear projects with optional filters.
 * `view`: Get details of a specific Linear project.
+* `create`: Create a new Linear project.
+* `update`: Update an existing Linear project.
+* `delete`: Delete a Linear project.
+* `archive`: Archive a Linear project.
+* `unarchive`: Unarchive a Linear project.
 
 ### `linear p list`
 
@@ -1424,6 +1744,161 @@ $ linear p view [OPTIONS] PROJECT_ID
 **Options**:
 
 * `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `--help`: Show this message and exit.
+
+### `linear p create`
+
+Create a new Linear project.
+
+Examples:
+
+  # Create a project with minimal fields
+  linear projects create --name &quot;Q1 Initiative&quot; --team ENG
+
+  # Create with multiple teams
+  linear projects create --name &quot;Cross-team Project&quot; --team ENG --team DESIGN
+
+  # Create with all fields
+  linear projects create --name &quot;Q1 Initiative&quot; --team ENG           --description &quot;Focus area&quot; --state started           --target-date 2026-03-31 --lead user@example.com
+
+**Usage**:
+
+```console
+$ linear p create [OPTIONS]
+```
+
+**Options**:
+
+* `-n, --name TEXT`: Project name (required)  [required]
+* `-t, --team TEXT`: Team ID or key (can be used multiple times, required)  [required]
+* `-d, --description TEXT`: Project description
+* `-l, --lead TEXT`: Project lead (user email or ID)
+* `--state TEXT`: Project state (planned, started, paused, completed, canceled)
+* `--start-date TEXT`: Start date (YYYY-MM-DD)
+* `--target-date TEXT`: Target date (YYYY-MM-DD)
+* `--color TEXT`: Hex color code
+* `--icon TEXT`: Icon name
+* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `--help`: Show this message and exit.
+
+### `linear p update`
+
+Update an existing Linear project.
+
+Examples:
+
+  # Update project name
+  linear projects update my-project --name &quot;New Name&quot;
+
+  # Update multiple fields
+  linear projects update my-project --name &quot;New Name&quot; --state completed
+
+  # Update teams (replaces all teams)
+  linear projects update my-project --team ENG --team PLATFORM
+
+**Usage**:
+
+```console
+$ linear p update [OPTIONS] PROJECT_ID
+```
+
+**Arguments**:
+
+* `PROJECT_ID`: Project ID or slug  [required]
+
+**Options**:
+
+* `-n, --name TEXT`: New project name
+* `-d, --description TEXT`: New project description
+* `-t, --team TEXT`: Team ID or key (can be used multiple times, replaces all teams)
+* `-l, --lead TEXT`: New project lead (user email or ID)
+* `--state TEXT`: New project state (planned, started, paused, completed, canceled)
+* `--start-date TEXT`: New start date (YYYY-MM-DD)
+* `--target-date TEXT`: New target date (YYYY-MM-DD)
+* `--color TEXT`: New hex color code
+* `--icon TEXT`: New icon name
+* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `--help`: Show this message and exit.
+
+### `linear p delete`
+
+Delete a Linear project.
+
+Examples:
+
+  # Delete project (with confirmation)
+  linear projects delete my-project
+
+  # Delete without confirmation
+  linear projects delete my-project --yes
+
+**Usage**:
+
+```console
+$ linear p delete [OPTIONS] PROJECT_ID
+```
+
+**Arguments**:
+
+* `PROJECT_ID`: Project ID or slug  [required]
+
+**Options**:
+
+* `-y, --yes`: Skip confirmation prompt
+* `--help`: Show this message and exit.
+
+### `linear p archive`
+
+Archive a Linear project.
+
+Examples:
+
+  # Archive project (with confirmation)
+  linear projects archive my-project
+
+  # Archive without confirmation
+  linear projects archive my-project --yes
+
+**Usage**:
+
+```console
+$ linear p archive [OPTIONS] PROJECT_ID
+```
+
+**Arguments**:
+
+* `PROJECT_ID`: Project ID or slug  [required]
+
+**Options**:
+
+* `-y, --yes`: Skip confirmation prompt
+* `--help`: Show this message and exit.
+
+### `linear p unarchive`
+
+Unarchive a Linear project.
+
+Examples:
+
+  # Unarchive project (with confirmation)
+  linear projects unarchive my-project
+
+  # Unarchive without confirmation
+  linear projects unarchive my-project --yes
+
+**Usage**:
+
+```console
+$ linear p unarchive [OPTIONS] PROJECT_ID
+```
+
+**Arguments**:
+
+* `PROJECT_ID`: Project ID or slug  [required]
+
+**Options**:
+
+* `-y, --yes`: Skip confirmation prompt
 * `--help`: Show this message and exit.
 
 ## `linear teams`
@@ -3019,4 +3494,3 @@ $ linear r update [OPTIONS] ROADMAP_ID
 * `--owner-id TEXT`: New owner user ID
 * `-e, --editor`: Open editor for description
 * `--help`: Show this message and exit.
-

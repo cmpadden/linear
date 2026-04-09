@@ -36,6 +36,7 @@ relations_app = typer.Typer(help="Manage issue relations", no_args_is_help=True)
 def _list_issues_impl(
     ctx: typer.Context,
     assignee: str | None = None,
+    unassigned_only: bool = False,
     creator: str | None = None,
     project: str | None = None,
     status: str | None = None,
@@ -108,6 +109,7 @@ def _list_issues_impl(
             while current_page < page:
                 _, page_info = client.list_issues(
                     assignee=assignee,
+                    unassigned_only=unassigned_only,
                     creator=creator,
                     project=project,
                     status=status,
@@ -138,6 +140,7 @@ def _list_issues_impl(
         # Fetch issues
         issues, pagination_info = client.list_issues(
             assignee=assignee,
+            unassigned_only=unassigned_only,
             creator=creator,
             project=project,
             status=status,
@@ -214,8 +217,13 @@ def list_issues(
     ] = None,
     no_assignee: Annotated[
         bool,
+        typer.Option("--no-assignee", help="Filter to unassigned issues"),
+    ] = False,
+    all_assignees: Annotated[
+        bool,
         typer.Option(
-            "--no-assignee", help="Show all issues (disable default 'my issues' filter)"
+            "--all-assignees",
+            help="Show issues regardless of assignee (disable default 'my issues' filter)",
         ),
     ] = False,
     project: Annotated[
@@ -300,21 +308,28 @@ def list_issues(
     """List Linear issues.
 
     By default, shows issues assigned to you (like "My Issues" in Linear's web app).
-    Use --no-assignee to see all issues, or provide explicit filters.
+    Use --all-assignees to see all issues, or --no-assignee to show only unassigned
+    issues.
 
     Examples:
 
       # List your assigned issues (default)
       linear issues list
 
-      # List all issues in workspace
+      # List unassigned issues
       linear issues list --no-assignee
+
+      # List all issues in workspace
+      linear issues list --all-assignees
 
       # List issues you created (manager view: see delegated work)
       linear issues list --creator me
 
-      # List your team's issues (disable default assignee filter)
+      # List your team's unassigned issues
       linear issues list --team ENG --no-assignee
+
+      # List all issues in your team
+      linear issues list --team ENG --all-assignees
 
       # List your assigned issues in a specific team
       linear issues list --team ENG
@@ -337,13 +352,35 @@ def list_issues(
       # Filter by labels
       linear issues list --label bug --label urgent
     """
+    if assignee is not None and no_assignee:
+        console = Console()
+        console.print(
+            "[red]Error: --assignee and --no-assignee cannot be used together[/red]"
+        )
+        sys.exit(1)
+
+    if no_assignee and all_assignees:
+        console = Console()
+        console.print(
+            "[red]Error: --no-assignee and --all-assignees cannot be used together[/red]"
+        )
+        sys.exit(1)
+
+    if assignee is not None and all_assignees:
+        console = Console()
+        console.print(
+            "[red]Error: --assignee and --all-assignees cannot be used together[/red]"
+        )
+        sys.exit(1)
+
     # Apply default assignee filter unless explicitly disabled or overridden
-    if assignee is None and not no_assignee:
+    if assignee is None and not no_assignee and not all_assignees:
         assignee = "me"
 
     _list_issues_impl(
         ctx=ctx,
         assignee=assignee,
+        unassigned_only=no_assignee,
         creator=creator,
         project=project,
         status=status,
