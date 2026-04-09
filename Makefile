@@ -1,4 +1,4 @@
-.PHONY: help install format lint ty check build publish test clean pre-commit ruff docs
+.PHONY: help install format lint ty check build test clean pre-commit ruff docs
 
 help:
 	@echo "Linear CLI - Development Commands"
@@ -10,7 +10,6 @@ help:
 	@echo "  check         Run all checks (format, lint, ty)"
 	@echo "  docs          Generate CLI documentation (DOCUMENTATION.md)"
 	@echo "  build         Build distributions (wheel + sdist)"
-	@echo "  publish       Prepare release and guide GitHub release creation"
 	@echo "  test          Run tests (placeholder)"
 	@echo "  clean         Remove cache and build artifacts"
 	@echo "  pre-commit    Install pre-commit hooks"
@@ -54,39 +53,6 @@ build:
 	@uv build
 	@echo "Built distributions:"
 	@ls -lh dist/
-
-publish: check
-	@echo ""
-	@echo "========================================"
-	@echo "Preparing Release"
-	@echo "========================================"
-	@VERSION=$$(grep '^version = ' pyproject.toml | sed 's/version = "\(.*\)"/\1/'); \
-	echo "Version: $$VERSION"; \
-	echo ""; \
-	echo "Checking git status..."; \
-	if [ -n "$$(git status --porcelain)" ]; then \
-		echo "❌ Error: Working directory has uncommitted changes"; \
-		exit 1; \
-	fi; \
-	echo "✓ Git working directory is clean"; \
-	echo "✓ All quality checks passed"; \
-	echo ""; \
-	echo "To publish version $$VERSION to PyPI, create a GitHub release:"; \
-	echo ""; \
-	echo "Using GitHub CLI:"; \
-	echo "  gh release create v$$VERSION --generate-notes"; \
-	echo ""; \
-	echo "Or using the web interface:"; \
-	echo "  https://github.com/cmpadden/linear/releases/new?tag=v$$VERSION"; \
-	echo ""; \
-	echo "The GitHub Actions workflow will automatically:"; \
-	echo "  1. Validate version matches the release tag"; \
-	echo "  2. Run all quality checks"; \
-	echo "  3. Build distributions"; \
-	echo "  4. Publish to PyPI"; \
-	echo ""; \
-	echo "After publishing, view at:"; \
-	echo "  https://pypi.org/project/linear-app/$$VERSION/"
 
 release-patch: check
 	@./scripts/release.sh patch
