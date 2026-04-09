@@ -45,6 +45,7 @@ def _to_iso_datetime(date_str: str, start_of_day: bool = True) -> str:
 def list_issues(
     self: "LinearClient",
     assignee: str | None = None,
+    unassigned_only: bool = False,
     creator: str | None = None,
     project: str | None = None,
     status: str | None = None,
@@ -69,6 +70,7 @@ def list_issues(
 
     Args:
         assignee: Filter by assignee email
+        unassigned_only: Filter to issues with no assignee
         creator: Filter by issue creator email
         project: Filter by project name
         status: Filter by issue status/state
@@ -110,6 +112,8 @@ def list_issues(
 
     if assignee:
         simple_filters["assignee"] = {"email": {"eq": assignee}}
+    elif unassigned_only:
+        simple_filters["assignee"] = {"null": True}
 
     if creator:
         simple_filters["creator"] = {"email": {"eq": creator}}

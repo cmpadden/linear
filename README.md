@@ -29,6 +29,7 @@ For complete CLI command reference with all available commands, options, and exa
 
 **Common patterns:**
 - Use `--help` on any command for details: `linear issues list --help`
+- `linear issues list` shows your assigned issues by default; use `--no-assignee` for unassigned issues or `--all-assignees` to remove the assignee filter
 - Most list commands support `--format json` for scripting
 - Command aliases available: `linear i` = `linear issues`, `linear p` = `linear projects`, etc.
 - Global options: `--verbose` (show GraphQL queries), `--version` (show CLI version)
