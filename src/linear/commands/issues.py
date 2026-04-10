@@ -1496,6 +1496,7 @@ def _update_with_flags(
     labels: list[str] | None,
     state: str | None,
     estimate: int | None,
+    yes: bool,
     client: LinearClient,
     console: Console,
 ) -> Issue:
@@ -1511,6 +1512,7 @@ def _update_with_flags(
         labels: New labels list (replaces all)
         state: New state name
         estimate: New estimate (-1 to clear)
+        yes: Whether to skip confirmation
         client: Linear API client
         console: Rich console
 
@@ -1557,18 +1559,19 @@ def _update_with_flags(
     # Display comparison
     _display_issue_comparison(original, api_input, display_values, console)
 
-    # Prompt for confirmation
-    response = Prompt.ask(
-        "Apply these changes?",
-        choices=["y", "yes", "n", "no"],
-        default="y",
-        show_choices=True,
-        case_sensitive=False,
-    )
+    # Prompt for confirmation unless --yes is used
+    if not yes:
+        response = Prompt.ask(
+            "Apply these changes?",
+            choices=["y", "yes", "n", "no"],
+            default="y",
+            show_choices=True,
+            case_sensitive=False,
+        )
 
-    if response[0].lower() == "n":
-        console.print("[yellow]Update cancelled.[/yellow]")
-        raise typer.Exit()
+        if response[0].lower() == "n":
+            console.print("[yellow]Update cancelled.[/yellow]")
+            raise typer.Exit()
 
     # Apply update
     try:
@@ -1582,6 +1585,7 @@ def _update_with_flags(
 
 def _update_with_editor(
     issue_id: str,
+    yes: bool,
     client: LinearClient,
     console: Console,
 ) -> Issue:
@@ -1589,6 +1593,7 @@ def _update_with_editor(
 
     Args:
         issue_id: Issue identifier or UUID
+        yes: Whether to skip confirmation
         client: Linear API client
         console: Rich console
 
@@ -1637,6 +1642,9 @@ def _update_with_editor(
 
         # Display comparison
         _display_issue_comparison(original, api_input, display_values, console)
+
+        if yes:
+            break
 
         # Prompt for confirmation
         response = Prompt.ask(
@@ -1732,6 +1740,10 @@ def update_issue(
             "--estimate", "-e", help="Story points estimate (use -1 to clear)"
         ),
     ] = None,
+    yes: Annotated[
+        bool,
+        typer.Option("--yes", "-y", help="Skip confirmation prompt"),
+    ] = False,
     format: Annotated[
         str,
         typer.Option("--format", "-f", help="Output format: detail, json"),
@@ -1770,6 +1782,9 @@ def update_issue(
 
       # Update multiple labels (replaces all)
       linear issues update ENG-123 --label bug --label urgent
+
+      # Skip confirmation for automation
+      linear issues update ENG-123 --assignee me --yes
 
       # Open in editor for interactive editing
       linear issues update ENG-123
@@ -1822,12 +1837,13 @@ def update_issue(
                 labels,
                 state,
                 estimate,
+                yes,
                 client,
                 console,
             )
         else:
             # Interactive editor mode
-            updated_issue = _update_with_editor(issue_id, client, console)
+            updated_issue = _update_with_editor(issue_id, yes, client, console)
 
         # Display result for JSON format only
         if format == "json":

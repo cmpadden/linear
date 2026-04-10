@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.0.16] Unreleased
 
+### Added
+- **Issue update automation**: Added `--yes` / `-y` to `linear issues update` to skip the confirmation prompt for non-interactive workflows (2026-04-09)
+  - Works for both flag-based updates and editor-based updates
+  - Example: `linear issues update ENG-123 --assignee me --yes`
+
 ### Changed
 - **Issue assignee filtering**: `linear issues list --no-assignee` now correctly filters to unassigned issues (2026-04-09)
   - Added `--all-assignees` to disable the default "my issues" filter and show issues regardless of assignee
