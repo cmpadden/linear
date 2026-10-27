@@ -7,16 +7,48 @@ A command-line interface for interacting with [Linear](https://linear.app).
 ## Getting started
 
 ```bash
-$ export LINEAR_API_KEY="<linear-api-key>"  # https://linear.app/settings/api
-
 $ alias linear="uvx --from linear-app linear"
+$ linear login
+$ linear auth status
 ```
+
+### Authentication
+
+`linear login` opens Linear in your browser and requests read/write access as
+**you**, using OAuth with PKCE (no client secret). It temporarily listens on
+`http://localhost:8765/oauth/callback`; port 8765 must be free and the browser
+must be able to reach the machine running the CLI. If the browser does not open,
+use the URL printed in the terminal. The default authorization timeout is 180
+seconds; use `linear login --timeout 300` to allow more time.
+
+Tokens are stored in the OS keychain (macOS Keychain, Windows Credential Locker,
+Linux Secret Service/libsecret, or KWallet), never in a plaintext config file.
+The CLI refreshes expiring access tokens automatically. One OAuth login is saved
+at a time; a successful login replaces the previous one.
+
+- `linear auth status` verifies the active login and displays its credential source.
+- `linear auth status --format json` provides machine-readable status (exit 1 if unauthenticated).
+- `linear logout` attempts remote revocation and deletes the saved local tokens.
+  If remote revocation fails, revoke the application in Linear settings as well.
+
+For CI, SSH sessions, or systems without a supported unlocked keychain, use a
+[personal API key](https://linear.app/settings/api) instead:
+
+```bash
+$ export LINEAR_API_KEY="<linear-api-key>"
+```
+
+`LINEAR_API_KEY` overrides saved OAuth credentials. Unset it to use browser login.
+Logging out does not unset or revoke personal API keys. Library callers can also
+supply an explicit API key, which takes precedence over the environment variable.
 
 ## Documentation
 
 For complete CLI command reference with all available commands, options, and examples, see [DOCUMENTATION.md](./DOCUMENTATION.md).
 
 **Quick reference:**
+- `linear login` / `linear logout` - Sign in through your browser or remove the saved login
+- `linear auth status` - Verify authentication and show the active identity
 - `linear issues` - Manage issues (list, create, view, update, search, delete, archive, etc.)
 - `linear projects` - Manage projects (list, view, create, update)
 - `linear teams` - Manage teams (list, view)

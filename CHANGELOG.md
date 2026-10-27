@@ -5,6 +5,20 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.19] (unreleased)
+
+### Added
+- Browser-based `linear login` using OAuth PKCE-S256, user-scoped read/write access, and a temporary `http://localhost:8765/oauth/callback` listener; includes a configurable authorization timeout and a manual browser URL.
+- Secure OAuth token storage in supported OS keychains, automatic access-token refresh with rotated refresh-token persistence, and cross-process credential locking. No client secret or plaintext credential fallback is used.
+- `linear logout` to revoke and remove saved OAuth credentials, and `linear auth status` with text/JSON output to verify the active identity and credential source.
+- Offline OAuth regression tests covering callback/state validation, token refresh, secure storage failures, API-key precedence, logout, and CLI output.
+
+### Changed
+- API clients fall back to saved OAuth credentials when no explicit API key or `LINEAR_API_KEY` is supplied. Existing API-key authentication remains supported and takes precedence.
+
+### Fixed
+- Keep `uv.lock` independent of developer-local uv settings so `uv sync --dev --locked` works in CI without a global `exclude-newer` configuration.
+
 ## [0.0.18] - 2026-10-27
 
 ### Added
