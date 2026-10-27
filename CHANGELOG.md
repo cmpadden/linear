@@ -16,6 +16,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 - API clients fall back to saved OAuth credentials when no explicit API key or `LINEAR_API_KEY` is supplied. Existing API-key authentication remains supported and takes precedence.
 
+### Fixed
+- Keep `uv.lock` independent of developer-local uv settings so `uv sync --dev --locked` works in CI without a global `exclude-newer` configuration.
+
 ## [0.0.18] - 2026-10-27
 
 ### Added
