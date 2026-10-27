@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.0.19] (unreleased)
+## [0.0.19] - 2026-10-27
 
 ### Added
 - Browser-based `linear login` using OAuth PKCE-S256, user-scoped read/write access, and a temporary `http://localhost:8765/oauth/callback` listener; includes a configurable authorization timeout and a manual browser URL.
