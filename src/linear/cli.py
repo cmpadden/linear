@@ -8,6 +8,7 @@ from typing_extensions import Annotated
 from linear import __version__
 from linear.commands import (
     attachments,
+    auth,
     comments,
     cycles,
     issues,
@@ -59,6 +60,10 @@ def main_callback(
 
 
 # Register command modules
+app.command("login")(auth.login)
+app.command("logout")(auth.logout)
+app.add_typer(auth.app, name="auth")
+
 app.add_typer(issues.app, name="issues")
 app.add_typer(issues.app, name="i", hidden=True)
 

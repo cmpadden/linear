@@ -18,7 +18,10 @@ $ linear [OPTIONS] COMMAND [ARGS]...
 
 **Commands**:
 
+* `login`: Sign in through your browser and save...
+* `logout`: Revoke the saved OAuth login and delete...
 * `docs`: Generate comprehensive CLI documentation...
+* `auth`: Inspect authentication
 * `issues`: Manage Linear issues.
 * `i`: Manage Linear issues.
 * `attachments`: Manage issue attachments
@@ -36,6 +39,46 @@ $ linear [OPTIONS] COMMAND [ARGS]...
 * `roadmaps`: Manage Linear roadmaps
 * `r`: Manage Linear roadmaps
 
+## `linear login`
+
+Sign in through your browser and save OAuth tokens in the OS keychain.
+
+Uses PKCE without a client secret. Requests read/write access as you, not
+as an application user. The temporary callback listens on localhost:8765.
+An existing saved login is replaced only after the new login is validated.
+LINEAR_API_KEY, when set, still overrides the saved login for other commands.
+
+Args:
+    timeout: Seconds to wait for the browser callback (1–600).
+
+**Usage**:
+
+```console
+$ linear login [OPTIONS]
+```
+
+**Options**:
+
+* `--timeout <int range>`: Seconds to wait for browser authorization.  [default: 180; 1<=x<=600]
+* `--help`: Show this message and exit.
+
+## `linear logout`
+
+Revoke the saved OAuth login and delete its tokens from the OS keychain.
+
+Local tokens are deleted even if revocation fails. Does not change the
+LINEAR_API_KEY environment variable or revoke personal API keys.
+
+**Usage**:
+
+```console
+$ linear logout [OPTIONS]
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
 ## `linear docs`
 
 Generate comprehensive CLI documentation in Markdown format to stdout.
@@ -48,6 +91,46 @@ $ linear docs [OPTIONS]
 
 **Options**:
 
+* `--help`: Show this message and exit.
+
+## `linear auth`
+
+Inspect authentication
+
+**Usage**:
+
+```console
+$ linear auth [OPTIONS] COMMAND [ARGS]...
+```
+
+**Options**:
+
+* `--help`: Show this message and exit.
+
+**Commands**:
+
+* `status`: Verify the active credential and show its...
+
+### `linear auth status`
+
+Verify the active credential and show its source and signed-in identity.
+
+Never displays tokens. LINEAR_API_KEY takes precedence over saved OAuth.
+Saved OAuth tokens are refreshed automatically when needed. Exits with
+code 1 if authentication fails or no usable credentials are available.
+
+Args:
+    format: Output format, either table or json.
+
+**Usage**:
+
+```console
+$ linear auth status [OPTIONS]
+```
+
+**Options**:
+
+* `-f, --format <str>`: Output format: table, json  [default: table]
 * `--help`: Show this message and exit.
 
 ## `linear issues`
