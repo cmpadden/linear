@@ -6,7 +6,7 @@
 - **Type Check**: `make ty` or `uv run ty check`
 - **Run All Checks**: `make check` (runs ruff + ty)
 - **Run CLI**: `uv run linear --help`
-- **No Tests**: Project has no test suite yet (`make test` is a placeholder)
+- **Tests**: `make test` or `uv run python -m unittest discover -s tests -v` (offline regression and CLI smoke tests; no API key required)
 
 ## Code Style
 - **Python**: 3.13+, use modern type hints (`str | None`, not `Optional[str]`)

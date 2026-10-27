@@ -10,7 +10,7 @@ help:
 	@echo "  check         Run all checks (format, lint, ty)"
 	@echo "  docs          Generate CLI documentation (DOCUMENTATION.md)"
 	@echo "  build         Build distributions (wheel + sdist)"
-	@echo "  test          Run tests (placeholder)"
+	@echo "  test          Run offline regression and CLI smoke tests"
 	@echo "  clean         Remove cache and build artifacts"
 	@echo "  pre-commit    Install pre-commit hooks"
 	@echo "  release-patch Create patch release (0.0.7 → 0.0.8)"
@@ -35,7 +35,7 @@ docs:
 	@echo "Successfully generated DOCUMENTATION.md"
 
 test:
-	@echo "No tests configured yet"
+	uv run python -m unittest discover -s tests -v
 
 clean:
 	rm -rf .venv

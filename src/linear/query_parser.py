@@ -75,7 +75,8 @@ class Tokenizer:
                 if next_char:
                     chars.append(next_char)
             else:
-                chars.append(self.advance())
+                chars.append(char)
+                self.advance()
         return "".join(chars)
 
     def read_word(self) -> str:
@@ -86,7 +87,8 @@ class Tokenizer:
             if char is None:
                 break
             if char.isalnum() or char in "-_@.":
-                chars.append(self.advance())
+                chars.append(char)
+                self.advance()
             else:
                 break
         return "".join(chars)

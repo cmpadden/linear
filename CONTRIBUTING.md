@@ -101,6 +101,19 @@ uv run pre-commit run
 
 The hooks will automatically run when you commit changes. If any issues are found and auto-fixed, you'll need to stage the fixes and commit again.
 
+### Tests
+
+Run the offline regression and CLI smoke tests with:
+
+```bash
+make test
+```
+
+The suite uses Python's standard-library `unittest` runner and Typer's `CliRunner`.
+It covers command help, version flags, documentation generation, option parsing,
+confirmation prompts, output formatting, Pydantic models, and filter tokenization.
+API calls are mocked; no Linear API key or network access is required.
+
 ## Code Organization
 
 ### Entity-Based Architecture
@@ -220,12 +233,15 @@ If Linear adds a new resource type (e.g., "Documents"):
 1. **Create model** in `models/documents.py`:
    ```python
    """Document-related Pydantic models."""
+
    from pydantic import BaseModel, ConfigDict, Field
    from .base import PageInfo
+
 
    class Document(BaseModel):
        model_config = ConfigDict(populate_by_name=True)
        # Fields here
+
 
    class DocumentConnection(BaseModel):
        nodes: list[Document] = Field(default_factory=list)
@@ -249,6 +265,7 @@ If Linear adds a new resource type (e.g., "Documents"):
    from linear.formatters import format_documents_table
 
    app = typer.Typer(help="Manage Linear documents")
+
 
    @app.command("list")
    def list_documents() -> None:

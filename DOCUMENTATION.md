@@ -52,7 +52,7 @@ $ linear docs [OPTIONS]
 
 ## `linear issues`
 
-Manage Linear issues. Run &#x27;linear issues list&#x27; to see your assigned issues.
+Manage Linear issues. Run 'linear issues list' to see your assigned issues.
 
 **Usage**:
 
@@ -82,7 +82,7 @@ $ linear issues [OPTIONS] COMMAND [ARGS]...
 
 List Linear issues.
 
-By default, shows issues assigned to you (like &quot;My Issues&quot; in Linear&#x27;s web app).
+By default, shows issues assigned to you (like "My Issues" in Linear's web app).
 Use --all-assignees to see all issues, or --no-assignee to show only unassigned
 issues.
 
@@ -100,7 +100,7 @@ Examples:
   # List issues you created (manager view: see delegated work)
   linear issues list --creator me
 
-  # List your team&#x27;s unassigned issues
+  # List your team's unassigned issues
   linear issues list --team ENG --no-assignee
 
   # List all issues in your team
@@ -110,13 +110,13 @@ Examples:
   linear issues list --team ENG
 
   # Filter by status
-  linear issues list --status &quot;in progress&quot;
+  linear issues list --status "in progress"
 
   # Explicitly filter by different assignee
   linear issues list --assignee user@example.com
 
   # Combine filters
-  linear issues list --creator me --status &quot;in progress&quot;
+  linear issues list --creator me --status "in progress"
 
   # Fetch all results
   linear issues list --all
@@ -135,28 +135,28 @@ $ linear issues list [OPTIONS]
 
 **Options**:
 
-* `-a, --assignee TEXT`: Filter by assignee email (use &#x27;me&#x27; or &#x27;self&#x27; for yourself)
-* `-c, --creator TEXT`: Filter by issue creator email (use &#x27;me&#x27; or &#x27;self&#x27; for yourself)
+* `-a, --assignee <str>`: Filter by assignee email (use 'me' or 'self' for yourself)
+* `-c, --creator <str>`: Filter by issue creator email (use 'me' or 'self' for yourself)
 * `--no-assignee`: Filter to unassigned issues
-* `--all-assignees`: Show issues regardless of assignee (disable default &#x27;my issues&#x27; filter)
-* `-p, --project TEXT`: Filter by project name
-* `-s, --status TEXT`: Filter by status
-* `-t, --team TEXT`: Filter by team key (e.g., ENG, DESIGN)
-* `--priority INTEGER`: Filter by priority (0-4)
-* `-l, --label TEXT`: Filter by label (repeatable)
-* `--created-after TEXT`: Show issues created after date (YYYY-MM-DD)
-* `--created-before TEXT`: Show issues created before date (YYYY-MM-DD)
-* `--updated-after TEXT`: Show issues updated after date (YYYY-MM-DD)
-* `--updated-before TEXT`: Show issues updated before date (YYYY-MM-DD)
-* `--filter TEXT`: Complex filter query (e.g., &quot;team:ENG OR team:DESIGN AND priority:1&quot;)
-* `--per-page INTEGER`: Number of issues per page (max 250)  [default: 50]
-* `--page INTEGER`: Page number to fetch (starts at 1)
+* `--all-assignees`: Show issues regardless of assignee (disable default 'my issues' filter)
+* `-p, --project <str>`: Filter by project name
+* `-s, --status <str>`: Filter by status
+* `-t, --team <str>`: Filter by team key (e.g., ENG, DESIGN)
+* `--priority <int>`: Filter by priority (0-4)
+* `-l, --label <str>`: Filter by label (repeatable)
+* `--created-after <str>`: Show issues created after date (YYYY-MM-DD)
+* `--created-before <str>`: Show issues created before date (YYYY-MM-DD)
+* `--updated-after <str>`: Show issues updated after date (YYYY-MM-DD)
+* `--updated-before <str>`: Show issues updated before date (YYYY-MM-DD)
+* `--filter <str>`: Complex filter query (e.g., "team:ENG OR team:DESIGN AND priority:1")
+* `--per-page <int>`: Number of issues per page (max 250)  [default: 50]
+* `--page <int>`: Page number to fetch (starts at 1)
 * `--all`: Fetch all results automatically
-* `--limit INTEGER`: DEPRECATED: use --per-page instead
+* `--limit <int>`: DEPRECATED: use --per-page instead
 * `--include-archived`: Include archived issues
-* `-f, --format TEXT`: Output format: table, json  [default: table]
-* `--order-by TEXT`: Sort by: created, updated, priority  [default: updated]
-* `--group-by TEXT`: Group by: cycle, project, team (default: cycle)  [default: cycle]
+* `-f, --format <str>`: Output format: table, json  [default: table]
+* `--order-by <str>`: Sort by: created, updated, priority  [default: updated]
+* `--group-by <str>`: Group by: cycle, project, team (default: cycle)  [default: cycle]
 * `--help`: Show this message and exit.
 
 ### `linear issues view`
@@ -177,16 +177,16 @@ Examples:
 **Usage**:
 
 ```console
-$ linear issues view [OPTIONS] ISSUE_ID
+$ linear issues view [OPTIONS] {issue_id}
 ```
 
 **Arguments**:
 
-* `ISSUE_ID`: Issue ID or identifier (e.g., &#x27;ENG-123&#x27;)  [required]
+* `issue_id`: Issue ID or identifier (e.g., 'ENG-123')  [required]
 
 **Options**:
 
-* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `-f, --format <str>`: Output format: detail, json  [default: detail]
 * `-w, --web`: Open issue in web browser
 * `--help`: Show this message and exit.
 
@@ -196,11 +196,11 @@ Search Linear issues by title.
 
 Examples:
 
-  # Search for issues with &quot;authentication&quot; in title
+  # Search for issues with "authentication" in title
   linear issues search authentication
 
   # Search with output as JSON
-  linear issues search &quot;bug fix&quot; --format json
+  linear issues search "bug fix" --format json
 
   # Fetch all matching results
   linear issues search refactor --all
@@ -211,74 +211,74 @@ Examples:
 **Usage**:
 
 ```console
-$ linear issues search [OPTIONS] QUERY
+$ linear issues search [OPTIONS] {query}
 ```
 
 **Arguments**:
 
-* `QUERY`: Search query (searches issue titles and descriptions)  [required]
+* `query`: Search query (searches issue titles and descriptions)  [required]
 
 **Options**:
 
-* `-a, --assignee TEXT`: Filter by assignee email
-* `-c, --creator TEXT`: Filter by issue creator email
-* `-p, --project TEXT`: Filter by project name
-* `-s, --status TEXT`: Filter by status
-* `-t, --team TEXT`: Filter by team key
-* `--priority INTEGER`: Filter by priority (0-4)
-* `-l, --label TEXT`: Filter by label (repeatable)
-* `--created-after TEXT`: Show issues created after date (YYYY-MM-DD)
-* `--created-before TEXT`: Show issues created before date (YYYY-MM-DD)
-* `--updated-after TEXT`: Show issues updated after date (YYYY-MM-DD)
-* `--updated-before TEXT`: Show issues updated before date (YYYY-MM-DD)
-* `--filter TEXT`: Complex filter query (e.g., &quot;team:ENG OR team:DESIGN AND priority:1&quot;)
-* `--per-page INTEGER`: Number of issues per page (max 250)  [default: 50]
+* `-a, --assignee <str>`: Filter by assignee email
+* `-c, --creator <str>`: Filter by issue creator email
+* `-p, --project <str>`: Filter by project name
+* `-s, --status <str>`: Filter by status
+* `-t, --team <str>`: Filter by team key
+* `--priority <int>`: Filter by priority (0-4)
+* `-l, --label <str>`: Filter by label (repeatable)
+* `--created-after <str>`: Show issues created after date (YYYY-MM-DD)
+* `--created-before <str>`: Show issues created before date (YYYY-MM-DD)
+* `--updated-after <str>`: Show issues updated after date (YYYY-MM-DD)
+* `--updated-before <str>`: Show issues updated before date (YYYY-MM-DD)
+* `--filter <str>`: Complex filter query (e.g., "team:ENG OR team:DESIGN AND priority:1")
+* `--per-page <int>`: Number of issues per page (max 250)  [default: 50]
 * `--all`: Fetch all results automatically
-* `--limit INTEGER`: DEPRECATED: use --per-page instead
+* `--limit <int>`: DEPRECATED: use --per-page instead
 * `--include-archived`: Include archived issues
-* `-f, --format TEXT`: Output format: table, json  [default: table]
-* `--order-by TEXT`: Sort by: created, updated, priority  [default: updated]
-* `--group-by TEXT`: Group by: cycle, project, team
+* `-f, --format <str>`: Output format: table, json  [default: table]
+* `--order-by <str>`: Sort by: created, updated, priority  [default: updated]
+* `--group-by <str>`: Group by: cycle, project, team
 * `--help`: Show this message and exit.
 
 ### `linear issues create`
 
 Create a new Linear issue.
 
-
+
 # Natural language with AI parsing (requires claude CLI)
-linear issues create &quot;High priority bug to fix login for john@example.com in ENG team&quot;
-
+linear issues create "High priority bug to fix login for john@example.com in ENG team"
+
 # Structured mode with explicit --title (skips AI)
-linear issues create --title &quot;Fix login bug&quot; --team ENG
-
+linear issues create --title "Fix login bug" --team ENG
+
 # Structured mode with all options
-linear issues create --title &quot;Add dark mode&quot; --team ENG --description &quot;Support dark theme&quot; --priority 2 --label feature --label ui
-
+linear issues create --title "Add dark mode" --team ENG --description "Support dark theme" --priority 2 --label feature --label ui
+
 # Defaults: assignee=current user, team=auto-selected if only 1, priority=none
 
 **Usage**:
 
 ```console
-$ linear issues create [OPTIONS] [PROMPT]
+$ linear issues create [OPTIONS] [prompt]
 ```
 
 **Arguments**:
 
-* `[PROMPT]`: Natural language prompt describing the issue
+* `prompt`: Natural language prompt describing the issue
 
 **Options**:
 
-* `--title TEXT`: Issue title (skips AI parsing)
-* `-t, --team TEXT`: Team ID or key
-* `-d, --description TEXT`: Issue description
-* `-a, --assignee TEXT`: Assignee email (defaults to you)
-* `-p, --priority INTEGER`: Priority: 0=None, 1=Urgent, 2=High, 3=Medium, 4=Low
-* `--project TEXT`: Project ID or name
-* `-l, --label TEXT`: Label name (repeatable)
-* `-s, --state TEXT`: Workflow state name
-* `-e, --estimate INTEGER`: Story points estimate
-* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `--title <str>`: Issue title (skips AI parsing)
+* `-t, --team <str>`: Team ID or key
+* `-d, --description <str>`: Issue description
+* `-a, --assignee <str>`: Assignee email (defaults to you)
+* `-p, --priority <int>`: Priority: 0=None, 1=Urgent, 2=High, 3=Medium, 4=Low
+* `--project <str>`: Project ID or name
+* `-l, --label <str>`: Label name (repeatable)
+* `-s, --state <str>`: Workflow state name
+* `-e, --estimate <int>`: Story points estimate
+* `-f, --format <str>`: Output format: detail, json  [default: detail]
 * `--help`: Show this message and exit.
 
 ### `linear issues update`
@@ -287,23 +287,23 @@ Update an existing Linear issue.
 
 Supports two modes:
 
-
+
 1. CLI flags (update specific fields):
-   linear issues update ENG-123 --title &quot;New title&quot; --priority 2
+   linear issues update ENG-123 --title "New title" --priority 2
 
-
+
 2. Interactive editor (edit all fields in $EDITOR):
    linear issues update ENG-123
 
-
+
 The command will show a before/after comparison and ask for confirmation
 before applying changes. Only specified fields are updated; all other
 fields remain unchanged.
 
-
+
 Examples:
   # Update title and priority
-  linear issues update ENG-123 --title &quot;Fix login bug&quot; --priority 1
+  linear issues update ENG-123 --title "Fix login bug" --priority 1
 
   # Reassign to yourself
   linear issues update ENG-123 --assignee me
@@ -317,33 +317,37 @@ Examples:
   # Update multiple labels (replaces all)
   linear issues update ENG-123 --label bug --label urgent
 
+  # Skip confirmation for automation
+  linear issues update ENG-123 --assignee me --yes
+
   # Open in editor for interactive editing
   linear issues update ENG-123
 
    # Output as JSON
-   linear issues update ENG-123 --title &quot;New title&quot; --format json
+   linear issues update ENG-123 --title "New title" --format json
 
 **Usage**:
 
 ```console
-$ linear issues update [OPTIONS] ISSUE_ID
+$ linear issues update [OPTIONS] {issue_id}
 ```
 
 **Arguments**:
 
-* `ISSUE_ID`: Issue ID or identifier (e.g., &#x27;ENG-123&#x27;)  [required]
+* `issue_id`: Issue ID or identifier (e.g., 'ENG-123')  [required]
 
 **Options**:
 
-* `--title TEXT`: New issue title
-* `-d, --description TEXT`: New issue description
-* `-a, --assignee TEXT`: Assignee email (use &#x27;me&#x27; for yourself, &#x27;null&#x27; to unassign)
-* `-p, --priority INTEGER`: Priority: 0=None, 1=Urgent, 2=High, 3=Medium, 4=Low
-* `--project TEXT`: Project ID or name (use &#x27;null&#x27; to remove)
-* `-l, --label TEXT`: Label name (repeatable, replaces all labels)
-* `-s, --state TEXT`: Workflow state name
-* `-e, --estimate INTEGER`: Story points estimate (use -1 to clear)
-* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `--title <str>`: New issue title
+* `-d, --description <str>`: New issue description
+* `-a, --assignee <str>`: Assignee email (use 'me' for yourself, 'null' to unassign)
+* `-p, --priority <int>`: Priority: 0=None, 1=Urgent, 2=High, 3=Medium, 4=Low
+* `--project <str>`: Project ID or name (use 'null' to remove)
+* `-l, --label <str>`: Label name (repeatable, replaces all labels)
+* `-s, --state <str>`: Workflow state name
+* `-e, --estimate <int>`: Story points estimate (use -1 to clear)
+* `-y, --yes`: Skip confirmation prompt
+* `-f, --format <str>`: Output format: detail, json  [default: detail]
 * `--help`: Show this message and exit.
 
 ### `linear issues delete`
@@ -361,12 +365,12 @@ Examples:
 **Usage**:
 
 ```console
-$ linear issues delete [OPTIONS] ISSUE_ID
+$ linear issues delete [OPTIONS] {issue_id}
 ```
 
 **Arguments**:
 
-* `ISSUE_ID`: Issue ID or identifier (e.g., &#x27;ENG-123&#x27;)  [required]
+* `issue_id`: Issue ID or identifier (e.g., 'ENG-123')  [required]
 
 **Options**:
 
@@ -388,12 +392,12 @@ Examples:
 **Usage**:
 
 ```console
-$ linear issues archive [OPTIONS] ISSUE_ID
+$ linear issues archive [OPTIONS] {issue_id}
 ```
 
 **Arguments**:
 
-* `ISSUE_ID`: Issue ID or identifier (e.g., &#x27;ENG-123&#x27;)  [required]
+* `issue_id`: Issue ID or identifier (e.g., 'ENG-123')  [required]
 
 **Options**:
 
@@ -415,12 +419,12 @@ Examples:
 **Usage**:
 
 ```console
-$ linear issues unarchive [OPTIONS] ISSUE_ID
+$ linear issues unarchive [OPTIONS] {issue_id}
 ```
 
 **Arguments**:
 
-* `ISSUE_ID`: Issue ID or identifier (e.g., &#x27;ENG-123&#x27;)  [required]
+* `issue_id`: Issue ID or identifier (e.g., 'ENG-123')  [required]
 
 **Options**:
 
@@ -452,18 +456,18 @@ Examples:
 **Usage**:
 
 ```console
-$ linear issues duplicate [OPTIONS] ISSUE_ID
+$ linear issues duplicate [OPTIONS] {issue_id}
 ```
 
 **Arguments**:
 
-* `ISSUE_ID`: Issue ID or identifier to duplicate  [required]
+* `issue_id`: Issue ID or identifier to duplicate  [required]
 
 **Options**:
 
 * `-y, --yes`: Skip confirmation
 * `--link`: Create duplicate relation between issues
-* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `-f, --format <str>`: Output format: detail, json  [default: detail]
 * `--help`: Show this message and exit.
 
 ### `linear issues move-state`
@@ -472,22 +476,22 @@ Move an issue to a different workflow state.
 
 Examples:
 
-  # Move issue to &quot;In Progress&quot; state
-  linear issues move-state ENG-123 &quot;In Progress&quot;
+  # Move issue to "In Progress" state
+  linear issues move-state ENG-123 "In Progress"
 
-  # Move issue to &quot;Done&quot; state without confirmation
+  # Move issue to "Done" state without confirmation
   linear issues move-state ENG-123 Done --yes
 
 **Usage**:
 
 ```console
-$ linear issues move-state [OPTIONS] ISSUE_ID STATE
+$ linear issues move-state [OPTIONS] {issue_id} {state}
 ```
 
 **Arguments**:
 
-* `ISSUE_ID`: Issue ID or identifier (e.g., &#x27;ENG-123&#x27;)  [required]
-* `STATE`: State name (e.g., &#x27;In Progress&#x27;, &#x27;Done&#x27;)  [required]
+* `issue_id`: Issue ID or identifier (e.g., 'ENG-123')  [required]
+* `state`: State name (e.g., 'In Progress', 'Done')  [required]
 
 **Options**:
 
@@ -529,16 +533,16 @@ Examples:
 **Usage**:
 
 ```console
-$ linear issues relations list [OPTIONS] ISSUE_ID
+$ linear issues relations list [OPTIONS] {issue_id}
 ```
 
 **Arguments**:
 
-* `ISSUE_ID`: Issue ID or identifier (e.g., &#x27;ENG-123&#x27;)  [required]
+* `issue_id`: Issue ID or identifier (e.g., 'ENG-123')  [required]
 
 **Options**:
 
-* `-f, --format TEXT`: Output format: table, json  [default: table]
+* `-f, --format <str>`: Output format: table, json  [default: table]
 * `--help`: Show this message and exit.
 
 #### `linear issues relations add`
@@ -547,58 +551,58 @@ Add a relation between two issues.
 
 Examples:
 
-  # Add a &#x27;related&#x27; relation
+  # Add a 'related' relation
   linear issues relations add ENG-123 ENG-456
 
-  # Add a &#x27;blocks&#x27; relation
+  # Add a 'blocks' relation
   linear issues relations add ENG-123 ENG-456 --type blocks
 
-  # Add a &#x27;blocked&#x27; relation
+  # Add a 'blocked' relation
   linear issues relations add ENG-123 ENG-456 --type blocked
 
-  # Add a &#x27;duplicate&#x27; relation
+  # Add a 'duplicate' relation
   linear issues relations add ENG-123 ENG-456 --type duplicate
 
 **Usage**:
 
 ```console
-$ linear issues relations add [OPTIONS] ISSUE_ID RELATED_ISSUE_ID
+$ linear issues relations add [OPTIONS] {issue_id} {related_issue_id}
 ```
 
 **Arguments**:
 
-* `ISSUE_ID`: Source issue ID or identifier (e.g., &#x27;ENG-123&#x27;)  [required]
-* `RELATED_ISSUE_ID`: Related issue ID or identifier (e.g., &#x27;ENG-456&#x27;)  [required]
+* `issue_id`: Source issue ID or identifier (e.g., 'ENG-123')  [required]
+* `related_issue_id`: Related issue ID or identifier (e.g., 'ENG-456')  [required]
 
 **Options**:
 
-* `-t, --type TEXT`: Relation type: blocks, blocked, related, duplicate  [default: related]
+* `-t, --type <str>`: Relation type: blocks, blocked, related, duplicate  [default: related]
 * `--help`: Show this message and exit.
 
 #### `linear issues relations remove`
 
 Remove a relation from an issue.
 
-Use &#x27;linear issues relations list &lt;issue-id&gt;&#x27; to find relation IDs.
+Use 'linear issues relations list <issue-id>' to find relation IDs.
 
 Examples:
 
   # Remove a relation
-  linear issues relations remove ENG-123 &lt;relation-id&gt;
+  linear issues relations remove ENG-123 <relation-id>
 
   # Remove without confirmation
-  linear issues relations remove ENG-123 &lt;relation-id&gt; --yes
+  linear issues relations remove ENG-123 <relation-id> --yes
 
 **Usage**:
 
 ```console
-$ linear issues relations remove [OPTIONS] ISSUE_ID RELATION_ID
+$ linear issues relations remove [OPTIONS] {issue_id} {relation_id}
 ```
 
 **Arguments**:
 
-* `ISSUE_ID`: Issue ID or identifier (e.g., &#x27;ENG-123&#x27;)  [required]
-* `RELATION_ID`: Relation ID to remove (use &#x27;list&#x27; to see IDs)  [required]
+* `issue_id`: Issue ID or identifier (e.g., 'ENG-123')  [required]
+* `relation_id`: Relation ID to remove (use 'list' to see IDs)  [required]
 
 **Options**:
 
@@ -607,7 +611,7 @@ $ linear issues relations remove [OPTIONS] ISSUE_ID RELATION_ID
 
 ## `linear i`
 
-Manage Linear issues. Run &#x27;linear issues list&#x27; to see your assigned issues.
+Manage Linear issues. Run 'linear issues list' to see your assigned issues.
 
 **Usage**:
 
@@ -637,7 +641,7 @@ $ linear i [OPTIONS] COMMAND [ARGS]...
 
 List Linear issues.
 
-By default, shows issues assigned to you (like &quot;My Issues&quot; in Linear&#x27;s web app).
+By default, shows issues assigned to you (like "My Issues" in Linear's web app).
 Use --all-assignees to see all issues, or --no-assignee to show only unassigned
 issues.
 
@@ -655,7 +659,7 @@ Examples:
   # List issues you created (manager view: see delegated work)
   linear issues list --creator me
 
-  # List your team&#x27;s unassigned issues
+  # List your team's unassigned issues
   linear issues list --team ENG --no-assignee
 
   # List all issues in your team
@@ -665,13 +669,13 @@ Examples:
   linear issues list --team ENG
 
   # Filter by status
-  linear issues list --status &quot;in progress&quot;
+  linear issues list --status "in progress"
 
   # Explicitly filter by different assignee
   linear issues list --assignee user@example.com
 
   # Combine filters
-  linear issues list --creator me --status &quot;in progress&quot;
+  linear issues list --creator me --status "in progress"
 
   # Fetch all results
   linear issues list --all
@@ -690,28 +694,28 @@ $ linear i list [OPTIONS]
 
 **Options**:
 
-* `-a, --assignee TEXT`: Filter by assignee email (use &#x27;me&#x27; or &#x27;self&#x27; for yourself)
-* `-c, --creator TEXT`: Filter by issue creator email (use &#x27;me&#x27; or &#x27;self&#x27; for yourself)
+* `-a, --assignee <str>`: Filter by assignee email (use 'me' or 'self' for yourself)
+* `-c, --creator <str>`: Filter by issue creator email (use 'me' or 'self' for yourself)
 * `--no-assignee`: Filter to unassigned issues
-* `--all-assignees`: Show issues regardless of assignee (disable default &#x27;my issues&#x27; filter)
-* `-p, --project TEXT`: Filter by project name
-* `-s, --status TEXT`: Filter by status
-* `-t, --team TEXT`: Filter by team key (e.g., ENG, DESIGN)
-* `--priority INTEGER`: Filter by priority (0-4)
-* `-l, --label TEXT`: Filter by label (repeatable)
-* `--created-after TEXT`: Show issues created after date (YYYY-MM-DD)
-* `--created-before TEXT`: Show issues created before date (YYYY-MM-DD)
-* `--updated-after TEXT`: Show issues updated after date (YYYY-MM-DD)
-* `--updated-before TEXT`: Show issues updated before date (YYYY-MM-DD)
-* `--filter TEXT`: Complex filter query (e.g., &quot;team:ENG OR team:DESIGN AND priority:1&quot;)
-* `--per-page INTEGER`: Number of issues per page (max 250)  [default: 50]
-* `--page INTEGER`: Page number to fetch (starts at 1)
+* `--all-assignees`: Show issues regardless of assignee (disable default 'my issues' filter)
+* `-p, --project <str>`: Filter by project name
+* `-s, --status <str>`: Filter by status
+* `-t, --team <str>`: Filter by team key (e.g., ENG, DESIGN)
+* `--priority <int>`: Filter by priority (0-4)
+* `-l, --label <str>`: Filter by label (repeatable)
+* `--created-after <str>`: Show issues created after date (YYYY-MM-DD)
+* `--created-before <str>`: Show issues created before date (YYYY-MM-DD)
+* `--updated-after <str>`: Show issues updated after date (YYYY-MM-DD)
+* `--updated-before <str>`: Show issues updated before date (YYYY-MM-DD)
+* `--filter <str>`: Complex filter query (e.g., "team:ENG OR team:DESIGN AND priority:1")
+* `--per-page <int>`: Number of issues per page (max 250)  [default: 50]
+* `--page <int>`: Page number to fetch (starts at 1)
 * `--all`: Fetch all results automatically
-* `--limit INTEGER`: DEPRECATED: use --per-page instead
+* `--limit <int>`: DEPRECATED: use --per-page instead
 * `--include-archived`: Include archived issues
-* `-f, --format TEXT`: Output format: table, json  [default: table]
-* `--order-by TEXT`: Sort by: created, updated, priority  [default: updated]
-* `--group-by TEXT`: Group by: cycle, project, team (default: cycle)  [default: cycle]
+* `-f, --format <str>`: Output format: table, json  [default: table]
+* `--order-by <str>`: Sort by: created, updated, priority  [default: updated]
+* `--group-by <str>`: Group by: cycle, project, team (default: cycle)  [default: cycle]
 * `--help`: Show this message and exit.
 
 ### `linear i view`
@@ -732,16 +736,16 @@ Examples:
 **Usage**:
 
 ```console
-$ linear i view [OPTIONS] ISSUE_ID
+$ linear i view [OPTIONS] {issue_id}
 ```
 
 **Arguments**:
 
-* `ISSUE_ID`: Issue ID or identifier (e.g., &#x27;ENG-123&#x27;)  [required]
+* `issue_id`: Issue ID or identifier (e.g., 'ENG-123')  [required]
 
 **Options**:
 
-* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `-f, --format <str>`: Output format: detail, json  [default: detail]
 * `-w, --web`: Open issue in web browser
 * `--help`: Show this message and exit.
 
@@ -751,11 +755,11 @@ Search Linear issues by title.
 
 Examples:
 
-  # Search for issues with &quot;authentication&quot; in title
+  # Search for issues with "authentication" in title
   linear issues search authentication
 
   # Search with output as JSON
-  linear issues search &quot;bug fix&quot; --format json
+  linear issues search "bug fix" --format json
 
   # Fetch all matching results
   linear issues search refactor --all
@@ -766,74 +770,74 @@ Examples:
 **Usage**:
 
 ```console
-$ linear i search [OPTIONS] QUERY
+$ linear i search [OPTIONS] {query}
 ```
 
 **Arguments**:
 
-* `QUERY`: Search query (searches issue titles and descriptions)  [required]
+* `query`: Search query (searches issue titles and descriptions)  [required]
 
 **Options**:
 
-* `-a, --assignee TEXT`: Filter by assignee email
-* `-c, --creator TEXT`: Filter by issue creator email
-* `-p, --project TEXT`: Filter by project name
-* `-s, --status TEXT`: Filter by status
-* `-t, --team TEXT`: Filter by team key
-* `--priority INTEGER`: Filter by priority (0-4)
-* `-l, --label TEXT`: Filter by label (repeatable)
-* `--created-after TEXT`: Show issues created after date (YYYY-MM-DD)
-* `--created-before TEXT`: Show issues created before date (YYYY-MM-DD)
-* `--updated-after TEXT`: Show issues updated after date (YYYY-MM-DD)
-* `--updated-before TEXT`: Show issues updated before date (YYYY-MM-DD)
-* `--filter TEXT`: Complex filter query (e.g., &quot;team:ENG OR team:DESIGN AND priority:1&quot;)
-* `--per-page INTEGER`: Number of issues per page (max 250)  [default: 50]
+* `-a, --assignee <str>`: Filter by assignee email
+* `-c, --creator <str>`: Filter by issue creator email
+* `-p, --project <str>`: Filter by project name
+* `-s, --status <str>`: Filter by status
+* `-t, --team <str>`: Filter by team key
+* `--priority <int>`: Filter by priority (0-4)
+* `-l, --label <str>`: Filter by label (repeatable)
+* `--created-after <str>`: Show issues created after date (YYYY-MM-DD)
+* `--created-before <str>`: Show issues created before date (YYYY-MM-DD)
+* `--updated-after <str>`: Show issues updated after date (YYYY-MM-DD)
+* `--updated-before <str>`: Show issues updated before date (YYYY-MM-DD)
+* `--filter <str>`: Complex filter query (e.g., "team:ENG OR team:DESIGN AND priority:1")
+* `--per-page <int>`: Number of issues per page (max 250)  [default: 50]
 * `--all`: Fetch all results automatically
-* `--limit INTEGER`: DEPRECATED: use --per-page instead
+* `--limit <int>`: DEPRECATED: use --per-page instead
 * `--include-archived`: Include archived issues
-* `-f, --format TEXT`: Output format: table, json  [default: table]
-* `--order-by TEXT`: Sort by: created, updated, priority  [default: updated]
-* `--group-by TEXT`: Group by: cycle, project, team
+* `-f, --format <str>`: Output format: table, json  [default: table]
+* `--order-by <str>`: Sort by: created, updated, priority  [default: updated]
+* `--group-by <str>`: Group by: cycle, project, team
 * `--help`: Show this message and exit.
 
 ### `linear i create`
 
 Create a new Linear issue.
 
-
+
 # Natural language with AI parsing (requires claude CLI)
-linear issues create &quot;High priority bug to fix login for john@example.com in ENG team&quot;
-
+linear issues create "High priority bug to fix login for john@example.com in ENG team"
+
 # Structured mode with explicit --title (skips AI)
-linear issues create --title &quot;Fix login bug&quot; --team ENG
-
+linear issues create --title "Fix login bug" --team ENG
+
 # Structured mode with all options
-linear issues create --title &quot;Add dark mode&quot; --team ENG --description &quot;Support dark theme&quot; --priority 2 --label feature --label ui
-
+linear issues create --title "Add dark mode" --team ENG --description "Support dark theme" --priority 2 --label feature --label ui
+
 # Defaults: assignee=current user, team=auto-selected if only 1, priority=none
 
 **Usage**:
 
 ```console
-$ linear i create [OPTIONS] [PROMPT]
+$ linear i create [OPTIONS] [prompt]
 ```
 
 **Arguments**:
 
-* `[PROMPT]`: Natural language prompt describing the issue
+* `prompt`: Natural language prompt describing the issue
 
 **Options**:
 
-* `--title TEXT`: Issue title (skips AI parsing)
-* `-t, --team TEXT`: Team ID or key
-* `-d, --description TEXT`: Issue description
-* `-a, --assignee TEXT`: Assignee email (defaults to you)
-* `-p, --priority INTEGER`: Priority: 0=None, 1=Urgent, 2=High, 3=Medium, 4=Low
-* `--project TEXT`: Project ID or name
-* `-l, --label TEXT`: Label name (repeatable)
-* `-s, --state TEXT`: Workflow state name
-* `-e, --estimate INTEGER`: Story points estimate
-* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `--title <str>`: Issue title (skips AI parsing)
+* `-t, --team <str>`: Team ID or key
+* `-d, --description <str>`: Issue description
+* `-a, --assignee <str>`: Assignee email (defaults to you)
+* `-p, --priority <int>`: Priority: 0=None, 1=Urgent, 2=High, 3=Medium, 4=Low
+* `--project <str>`: Project ID or name
+* `-l, --label <str>`: Label name (repeatable)
+* `-s, --state <str>`: Workflow state name
+* `-e, --estimate <int>`: Story points estimate
+* `-f, --format <str>`: Output format: detail, json  [default: detail]
 * `--help`: Show this message and exit.
 
 ### `linear i update`
@@ -842,23 +846,23 @@ Update an existing Linear issue.
 
 Supports two modes:
 
-
+
 1. CLI flags (update specific fields):
-   linear issues update ENG-123 --title &quot;New title&quot; --priority 2
+   linear issues update ENG-123 --title "New title" --priority 2
 
-
+
 2. Interactive editor (edit all fields in $EDITOR):
    linear issues update ENG-123
 
-
+
 The command will show a before/after comparison and ask for confirmation
 before applying changes. Only specified fields are updated; all other
 fields remain unchanged.
 
-
+
 Examples:
   # Update title and priority
-  linear issues update ENG-123 --title &quot;Fix login bug&quot; --priority 1
+  linear issues update ENG-123 --title "Fix login bug" --priority 1
 
   # Reassign to yourself
   linear issues update ENG-123 --assignee me
@@ -872,33 +876,37 @@ Examples:
   # Update multiple labels (replaces all)
   linear issues update ENG-123 --label bug --label urgent
 
+  # Skip confirmation for automation
+  linear issues update ENG-123 --assignee me --yes
+
   # Open in editor for interactive editing
   linear issues update ENG-123
 
    # Output as JSON
-   linear issues update ENG-123 --title &quot;New title&quot; --format json
+   linear issues update ENG-123 --title "New title" --format json
 
 **Usage**:
 
 ```console
-$ linear i update [OPTIONS] ISSUE_ID
+$ linear i update [OPTIONS] {issue_id}
 ```
 
 **Arguments**:
 
-* `ISSUE_ID`: Issue ID or identifier (e.g., &#x27;ENG-123&#x27;)  [required]
+* `issue_id`: Issue ID or identifier (e.g., 'ENG-123')  [required]
 
 **Options**:
 
-* `--title TEXT`: New issue title
-* `-d, --description TEXT`: New issue description
-* `-a, --assignee TEXT`: Assignee email (use &#x27;me&#x27; for yourself, &#x27;null&#x27; to unassign)
-* `-p, --priority INTEGER`: Priority: 0=None, 1=Urgent, 2=High, 3=Medium, 4=Low
-* `--project TEXT`: Project ID or name (use &#x27;null&#x27; to remove)
-* `-l, --label TEXT`: Label name (repeatable, replaces all labels)
-* `-s, --state TEXT`: Workflow state name
-* `-e, --estimate INTEGER`: Story points estimate (use -1 to clear)
-* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `--title <str>`: New issue title
+* `-d, --description <str>`: New issue description
+* `-a, --assignee <str>`: Assignee email (use 'me' for yourself, 'null' to unassign)
+* `-p, --priority <int>`: Priority: 0=None, 1=Urgent, 2=High, 3=Medium, 4=Low
+* `--project <str>`: Project ID or name (use 'null' to remove)
+* `-l, --label <str>`: Label name (repeatable, replaces all labels)
+* `-s, --state <str>`: Workflow state name
+* `-e, --estimate <int>`: Story points estimate (use -1 to clear)
+* `-y, --yes`: Skip confirmation prompt
+* `-f, --format <str>`: Output format: detail, json  [default: detail]
 * `--help`: Show this message and exit.
 
 ### `linear i delete`
@@ -916,12 +924,12 @@ Examples:
 **Usage**:
 
 ```console
-$ linear i delete [OPTIONS] ISSUE_ID
+$ linear i delete [OPTIONS] {issue_id}
 ```
 
 **Arguments**:
 
-* `ISSUE_ID`: Issue ID or identifier (e.g., &#x27;ENG-123&#x27;)  [required]
+* `issue_id`: Issue ID or identifier (e.g., 'ENG-123')  [required]
 
 **Options**:
 
@@ -943,12 +951,12 @@ Examples:
 **Usage**:
 
 ```console
-$ linear i archive [OPTIONS] ISSUE_ID
+$ linear i archive [OPTIONS] {issue_id}
 ```
 
 **Arguments**:
 
-* `ISSUE_ID`: Issue ID or identifier (e.g., &#x27;ENG-123&#x27;)  [required]
+* `issue_id`: Issue ID or identifier (e.g., 'ENG-123')  [required]
 
 **Options**:
 
@@ -970,12 +978,12 @@ Examples:
 **Usage**:
 
 ```console
-$ linear i unarchive [OPTIONS] ISSUE_ID
+$ linear i unarchive [OPTIONS] {issue_id}
 ```
 
 **Arguments**:
 
-* `ISSUE_ID`: Issue ID or identifier (e.g., &#x27;ENG-123&#x27;)  [required]
+* `issue_id`: Issue ID or identifier (e.g., 'ENG-123')  [required]
 
 **Options**:
 
@@ -1007,18 +1015,18 @@ Examples:
 **Usage**:
 
 ```console
-$ linear i duplicate [OPTIONS] ISSUE_ID
+$ linear i duplicate [OPTIONS] {issue_id}
 ```
 
 **Arguments**:
 
-* `ISSUE_ID`: Issue ID or identifier to duplicate  [required]
+* `issue_id`: Issue ID or identifier to duplicate  [required]
 
 **Options**:
 
 * `-y, --yes`: Skip confirmation
 * `--link`: Create duplicate relation between issues
-* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `-f, --format <str>`: Output format: detail, json  [default: detail]
 * `--help`: Show this message and exit.
 
 ### `linear i move-state`
@@ -1027,22 +1035,22 @@ Move an issue to a different workflow state.
 
 Examples:
 
-  # Move issue to &quot;In Progress&quot; state
-  linear issues move-state ENG-123 &quot;In Progress&quot;
+  # Move issue to "In Progress" state
+  linear issues move-state ENG-123 "In Progress"
 
-  # Move issue to &quot;Done&quot; state without confirmation
+  # Move issue to "Done" state without confirmation
   linear issues move-state ENG-123 Done --yes
 
 **Usage**:
 
 ```console
-$ linear i move-state [OPTIONS] ISSUE_ID STATE
+$ linear i move-state [OPTIONS] {issue_id} {state}
 ```
 
 **Arguments**:
 
-* `ISSUE_ID`: Issue ID or identifier (e.g., &#x27;ENG-123&#x27;)  [required]
-* `STATE`: State name (e.g., &#x27;In Progress&#x27;, &#x27;Done&#x27;)  [required]
+* `issue_id`: Issue ID or identifier (e.g., 'ENG-123')  [required]
+* `state`: State name (e.g., 'In Progress', 'Done')  [required]
 
 **Options**:
 
@@ -1084,16 +1092,16 @@ Examples:
 **Usage**:
 
 ```console
-$ linear i relations list [OPTIONS] ISSUE_ID
+$ linear i relations list [OPTIONS] {issue_id}
 ```
 
 **Arguments**:
 
-* `ISSUE_ID`: Issue ID or identifier (e.g., &#x27;ENG-123&#x27;)  [required]
+* `issue_id`: Issue ID or identifier (e.g., 'ENG-123')  [required]
 
 **Options**:
 
-* `-f, --format TEXT`: Output format: table, json  [default: table]
+* `-f, --format <str>`: Output format: table, json  [default: table]
 * `--help`: Show this message and exit.
 
 #### `linear i relations add`
@@ -1102,58 +1110,58 @@ Add a relation between two issues.
 
 Examples:
 
-  # Add a &#x27;related&#x27; relation
+  # Add a 'related' relation
   linear issues relations add ENG-123 ENG-456
 
-  # Add a &#x27;blocks&#x27; relation
+  # Add a 'blocks' relation
   linear issues relations add ENG-123 ENG-456 --type blocks
 
-  # Add a &#x27;blocked&#x27; relation
+  # Add a 'blocked' relation
   linear issues relations add ENG-123 ENG-456 --type blocked
 
-  # Add a &#x27;duplicate&#x27; relation
+  # Add a 'duplicate' relation
   linear issues relations add ENG-123 ENG-456 --type duplicate
 
 **Usage**:
 
 ```console
-$ linear i relations add [OPTIONS] ISSUE_ID RELATED_ISSUE_ID
+$ linear i relations add [OPTIONS] {issue_id} {related_issue_id}
 ```
 
 **Arguments**:
 
-* `ISSUE_ID`: Source issue ID or identifier (e.g., &#x27;ENG-123&#x27;)  [required]
-* `RELATED_ISSUE_ID`: Related issue ID or identifier (e.g., &#x27;ENG-456&#x27;)  [required]
+* `issue_id`: Source issue ID or identifier (e.g., 'ENG-123')  [required]
+* `related_issue_id`: Related issue ID or identifier (e.g., 'ENG-456')  [required]
 
 **Options**:
 
-* `-t, --type TEXT`: Relation type: blocks, blocked, related, duplicate  [default: related]
+* `-t, --type <str>`: Relation type: blocks, blocked, related, duplicate  [default: related]
 * `--help`: Show this message and exit.
 
 #### `linear i relations remove`
 
 Remove a relation from an issue.
 
-Use &#x27;linear issues relations list &lt;issue-id&gt;&#x27; to find relation IDs.
+Use 'linear issues relations list <issue-id>' to find relation IDs.
 
 Examples:
 
   # Remove a relation
-  linear issues relations remove ENG-123 &lt;relation-id&gt;
+  linear issues relations remove ENG-123 <relation-id>
 
   # Remove without confirmation
-  linear issues relations remove ENG-123 &lt;relation-id&gt; --yes
+  linear issues relations remove ENG-123 <relation-id> --yes
 
 **Usage**:
 
 ```console
-$ linear i relations remove [OPTIONS] ISSUE_ID RELATION_ID
+$ linear i relations remove [OPTIONS] {issue_id} {relation_id}
 ```
 
 **Arguments**:
 
-* `ISSUE_ID`: Issue ID or identifier (e.g., &#x27;ENG-123&#x27;)  [required]
-* `RELATION_ID`: Relation ID to remove (use &#x27;list&#x27; to see IDs)  [required]
+* `issue_id`: Issue ID or identifier (e.g., 'ENG-123')  [required]
+* `relation_id`: Relation ID to remove (use 'list' to see IDs)  [required]
 
 **Options**:
 
@@ -1195,16 +1203,16 @@ Examples:
 **Usage**:
 
 ```console
-$ linear attachments list [OPTIONS] ISSUE_ID
+$ linear attachments list [OPTIONS] {issue_id}
 ```
 
 **Arguments**:
 
-* `ISSUE_ID`: Issue ID or identifier (e.g., &#x27;ENG-123&#x27;)  [required]
+* `issue_id`: Issue ID or identifier (e.g., 'ENG-123')  [required]
 
 **Options**:
 
-* `-f, --format TEXT`: Output format: table, json  [default: table]
+* `-f, --format <str>`: Output format: table, json  [default: table]
 * `--help`: Show this message and exit.
 
 ### `linear attachments upload`
@@ -1217,22 +1225,22 @@ Examples:
   linear attachments upload ENG-123 ./screenshot.png
 
   # Upload with custom title
-  linear attachments upload ENG-123 ./doc.pdf --title &quot;Design Document&quot;
+  linear attachments upload ENG-123 ./doc.pdf --title "Design Document"
 
 **Usage**:
 
 ```console
-$ linear attachments upload [OPTIONS] ISSUE_ID FILE_PATH
+$ linear attachments upload [OPTIONS] {issue_id} {file_path}
 ```
 
 **Arguments**:
 
-* `ISSUE_ID`: Issue ID or identifier (e.g., &#x27;ENG-123&#x27;)  [required]
-* `FILE_PATH`: Path to file to upload  [required]
+* `issue_id`: Issue ID or identifier (e.g., 'ENG-123')  [required]
+* `file_path`: Path to file to upload  [required]
 
 **Options**:
 
-* `-t, --title TEXT`: Attachment title (defaults to filename)
+* `-t, --title <str>`: Attachment title (defaults to filename)
 * `--help`: Show this message and exit.
 
 ### `linear attachments delete`
@@ -1242,20 +1250,20 @@ Delete an attachment.
 Examples:
 
   # Delete an attachment with confirmation
-  linear attachments delete &lt;attachment-id&gt;
+  linear attachments delete <attachment-id>
 
   # Delete without confirmation prompt
-  linear attachments delete &lt;attachment-id&gt; --yes
+  linear attachments delete <attachment-id> --yes
 
 **Usage**:
 
 ```console
-$ linear attachments delete [OPTIONS] ATTACHMENT_ID
+$ linear attachments delete [OPTIONS] {attachment_id}
 ```
 
 **Arguments**:
 
-* `ATTACHMENT_ID`: Attachment ID  [required]
+* `attachment_id`: Attachment ID  [required]
 
 **Options**:
 
@@ -1298,16 +1306,16 @@ Examples:
 **Usage**:
 
 ```console
-$ linear comments list [OPTIONS] ISSUE_ID
+$ linear comments list [OPTIONS] {issue_id}
 ```
 
 **Arguments**:
 
-* `ISSUE_ID`: Issue ID or identifier (e.g., &#x27;ENG-123&#x27;)  [required]
+* `issue_id`: Issue ID or identifier (e.g., 'ENG-123')  [required]
 
 **Options**:
 
-* `-f, --format TEXT`: Output format: table, json  [default: table]
+* `-f, --format <str>`: Output format: table, json  [default: table]
 * `--help`: Show this message and exit.
 
 ### `linear comments create`
@@ -1319,28 +1327,28 @@ If --body is not provided, opens your $EDITOR to write the comment.
 Examples:
 
   # Create comment with body flag
-  linear comments create ENG-123 --body &quot;This looks good!&quot;
+  linear comments create ENG-123 --body "This looks good!"
 
   # Open editor to write comment
   linear comments create ENG-123
 
   # Output as JSON
-  linear comments create ENG-123 --body &quot;Comment&quot; --format json
+  linear comments create ENG-123 --body "Comment" --format json
 
 **Usage**:
 
 ```console
-$ linear comments create [OPTIONS] ISSUE_ID
+$ linear comments create [OPTIONS] {issue_id}
 ```
 
 **Arguments**:
 
-* `ISSUE_ID`: Issue ID or identifier (e.g., &#x27;ENG-123&#x27;)  [required]
+* `issue_id`: Issue ID or identifier (e.g., 'ENG-123')  [required]
 
 **Options**:
 
-* `-b, --body TEXT`: Comment body (markdown)
-* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `-b, --body <str>`: Comment body (markdown)
+* `-f, --format <str>`: Output format: detail, json  [default: detail]
 * `--help`: Show this message and exit.
 
 ### `linear comments update`
@@ -1352,28 +1360,28 @@ If --body is not provided, opens your $EDITOR to edit the comment.
 Examples:
 
   # Update comment with body flag
-  linear comments update &lt;comment-id&gt; --body &quot;Updated text&quot;
+  linear comments update <comment-id> --body "Updated text"
 
   # Open editor to edit comment
-  linear comments update &lt;comment-id&gt;
+  linear comments update <comment-id>
 
   # Output as JSON
-  linear comments update &lt;comment-id&gt; --body &quot;Text&quot; --format json
+  linear comments update <comment-id> --body "Text" --format json
 
 **Usage**:
 
 ```console
-$ linear comments update [OPTIONS] COMMENT_ID
+$ linear comments update [OPTIONS] {comment_id}
 ```
 
 **Arguments**:
 
-* `COMMENT_ID`: Comment ID (UUID)  [required]
+* `comment_id`: Comment ID (UUID)  [required]
 
 **Options**:
 
-* `-b, --body TEXT`: New comment body (markdown)
-* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `-b, --body <str>`: New comment body (markdown)
+* `-f, --format <str>`: Output format: detail, json  [default: detail]
 * `--help`: Show this message and exit.
 
 ### `linear comments delete`
@@ -1383,20 +1391,20 @@ Delete a comment.
 Examples:
 
   # Delete comment with confirmation
-  linear comments delete &lt;comment-id&gt;
+  linear comments delete <comment-id>
 
   # Delete without confirmation prompt
-  linear comments delete &lt;comment-id&gt; --yes
+  linear comments delete <comment-id> --yes
 
 **Usage**:
 
 ```console
-$ linear comments delete [OPTIONS] COMMENT_ID
+$ linear comments delete [OPTIONS] {comment_id}
 ```
 
 **Arguments**:
 
-* `COMMENT_ID`: Comment ID (UUID)  [required]
+* `comment_id`: Comment ID (UUID)  [required]
 
 **Options**:
 
@@ -1459,15 +1467,15 @@ $ linear projects list [OPTIONS]
 
 **Options**:
 
-* `-s, --state TEXT`: Filter by state (planned, started, paused, completed, canceled)
-* `-t, --team TEXT`: Filter by team key (e.g., ENG, DESIGN)
-* `--per-page INTEGER`: Number of projects per page (max 250)  [default: 50]
-* `--page INTEGER`: Page number to fetch (starts at 1)
+* `-s, --state <str>`: Filter by state (planned, started, paused, completed, canceled)
+* `-t, --team <str>`: Filter by team key (e.g., ENG, DESIGN)
+* `--per-page <int>`: Number of projects per page (max 250)  [default: 50]
+* `--page <int>`: Page number to fetch (starts at 1)
 * `--all`: Fetch all results automatically
-* `--limit INTEGER`: DEPRECATED: use --per-page instead
+* `--limit <int>`: DEPRECATED: use --per-page instead
 * `--include-archived`: Include archived projects
-* `-f, --format TEXT`: Output format: table, json  [default: table]
-* `--order-by TEXT`: Sort by: created, updated  [default: updated]
+* `-f, --format <str>`: Output format: table, json  [default: table]
+* `--order-by <str>`: Sort by: created, updated  [default: updated]
 * `--help`: Show this message and exit.
 
 ### `linear projects view`
@@ -1485,16 +1493,16 @@ Examples:
 **Usage**:
 
 ```console
-$ linear projects view [OPTIONS] PROJECT_ID
+$ linear projects view [OPTIONS] {project_id}
 ```
 
 **Arguments**:
 
-* `PROJECT_ID`: Project ID or slug  [required]
+* `project_id`: Project ID or slug  [required]
 
 **Options**:
 
-* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `-f, --format <str>`: Output format: detail, json  [default: detail]
 * `--help`: Show this message and exit.
 
 ### `linear projects create`
@@ -1504,13 +1512,13 @@ Create a new Linear project.
 Examples:
 
   # Create a project with minimal fields
-  linear projects create --name &quot;Q1 Initiative&quot; --team ENG
+  linear projects create --name "Q1 Initiative" --team ENG
 
   # Create with multiple teams
-  linear projects create --name &quot;Cross-team Project&quot; --team ENG --team DESIGN
+  linear projects create --name "Cross-team Project" --team ENG --team DESIGN
 
   # Create with all fields
-  linear projects create --name &quot;Q1 Initiative&quot; --team ENG           --description &quot;Focus area&quot; --state started           --target-date 2026-03-31 --lead user@example.com
+  linear projects create --name "Q1 Initiative" --team ENG           --description "Focus area" --state started           --target-date 2026-03-31 --lead user@example.com
 
 **Usage**:
 
@@ -1520,16 +1528,16 @@ $ linear projects create [OPTIONS]
 
 **Options**:
 
-* `-n, --name TEXT`: Project name (required)  [required]
-* `-t, --team TEXT`: Team ID or key (can be used multiple times, required)  [required]
-* `-d, --description TEXT`: Project description
-* `-l, --lead TEXT`: Project lead (user email or ID)
-* `--state TEXT`: Project state (planned, started, paused, completed, canceled)
-* `--start-date TEXT`: Start date (YYYY-MM-DD)
-* `--target-date TEXT`: Target date (YYYY-MM-DD)
-* `--color TEXT`: Hex color code
-* `--icon TEXT`: Icon name
-* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `-n, --name <str>`: Project name (required)  [required]
+* `-t, --team <str>`: Team ID or key (can be used multiple times, required)  [required]
+* `-d, --description <str>`: Project description
+* `-l, --lead <str>`: Project lead (user email or ID)
+* `--state <str>`: Project state (planned, started, paused, completed, canceled)
+* `--start-date <str>`: Start date (YYYY-MM-DD)
+* `--target-date <str>`: Target date (YYYY-MM-DD)
+* `--color <str>`: Hex color code
+* `--icon <str>`: Icon name
+* `-f, --format <str>`: Output format: detail, json  [default: detail]
 * `--help`: Show this message and exit.
 
 ### `linear projects update`
@@ -1539,10 +1547,10 @@ Update an existing Linear project.
 Examples:
 
   # Update project name
-  linear projects update my-project --name &quot;New Name&quot;
+  linear projects update my-project --name "New Name"
 
   # Update multiple fields
-  linear projects update my-project --name &quot;New Name&quot; --state completed
+  linear projects update my-project --name "New Name" --state completed
 
   # Update teams (replaces all teams)
   linear projects update my-project --team ENG --team PLATFORM
@@ -1550,25 +1558,25 @@ Examples:
 **Usage**:
 
 ```console
-$ linear projects update [OPTIONS] PROJECT_ID
+$ linear projects update [OPTIONS] {project_id}
 ```
 
 **Arguments**:
 
-* `PROJECT_ID`: Project ID or slug  [required]
+* `project_id`: Project ID or slug  [required]
 
 **Options**:
 
-* `-n, --name TEXT`: New project name
-* `-d, --description TEXT`: New project description
-* `-t, --team TEXT`: Team ID or key (can be used multiple times, replaces all teams)
-* `-l, --lead TEXT`: New project lead (user email or ID)
-* `--state TEXT`: New project state (planned, started, paused, completed, canceled)
-* `--start-date TEXT`: New start date (YYYY-MM-DD)
-* `--target-date TEXT`: New target date (YYYY-MM-DD)
-* `--color TEXT`: New hex color code
-* `--icon TEXT`: New icon name
-* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `-n, --name <str>`: New project name
+* `-d, --description <str>`: New project description
+* `-t, --team <str>`: Team ID or key (can be used multiple times, replaces all teams)
+* `-l, --lead <str>`: New project lead (user email or ID)
+* `--state <str>`: New project state (planned, started, paused, completed, canceled)
+* `--start-date <str>`: New start date (YYYY-MM-DD)
+* `--target-date <str>`: New target date (YYYY-MM-DD)
+* `--color <str>`: New hex color code
+* `--icon <str>`: New icon name
+* `-f, --format <str>`: Output format: detail, json  [default: detail]
 * `--help`: Show this message and exit.
 
 ### `linear projects delete`
@@ -1586,12 +1594,12 @@ Examples:
 **Usage**:
 
 ```console
-$ linear projects delete [OPTIONS] PROJECT_ID
+$ linear projects delete [OPTIONS] {project_id}
 ```
 
 **Arguments**:
 
-* `PROJECT_ID`: Project ID or slug  [required]
+* `project_id`: Project ID or slug  [required]
 
 **Options**:
 
@@ -1613,12 +1621,12 @@ Examples:
 **Usage**:
 
 ```console
-$ linear projects archive [OPTIONS] PROJECT_ID
+$ linear projects archive [OPTIONS] {project_id}
 ```
 
 **Arguments**:
 
-* `PROJECT_ID`: Project ID or slug  [required]
+* `project_id`: Project ID or slug  [required]
 
 **Options**:
 
@@ -1640,12 +1648,12 @@ Examples:
 **Usage**:
 
 ```console
-$ linear projects unarchive [OPTIONS] PROJECT_ID
+$ linear projects unarchive [OPTIONS] {project_id}
 ```
 
 **Arguments**:
 
-* `PROJECT_ID`: Project ID or slug  [required]
+* `project_id`: Project ID or slug  [required]
 
 **Options**:
 
@@ -1708,15 +1716,15 @@ $ linear p list [OPTIONS]
 
 **Options**:
 
-* `-s, --state TEXT`: Filter by state (planned, started, paused, completed, canceled)
-* `-t, --team TEXT`: Filter by team key (e.g., ENG, DESIGN)
-* `--per-page INTEGER`: Number of projects per page (max 250)  [default: 50]
-* `--page INTEGER`: Page number to fetch (starts at 1)
+* `-s, --state <str>`: Filter by state (planned, started, paused, completed, canceled)
+* `-t, --team <str>`: Filter by team key (e.g., ENG, DESIGN)
+* `--per-page <int>`: Number of projects per page (max 250)  [default: 50]
+* `--page <int>`: Page number to fetch (starts at 1)
 * `--all`: Fetch all results automatically
-* `--limit INTEGER`: DEPRECATED: use --per-page instead
+* `--limit <int>`: DEPRECATED: use --per-page instead
 * `--include-archived`: Include archived projects
-* `-f, --format TEXT`: Output format: table, json  [default: table]
-* `--order-by TEXT`: Sort by: created, updated  [default: updated]
+* `-f, --format <str>`: Output format: table, json  [default: table]
+* `--order-by <str>`: Sort by: created, updated  [default: updated]
 * `--help`: Show this message and exit.
 
 ### `linear p view`
@@ -1734,16 +1742,16 @@ Examples:
 **Usage**:
 
 ```console
-$ linear p view [OPTIONS] PROJECT_ID
+$ linear p view [OPTIONS] {project_id}
 ```
 
 **Arguments**:
 
-* `PROJECT_ID`: Project ID or slug  [required]
+* `project_id`: Project ID or slug  [required]
 
 **Options**:
 
-* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `-f, --format <str>`: Output format: detail, json  [default: detail]
 * `--help`: Show this message and exit.
 
 ### `linear p create`
@@ -1753,13 +1761,13 @@ Create a new Linear project.
 Examples:
 
   # Create a project with minimal fields
-  linear projects create --name &quot;Q1 Initiative&quot; --team ENG
+  linear projects create --name "Q1 Initiative" --team ENG
 
   # Create with multiple teams
-  linear projects create --name &quot;Cross-team Project&quot; --team ENG --team DESIGN
+  linear projects create --name "Cross-team Project" --team ENG --team DESIGN
 
   # Create with all fields
-  linear projects create --name &quot;Q1 Initiative&quot; --team ENG           --description &quot;Focus area&quot; --state started           --target-date 2026-03-31 --lead user@example.com
+  linear projects create --name "Q1 Initiative" --team ENG           --description "Focus area" --state started           --target-date 2026-03-31 --lead user@example.com
 
 **Usage**:
 
@@ -1769,16 +1777,16 @@ $ linear p create [OPTIONS]
 
 **Options**:
 
-* `-n, --name TEXT`: Project name (required)  [required]
-* `-t, --team TEXT`: Team ID or key (can be used multiple times, required)  [required]
-* `-d, --description TEXT`: Project description
-* `-l, --lead TEXT`: Project lead (user email or ID)
-* `--state TEXT`: Project state (planned, started, paused, completed, canceled)
-* `--start-date TEXT`: Start date (YYYY-MM-DD)
-* `--target-date TEXT`: Target date (YYYY-MM-DD)
-* `--color TEXT`: Hex color code
-* `--icon TEXT`: Icon name
-* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `-n, --name <str>`: Project name (required)  [required]
+* `-t, --team <str>`: Team ID or key (can be used multiple times, required)  [required]
+* `-d, --description <str>`: Project description
+* `-l, --lead <str>`: Project lead (user email or ID)
+* `--state <str>`: Project state (planned, started, paused, completed, canceled)
+* `--start-date <str>`: Start date (YYYY-MM-DD)
+* `--target-date <str>`: Target date (YYYY-MM-DD)
+* `--color <str>`: Hex color code
+* `--icon <str>`: Icon name
+* `-f, --format <str>`: Output format: detail, json  [default: detail]
 * `--help`: Show this message and exit.
 
 ### `linear p update`
@@ -1788,10 +1796,10 @@ Update an existing Linear project.
 Examples:
 
   # Update project name
-  linear projects update my-project --name &quot;New Name&quot;
+  linear projects update my-project --name "New Name"
 
   # Update multiple fields
-  linear projects update my-project --name &quot;New Name&quot; --state completed
+  linear projects update my-project --name "New Name" --state completed
 
   # Update teams (replaces all teams)
   linear projects update my-project --team ENG --team PLATFORM
@@ -1799,25 +1807,25 @@ Examples:
 **Usage**:
 
 ```console
-$ linear p update [OPTIONS] PROJECT_ID
+$ linear p update [OPTIONS] {project_id}
 ```
 
 **Arguments**:
 
-* `PROJECT_ID`: Project ID or slug  [required]
+* `project_id`: Project ID or slug  [required]
 
 **Options**:
 
-* `-n, --name TEXT`: New project name
-* `-d, --description TEXT`: New project description
-* `-t, --team TEXT`: Team ID or key (can be used multiple times, replaces all teams)
-* `-l, --lead TEXT`: New project lead (user email or ID)
-* `--state TEXT`: New project state (planned, started, paused, completed, canceled)
-* `--start-date TEXT`: New start date (YYYY-MM-DD)
-* `--target-date TEXT`: New target date (YYYY-MM-DD)
-* `--color TEXT`: New hex color code
-* `--icon TEXT`: New icon name
-* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `-n, --name <str>`: New project name
+* `-d, --description <str>`: New project description
+* `-t, --team <str>`: Team ID or key (can be used multiple times, replaces all teams)
+* `-l, --lead <str>`: New project lead (user email or ID)
+* `--state <str>`: New project state (planned, started, paused, completed, canceled)
+* `--start-date <str>`: New start date (YYYY-MM-DD)
+* `--target-date <str>`: New target date (YYYY-MM-DD)
+* `--color <str>`: New hex color code
+* `--icon <str>`: New icon name
+* `-f, --format <str>`: Output format: detail, json  [default: detail]
 * `--help`: Show this message and exit.
 
 ### `linear p delete`
@@ -1835,12 +1843,12 @@ Examples:
 **Usage**:
 
 ```console
-$ linear p delete [OPTIONS] PROJECT_ID
+$ linear p delete [OPTIONS] {project_id}
 ```
 
 **Arguments**:
 
-* `PROJECT_ID`: Project ID or slug  [required]
+* `project_id`: Project ID or slug  [required]
 
 **Options**:
 
@@ -1862,12 +1870,12 @@ Examples:
 **Usage**:
 
 ```console
-$ linear p archive [OPTIONS] PROJECT_ID
+$ linear p archive [OPTIONS] {project_id}
 ```
 
 **Arguments**:
 
-* `PROJECT_ID`: Project ID or slug  [required]
+* `project_id`: Project ID or slug  [required]
 
 **Options**:
 
@@ -1889,12 +1897,12 @@ Examples:
 **Usage**:
 
 ```console
-$ linear p unarchive [OPTIONS] PROJECT_ID
+$ linear p unarchive [OPTIONS] {project_id}
 ```
 
 **Arguments**:
 
-* `PROJECT_ID`: Project ID or slug  [required]
+* `project_id`: Project ID or slug  [required]
 
 **Options**:
 
@@ -1953,12 +1961,12 @@ $ linear teams list [OPTIONS]
 
 **Options**:
 
-* `--per-page INTEGER`: Number of teams per page (max 250)  [default: 50]
-* `--page INTEGER`: Page number to fetch (starts at 1)
+* `--per-page <int>`: Number of teams per page (max 250)  [default: 50]
+* `--page <int>`: Page number to fetch (starts at 1)
 * `--all`: Fetch all results automatically
-* `--limit INTEGER`: DEPRECATED: use --per-page instead
+* `--limit <int>`: DEPRECATED: use --per-page instead
 * `--include-archived`: Include archived teams
-* `-f, --format TEXT`: Output format: table, json  [default: table]
+* `-f, --format <str>`: Output format: table, json  [default: table]
 * `--help`: Show this message and exit.
 
 ### `linear teams view`
@@ -1976,16 +1984,16 @@ Examples:
 **Usage**:
 
 ```console
-$ linear teams view [OPTIONS] TEAM_ID
+$ linear teams view [OPTIONS] {team_id}
 ```
 
 **Arguments**:
 
-* `TEAM_ID`: Team ID or key (e.g., &#x27;ENG&#x27;)  [required]
+* `team_id`: Team ID or key (e.g., 'ENG')  [required]
 
 **Options**:
 
-* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `-f, --format <str>`: Output format: detail, json  [default: detail]
 * `--help`: Show this message and exit.
 
 ### `linear teams create`
@@ -1995,10 +2003,10 @@ Create a new Linear team.
 Examples:
 
   # Create a new team
-  linear teams create --name &quot;Engineering&quot; --key ENG
+  linear teams create --name "Engineering" --key ENG
 
   # Create a private team with description
-  linear teams create --name &quot;Design&quot; --key DESIGN --description &quot;Product design team&quot; --private
+  linear teams create --name "Design" --key DESIGN --description "Product design team" --private
 
 **Usage**:
 
@@ -2008,11 +2016,11 @@ $ linear teams create [OPTIONS]
 
 **Options**:
 
-* `-n, --name TEXT`: Team name (required)  [required]
-* `-k, --key TEXT`: Team key (required)  [required]
-* `-d, --description TEXT`: Team description
+* `-n, --name <str>`: Team name (required)  [required]
+* `-k, --key <str>`: Team key (required)  [required]
+* `-d, --description <str>`: Team description
 * `--private`: Make team private
-* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `-f, --format <str>`: Output format: detail, json  [default: detail]
 * `--help`: Show this message and exit.
 
 ### `linear teams update`
@@ -2022,10 +2030,10 @@ Update an existing Linear team.
 Examples:
 
   # Update team name
-  linear teams update ENG --name &quot;Engineering Team&quot;
+  linear teams update ENG --name "Engineering Team"
 
   # Update multiple fields
-  linear teams update ENG --name &quot;Core Engineering&quot; --description &quot;Backend team&quot;
+  linear teams update ENG --name "Core Engineering" --description "Backend team"
 
   # Make team private
   linear teams update ENG --private
@@ -2033,20 +2041,20 @@ Examples:
 **Usage**:
 
 ```console
-$ linear teams update [OPTIONS] TEAM_ID
+$ linear teams update [OPTIONS] {team_id}
 ```
 
 **Arguments**:
 
-* `TEAM_ID`: Team ID or key (e.g., &#x27;ENG&#x27;)  [required]
+* `team_id`: Team ID or key (e.g., 'ENG')  [required]
 
 **Options**:
 
-* `-n, --name TEXT`: New team name
-* `-k, --key TEXT`: New team key
-* `-d, --description TEXT`: New team description
+* `-n, --name <str>`: New team name
+* `-k, --key <str>`: New team key
+* `-d, --description <str>`: New team description
 * `--private / --public`: Change team privacy
-* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `-f, --format <str>`: Output format: detail, json  [default: detail]
 * `--help`: Show this message and exit.
 
 ### `linear teams delete`
@@ -2064,12 +2072,12 @@ Examples:
 **Usage**:
 
 ```console
-$ linear teams delete [OPTIONS] TEAM_ID
+$ linear teams delete [OPTIONS] {team_id}
 ```
 
 **Arguments**:
 
-* `TEAM_ID`: Team ID or key (e.g., &#x27;ENG&#x27;)  [required]
+* `team_id`: Team ID or key (e.g., 'ENG')  [required]
 
 **Options**:
 
@@ -2091,12 +2099,12 @@ Examples:
 **Usage**:
 
 ```console
-$ linear teams archive [OPTIONS] TEAM_ID
+$ linear teams archive [OPTIONS] {team_id}
 ```
 
 **Arguments**:
 
-* `TEAM_ID`: Team ID or key (e.g., &#x27;ENG&#x27;)  [required]
+* `team_id`: Team ID or key (e.g., 'ENG')  [required]
 
 **Options**:
 
@@ -2155,12 +2163,12 @@ $ linear t list [OPTIONS]
 
 **Options**:
 
-* `--per-page INTEGER`: Number of teams per page (max 250)  [default: 50]
-* `--page INTEGER`: Page number to fetch (starts at 1)
+* `--per-page <int>`: Number of teams per page (max 250)  [default: 50]
+* `--page <int>`: Page number to fetch (starts at 1)
 * `--all`: Fetch all results automatically
-* `--limit INTEGER`: DEPRECATED: use --per-page instead
+* `--limit <int>`: DEPRECATED: use --per-page instead
 * `--include-archived`: Include archived teams
-* `-f, --format TEXT`: Output format: table, json  [default: table]
+* `-f, --format <str>`: Output format: table, json  [default: table]
 * `--help`: Show this message and exit.
 
 ### `linear t view`
@@ -2178,16 +2186,16 @@ Examples:
 **Usage**:
 
 ```console
-$ linear t view [OPTIONS] TEAM_ID
+$ linear t view [OPTIONS] {team_id}
 ```
 
 **Arguments**:
 
-* `TEAM_ID`: Team ID or key (e.g., &#x27;ENG&#x27;)  [required]
+* `team_id`: Team ID or key (e.g., 'ENG')  [required]
 
 **Options**:
 
-* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `-f, --format <str>`: Output format: detail, json  [default: detail]
 * `--help`: Show this message and exit.
 
 ### `linear t create`
@@ -2197,10 +2205,10 @@ Create a new Linear team.
 Examples:
 
   # Create a new team
-  linear teams create --name &quot;Engineering&quot; --key ENG
+  linear teams create --name "Engineering" --key ENG
 
   # Create a private team with description
-  linear teams create --name &quot;Design&quot; --key DESIGN --description &quot;Product design team&quot; --private
+  linear teams create --name "Design" --key DESIGN --description "Product design team" --private
 
 **Usage**:
 
@@ -2210,11 +2218,11 @@ $ linear t create [OPTIONS]
 
 **Options**:
 
-* `-n, --name TEXT`: Team name (required)  [required]
-* `-k, --key TEXT`: Team key (required)  [required]
-* `-d, --description TEXT`: Team description
+* `-n, --name <str>`: Team name (required)  [required]
+* `-k, --key <str>`: Team key (required)  [required]
+* `-d, --description <str>`: Team description
 * `--private`: Make team private
-* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `-f, --format <str>`: Output format: detail, json  [default: detail]
 * `--help`: Show this message and exit.
 
 ### `linear t update`
@@ -2224,10 +2232,10 @@ Update an existing Linear team.
 Examples:
 
   # Update team name
-  linear teams update ENG --name &quot;Engineering Team&quot;
+  linear teams update ENG --name "Engineering Team"
 
   # Update multiple fields
-  linear teams update ENG --name &quot;Core Engineering&quot; --description &quot;Backend team&quot;
+  linear teams update ENG --name "Core Engineering" --description "Backend team"
 
   # Make team private
   linear teams update ENG --private
@@ -2235,20 +2243,20 @@ Examples:
 **Usage**:
 
 ```console
-$ linear t update [OPTIONS] TEAM_ID
+$ linear t update [OPTIONS] {team_id}
 ```
 
 **Arguments**:
 
-* `TEAM_ID`: Team ID or key (e.g., &#x27;ENG&#x27;)  [required]
+* `team_id`: Team ID or key (e.g., 'ENG')  [required]
 
 **Options**:
 
-* `-n, --name TEXT`: New team name
-* `-k, --key TEXT`: New team key
-* `-d, --description TEXT`: New team description
+* `-n, --name <str>`: New team name
+* `-k, --key <str>`: New team key
+* `-d, --description <str>`: New team description
 * `--private / --public`: Change team privacy
-* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `-f, --format <str>`: Output format: detail, json  [default: detail]
 * `--help`: Show this message and exit.
 
 ### `linear t delete`
@@ -2266,12 +2274,12 @@ Examples:
 **Usage**:
 
 ```console
-$ linear t delete [OPTIONS] TEAM_ID
+$ linear t delete [OPTIONS] {team_id}
 ```
 
 **Arguments**:
 
-* `TEAM_ID`: Team ID or key (e.g., &#x27;ENG&#x27;)  [required]
+* `team_id`: Team ID or key (e.g., 'ENG')  [required]
 
 **Options**:
 
@@ -2293,12 +2301,12 @@ Examples:
 **Usage**:
 
 ```console
-$ linear t archive [OPTIONS] TEAM_ID
+$ linear t archive [OPTIONS] {team_id}
 ```
 
 **Arguments**:
 
-* `TEAM_ID`: Team ID or key (e.g., &#x27;ENG&#x27;)  [required]
+* `team_id`: Team ID or key (e.g., 'ENG')  [required]
 
 **Options**:
 
@@ -2363,16 +2371,16 @@ $ linear cycles list [OPTIONS]
 
 **Options**:
 
-* `-t, --team TEXT`: Filter by team name or key
+* `-t, --team <str>`: Filter by team name or key
 * `-a, --active`: Show only active cycles
 * `--future`: Show only future cycles
 * `--past`: Show only past cycles
-* `--per-page INTEGER`: Number of cycles per page (max 250)  [default: 50]
-* `--page INTEGER`: Page number to fetch (starts at 1)
+* `--per-page <int>`: Number of cycles per page (max 250)  [default: 50]
+* `--page <int>`: Page number to fetch (starts at 1)
 * `--all`: Fetch all results automatically
-* `-l, --limit INTEGER`: DEPRECATED: use --per-page instead
+* `-l, --limit <int>`: DEPRECATED: use --per-page instead
 * `--include-archived`: Include archived cycles
-* `-f, --format TEXT`: Output format: table, json  [default: table]
+* `-f, --format <str>`: Output format: table, json  [default: table]
 * `--help`: Show this message and exit.
 
 ### `linear cycles view`
@@ -2390,16 +2398,16 @@ Examples:
 **Usage**:
 
 ```console
-$ linear cycles view [OPTIONS] CYCLE_ID
+$ linear cycles view [OPTIONS] {cycle_id}
 ```
 
 **Arguments**:
 
-* `CYCLE_ID`: Cycle ID  [required]
+* `cycle_id`: Cycle ID  [required]
 
 **Options**:
 
-* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `-f, --format <str>`: Output format: detail, json  [default: detail]
 * `--help`: Show this message and exit.
 
 ### `linear cycles create`
@@ -2409,10 +2417,10 @@ Create a new Linear cycle.
 Examples:
 
   # Create a new cycle
-  linear cycles create --name &quot;Sprint 1&quot; --team ENG --starts-at 2024-01-01 --ends-at 2024-01-14
+  linear cycles create --name "Sprint 1" --team ENG --starts-at 2024-01-01 --ends-at 2024-01-14
 
   # With description
-  linear cycles create --name &quot;Q1 Sprint 1&quot; --team ENG --starts-at 2024-01-01 --ends-at 2024-01-14 --description &quot;Focus on auth features&quot;
+  linear cycles create --name "Q1 Sprint 1" --team ENG --starts-at 2024-01-01 --ends-at 2024-01-14 --description "Focus on auth features"
 
 **Usage**:
 
@@ -2422,12 +2430,12 @@ $ linear cycles create [OPTIONS]
 
 **Options**:
 
-* `-n, --name TEXT`: Cycle name (required)  [required]
-* `-t, --team TEXT`: Team ID or key (required)  [required]
-* `--starts-at TEXT`: Start date (YYYY-MM-DD)  [required]
-* `--ends-at TEXT`: End date (YYYY-MM-DD)  [required]
-* `-d, --description TEXT`: Cycle description
-* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `-n, --name <str>`: Cycle name (required)  [required]
+* `-t, --team <str>`: Team ID or key (required)  [required]
+* `--starts-at <str>`: Start date (YYYY-MM-DD)  [required]
+* `--ends-at <str>`: End date (YYYY-MM-DD)  [required]
+* `-d, --description <str>`: Cycle description
+* `-f, --format <str>`: Output format: detail, json  [default: detail]
 * `--help`: Show this message and exit.
 
 ### `linear cycles update`
@@ -2437,31 +2445,31 @@ Update an existing Linear cycle.
 Examples:
 
   # Update cycle name
-  linear cycles update abc123 --name &quot;Sprint 2&quot;
+  linear cycles update abc123 --name "Sprint 2"
 
   # Update dates
   linear cycles update abc123 --starts-at 2024-01-15 --ends-at 2024-01-29
 
   # Update multiple fields
-  linear cycles update abc123 --name &quot;Q1 Sprint 2&quot; --description &quot;Focus on dashboard&quot;
+  linear cycles update abc123 --name "Q1 Sprint 2" --description "Focus on dashboard"
 
 **Usage**:
 
 ```console
-$ linear cycles update [OPTIONS] CYCLE_ID
+$ linear cycles update [OPTIONS] {cycle_id}
 ```
 
 **Arguments**:
 
-* `CYCLE_ID`: Cycle ID  [required]
+* `cycle_id`: Cycle ID  [required]
 
 **Options**:
 
-* `-n, --name TEXT`: New cycle name
-* `--starts-at TEXT`: New start date (YYYY-MM-DD)
-* `--ends-at TEXT`: New end date (YYYY-MM-DD)
-* `-d, --description TEXT`: New cycle description
-* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `-n, --name <str>`: New cycle name
+* `--starts-at <str>`: New start date (YYYY-MM-DD)
+* `--ends-at <str>`: New end date (YYYY-MM-DD)
+* `-d, --description <str>`: New cycle description
+* `-f, --format <str>`: Output format: detail, json  [default: detail]
 * `--help`: Show this message and exit.
 
 ### `linear cycles delete`
@@ -2479,12 +2487,12 @@ Examples:
 **Usage**:
 
 ```console
-$ linear cycles delete [OPTIONS] CYCLE_ID
+$ linear cycles delete [OPTIONS] {cycle_id}
 ```
 
 **Arguments**:
 
-* `CYCLE_ID`: Cycle ID  [required]
+* `cycle_id`: Cycle ID  [required]
 
 **Options**:
 
@@ -2506,12 +2514,12 @@ Examples:
 **Usage**:
 
 ```console
-$ linear cycles archive [OPTIONS] CYCLE_ID
+$ linear cycles archive [OPTIONS] {cycle_id}
 ```
 
 **Arguments**:
 
-* `CYCLE_ID`: Cycle ID  [required]
+* `cycle_id`: Cycle ID  [required]
 
 **Options**:
 
@@ -2576,16 +2584,16 @@ $ linear c list [OPTIONS]
 
 **Options**:
 
-* `-t, --team TEXT`: Filter by team name or key
+* `-t, --team <str>`: Filter by team name or key
 * `-a, --active`: Show only active cycles
 * `--future`: Show only future cycles
 * `--past`: Show only past cycles
-* `--per-page INTEGER`: Number of cycles per page (max 250)  [default: 50]
-* `--page INTEGER`: Page number to fetch (starts at 1)
+* `--per-page <int>`: Number of cycles per page (max 250)  [default: 50]
+* `--page <int>`: Page number to fetch (starts at 1)
 * `--all`: Fetch all results automatically
-* `-l, --limit INTEGER`: DEPRECATED: use --per-page instead
+* `-l, --limit <int>`: DEPRECATED: use --per-page instead
 * `--include-archived`: Include archived cycles
-* `-f, --format TEXT`: Output format: table, json  [default: table]
+* `-f, --format <str>`: Output format: table, json  [default: table]
 * `--help`: Show this message and exit.
 
 ### `linear c view`
@@ -2603,16 +2611,16 @@ Examples:
 **Usage**:
 
 ```console
-$ linear c view [OPTIONS] CYCLE_ID
+$ linear c view [OPTIONS] {cycle_id}
 ```
 
 **Arguments**:
 
-* `CYCLE_ID`: Cycle ID  [required]
+* `cycle_id`: Cycle ID  [required]
 
 **Options**:
 
-* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `-f, --format <str>`: Output format: detail, json  [default: detail]
 * `--help`: Show this message and exit.
 
 ### `linear c create`
@@ -2622,10 +2630,10 @@ Create a new Linear cycle.
 Examples:
 
   # Create a new cycle
-  linear cycles create --name &quot;Sprint 1&quot; --team ENG --starts-at 2024-01-01 --ends-at 2024-01-14
+  linear cycles create --name "Sprint 1" --team ENG --starts-at 2024-01-01 --ends-at 2024-01-14
 
   # With description
-  linear cycles create --name &quot;Q1 Sprint 1&quot; --team ENG --starts-at 2024-01-01 --ends-at 2024-01-14 --description &quot;Focus on auth features&quot;
+  linear cycles create --name "Q1 Sprint 1" --team ENG --starts-at 2024-01-01 --ends-at 2024-01-14 --description "Focus on auth features"
 
 **Usage**:
 
@@ -2635,12 +2643,12 @@ $ linear c create [OPTIONS]
 
 **Options**:
 
-* `-n, --name TEXT`: Cycle name (required)  [required]
-* `-t, --team TEXT`: Team ID or key (required)  [required]
-* `--starts-at TEXT`: Start date (YYYY-MM-DD)  [required]
-* `--ends-at TEXT`: End date (YYYY-MM-DD)  [required]
-* `-d, --description TEXT`: Cycle description
-* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `-n, --name <str>`: Cycle name (required)  [required]
+* `-t, --team <str>`: Team ID or key (required)  [required]
+* `--starts-at <str>`: Start date (YYYY-MM-DD)  [required]
+* `--ends-at <str>`: End date (YYYY-MM-DD)  [required]
+* `-d, --description <str>`: Cycle description
+* `-f, --format <str>`: Output format: detail, json  [default: detail]
 * `--help`: Show this message and exit.
 
 ### `linear c update`
@@ -2650,31 +2658,31 @@ Update an existing Linear cycle.
 Examples:
 
   # Update cycle name
-  linear cycles update abc123 --name &quot;Sprint 2&quot;
+  linear cycles update abc123 --name "Sprint 2"
 
   # Update dates
   linear cycles update abc123 --starts-at 2024-01-15 --ends-at 2024-01-29
 
   # Update multiple fields
-  linear cycles update abc123 --name &quot;Q1 Sprint 2&quot; --description &quot;Focus on dashboard&quot;
+  linear cycles update abc123 --name "Q1 Sprint 2" --description "Focus on dashboard"
 
 **Usage**:
 
 ```console
-$ linear c update [OPTIONS] CYCLE_ID
+$ linear c update [OPTIONS] {cycle_id}
 ```
 
 **Arguments**:
 
-* `CYCLE_ID`: Cycle ID  [required]
+* `cycle_id`: Cycle ID  [required]
 
 **Options**:
 
-* `-n, --name TEXT`: New cycle name
-* `--starts-at TEXT`: New start date (YYYY-MM-DD)
-* `--ends-at TEXT`: New end date (YYYY-MM-DD)
-* `-d, --description TEXT`: New cycle description
-* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `-n, --name <str>`: New cycle name
+* `--starts-at <str>`: New start date (YYYY-MM-DD)
+* `--ends-at <str>`: New end date (YYYY-MM-DD)
+* `-d, --description <str>`: New cycle description
+* `-f, --format <str>`: Output format: detail, json  [default: detail]
 * `--help`: Show this message and exit.
 
 ### `linear c delete`
@@ -2692,12 +2700,12 @@ Examples:
 **Usage**:
 
 ```console
-$ linear c delete [OPTIONS] CYCLE_ID
+$ linear c delete [OPTIONS] {cycle_id}
 ```
 
 **Arguments**:
 
-* `CYCLE_ID`: Cycle ID  [required]
+* `cycle_id`: Cycle ID  [required]
 
 **Options**:
 
@@ -2719,12 +2727,12 @@ Examples:
 **Usage**:
 
 ```console
-$ linear c archive [OPTIONS] CYCLE_ID
+$ linear c archive [OPTIONS] {cycle_id}
 ```
 
 **Arguments**:
 
-* `CYCLE_ID`: Cycle ID  [required]
+* `cycle_id`: Cycle ID  [required]
 
 **Options**:
 
@@ -2780,12 +2788,12 @@ $ linear users list [OPTIONS]
 **Options**:
 
 * `--active-only`: Show only active users  [default: True]
-* `--per-page INTEGER`: Number of users per page (max 250)  [default: 50]
-* `--page INTEGER`: Page number to fetch (starts at 1)
+* `--per-page <int>`: Number of users per page (max 250)  [default: 50]
+* `--page <int>`: Page number to fetch (starts at 1)
 * `--all`: Fetch all results automatically
-* `-l, --limit INTEGER`: DEPRECATED: use --per-page instead
+* `-l, --limit <int>`: DEPRECATED: use --per-page instead
 * `--include-disabled`: Include disabled users
-* `-f, --format TEXT`: Output format: table, json  [default: table]
+* `-f, --format <str>`: Output format: table, json  [default: table]
 * `--help`: Show this message and exit.
 
 ### `linear users view`
@@ -2806,16 +2814,16 @@ Examples:
 **Usage**:
 
 ```console
-$ linear users view [OPTIONS] USER_ID
+$ linear users view [OPTIONS] {user_id}
 ```
 
 **Arguments**:
 
-* `USER_ID`: User ID or email  [required]
+* `user_id`: User ID or email  [required]
 
 **Options**:
 
-* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `-f, --format <str>`: Output format: detail, json  [default: detail]
 * `--help`: Show this message and exit.
 
 ## `linear u`
@@ -2867,12 +2875,12 @@ $ linear u list [OPTIONS]
 **Options**:
 
 * `--active-only`: Show only active users  [default: True]
-* `--per-page INTEGER`: Number of users per page (max 250)  [default: 50]
-* `--page INTEGER`: Page number to fetch (starts at 1)
+* `--per-page <int>`: Number of users per page (max 250)  [default: 50]
+* `--page <int>`: Page number to fetch (starts at 1)
 * `--all`: Fetch all results automatically
-* `-l, --limit INTEGER`: DEPRECATED: use --per-page instead
+* `-l, --limit <int>`: DEPRECATED: use --per-page instead
 * `--include-disabled`: Include disabled users
-* `-f, --format TEXT`: Output format: table, json  [default: table]
+* `-f, --format <str>`: Output format: table, json  [default: table]
 * `--help`: Show this message and exit.
 
 ### `linear u view`
@@ -2893,16 +2901,16 @@ Examples:
 **Usage**:
 
 ```console
-$ linear u view [OPTIONS] USER_ID
+$ linear u view [OPTIONS] {user_id}
 ```
 
 **Arguments**:
 
-* `USER_ID`: User ID or email  [required]
+* `user_id`: User ID or email  [required]
 
 **Options**:
 
-* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `-f, --format <str>`: Output format: detail, json  [default: detail]
 * `--help`: Show this message and exit.
 
 ## `linear labels`
@@ -2947,13 +2955,13 @@ $ linear labels list [OPTIONS]
 
 **Options**:
 
-* `--per-page INTEGER`: Number of labels per page (max 250)  [default: 50]
-* `--page INTEGER`: Page number to fetch (starts at 1)
+* `--per-page <int>`: Number of labels per page (max 250)  [default: 50]
+* `--page <int>`: Page number to fetch (starts at 1)
 * `--all`: Fetch all results automatically
-* `-l, --limit INTEGER`: DEPRECATED: use --per-page instead
-* `-t, --team TEXT`: Filter by team ID or key (e.g., &#x27;ENG&#x27;, &#x27;DESIGN&#x27;)
+* `-l, --limit <int>`: DEPRECATED: use --per-page instead
+* `-t, --team <str>`: Filter by team ID or key (e.g., 'ENG', 'DESIGN')
 * `--include-archived`: Include archived labels
-* `-f, --format TEXT`: Output format: table (default) or json  [default: table]
+* `-f, --format <str>`: Output format: table (default) or json  [default: table]
 * `--help`: Show this message and exit.
 
 ### `linear labels create`
@@ -2961,8 +2969,8 @@ $ linear labels list [OPTIONS]
 Create a new label.
 
 Examples:
-    linear labels create --name bug --color &quot;#FF0000&quot; --team ENG
-    linear labels create --name feature --description &quot;New features&quot; --color blue
+    linear labels create --name bug --color "#FF0000" --team ENG
+    linear labels create --name feature --description "New features" --color blue
     linear labels create --name urgent  # Workspace-wide label
 
 **Usage**:
@@ -2973,11 +2981,11 @@ $ linear labels create [OPTIONS]
 
 **Options**:
 
-* `-n, --name TEXT`: Label name (required)  [required]
-* `-d, --description TEXT`: Label description
-* `-c, --color TEXT`: Label color (hex like &quot;#FF0000&quot; or color name)
-* `-t, --team TEXT`: Team ID or key (omit for workspace-wide label)
-* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `-n, --name <str>`: Label name (required)  [required]
+* `-d, --description <str>`: Label description
+* `-c, --color <str>`: Label color (hex like "#FF0000" or color name)
+* `-t, --team <str>`: Team ID or key (omit for workspace-wide label)
+* `-f, --format <str>`: Output format: detail, json  [default: detail]
 * `--help`: Show this message and exit.
 
 ### `linear labels update`
@@ -2985,25 +2993,25 @@ $ linear labels create [OPTIONS]
 Update an existing label.
 
 Examples:
-    linear labels update &lt;label-id&gt; --name &quot;critical-bug&quot;
-    linear labels update &lt;label-id&gt; --color &quot;#FF0000&quot; --description &quot;High priority bugs&quot;
+    linear labels update <label-id> --name "critical-bug"
+    linear labels update <label-id> --color "#FF0000" --description "High priority bugs"
 
 **Usage**:
 
 ```console
-$ linear labels update [OPTIONS] LABEL_ID
+$ linear labels update [OPTIONS] {label_id}
 ```
 
 **Arguments**:
 
-* `LABEL_ID`: Label ID  [required]
+* `label_id`: Label ID  [required]
 
 **Options**:
 
-* `-n, --name TEXT`: New label name
-* `-d, --description TEXT`: New label description
-* `-c, --color TEXT`: New label color (hex like &quot;#FF0000&quot; or color name)
-* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `-n, --name <str>`: New label name
+* `-d, --description <str>`: New label description
+* `-c, --color <str>`: New label color (hex like "#FF0000" or color name)
+* `-f, --format <str>`: Output format: detail, json  [default: detail]
 * `--help`: Show this message and exit.
 
 ### `linear labels delete`
@@ -3011,18 +3019,18 @@ $ linear labels update [OPTIONS] LABEL_ID
 Delete (permanently remove) a label.
 
 Examples:
-    linear labels delete &lt;label-id&gt;
-    linear labels delete &lt;label-id&gt; --yes  # Skip confirmation
+    linear labels delete <label-id>
+    linear labels delete <label-id> --yes  # Skip confirmation
 
 **Usage**:
 
 ```console
-$ linear labels delete [OPTIONS] LABEL_ID
+$ linear labels delete [OPTIONS] {label_id}
 ```
 
 **Arguments**:
 
-* `LABEL_ID`: Label ID  [required]
+* `label_id`: Label ID  [required]
 
 **Options**:
 
@@ -3034,17 +3042,17 @@ $ linear labels delete [OPTIONS] LABEL_ID
 Archive a label.
 
 Examples:
-    linear labels archive &lt;label-id&gt;
+    linear labels archive <label-id>
 
 **Usage**:
 
 ```console
-$ linear labels archive [OPTIONS] LABEL_ID
+$ linear labels archive [OPTIONS] {label_id}
 ```
 
 **Arguments**:
 
-* `LABEL_ID`: Label ID  [required]
+* `label_id`: Label ID  [required]
 
 **Options**:
 
@@ -3092,13 +3100,13 @@ $ linear l list [OPTIONS]
 
 **Options**:
 
-* `--per-page INTEGER`: Number of labels per page (max 250)  [default: 50]
-* `--page INTEGER`: Page number to fetch (starts at 1)
+* `--per-page <int>`: Number of labels per page (max 250)  [default: 50]
+* `--page <int>`: Page number to fetch (starts at 1)
 * `--all`: Fetch all results automatically
-* `-l, --limit INTEGER`: DEPRECATED: use --per-page instead
-* `-t, --team TEXT`: Filter by team ID or key (e.g., &#x27;ENG&#x27;, &#x27;DESIGN&#x27;)
+* `-l, --limit <int>`: DEPRECATED: use --per-page instead
+* `-t, --team <str>`: Filter by team ID or key (e.g., 'ENG', 'DESIGN')
 * `--include-archived`: Include archived labels
-* `-f, --format TEXT`: Output format: table (default) or json  [default: table]
+* `-f, --format <str>`: Output format: table (default) or json  [default: table]
 * `--help`: Show this message and exit.
 
 ### `linear l create`
@@ -3106,8 +3114,8 @@ $ linear l list [OPTIONS]
 Create a new label.
 
 Examples:
-    linear labels create --name bug --color &quot;#FF0000&quot; --team ENG
-    linear labels create --name feature --description &quot;New features&quot; --color blue
+    linear labels create --name bug --color "#FF0000" --team ENG
+    linear labels create --name feature --description "New features" --color blue
     linear labels create --name urgent  # Workspace-wide label
 
 **Usage**:
@@ -3118,11 +3126,11 @@ $ linear l create [OPTIONS]
 
 **Options**:
 
-* `-n, --name TEXT`: Label name (required)  [required]
-* `-d, --description TEXT`: Label description
-* `-c, --color TEXT`: Label color (hex like &quot;#FF0000&quot; or color name)
-* `-t, --team TEXT`: Team ID or key (omit for workspace-wide label)
-* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `-n, --name <str>`: Label name (required)  [required]
+* `-d, --description <str>`: Label description
+* `-c, --color <str>`: Label color (hex like "#FF0000" or color name)
+* `-t, --team <str>`: Team ID or key (omit for workspace-wide label)
+* `-f, --format <str>`: Output format: detail, json  [default: detail]
 * `--help`: Show this message and exit.
 
 ### `linear l update`
@@ -3130,25 +3138,25 @@ $ linear l create [OPTIONS]
 Update an existing label.
 
 Examples:
-    linear labels update &lt;label-id&gt; --name &quot;critical-bug&quot;
-    linear labels update &lt;label-id&gt; --color &quot;#FF0000&quot; --description &quot;High priority bugs&quot;
+    linear labels update <label-id> --name "critical-bug"
+    linear labels update <label-id> --color "#FF0000" --description "High priority bugs"
 
 **Usage**:
 
 ```console
-$ linear l update [OPTIONS] LABEL_ID
+$ linear l update [OPTIONS] {label_id}
 ```
 
 **Arguments**:
 
-* `LABEL_ID`: Label ID  [required]
+* `label_id`: Label ID  [required]
 
 **Options**:
 
-* `-n, --name TEXT`: New label name
-* `-d, --description TEXT`: New label description
-* `-c, --color TEXT`: New label color (hex like &quot;#FF0000&quot; or color name)
-* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `-n, --name <str>`: New label name
+* `-d, --description <str>`: New label description
+* `-c, --color <str>`: New label color (hex like "#FF0000" or color name)
+* `-f, --format <str>`: Output format: detail, json  [default: detail]
 * `--help`: Show this message and exit.
 
 ### `linear l delete`
@@ -3156,18 +3164,18 @@ $ linear l update [OPTIONS] LABEL_ID
 Delete (permanently remove) a label.
 
 Examples:
-    linear labels delete &lt;label-id&gt;
-    linear labels delete &lt;label-id&gt; --yes  # Skip confirmation
+    linear labels delete <label-id>
+    linear labels delete <label-id> --yes  # Skip confirmation
 
 **Usage**:
 
 ```console
-$ linear l delete [OPTIONS] LABEL_ID
+$ linear l delete [OPTIONS] {label_id}
 ```
 
 **Arguments**:
 
-* `LABEL_ID`: Label ID  [required]
+* `label_id`: Label ID  [required]
 
 **Options**:
 
@@ -3179,17 +3187,17 @@ $ linear l delete [OPTIONS] LABEL_ID
 Archive a label.
 
 Examples:
-    linear labels archive &lt;label-id&gt;
+    linear labels archive <label-id>
 
 **Usage**:
 
 ```console
-$ linear l archive [OPTIONS] LABEL_ID
+$ linear l archive [OPTIONS] {label_id}
 ```
 
 **Arguments**:
 
-* `LABEL_ID`: Label ID  [required]
+* `label_id`: Label ID  [required]
 
 **Options**:
 
@@ -3242,12 +3250,12 @@ $ linear roadmaps list [OPTIONS]
 
 **Options**:
 
-* `--per-page INTEGER`: Number of roadmaps per page (max 250)  [default: 50]
-* `--page INTEGER`: Page number to fetch (starts at 1)
+* `--per-page <int>`: Number of roadmaps per page (max 250)  [default: 50]
+* `--page <int>`: Page number to fetch (starts at 1)
 * `--all`: Fetch all results automatically
 * `--include-archived`: Include archived roadmaps
-* `-f, --format TEXT`: Output format: table, json  [default: table]
-* `--order-by TEXT`: Sort by: created, updated  [default: updated]
+* `-f, --format <str>`: Output format: table, json  [default: table]
+* `--order-by <str>`: Sort by: created, updated  [default: updated]
 * `--help`: Show this message and exit.
 
 ### `linear roadmaps view`
@@ -3265,16 +3273,16 @@ Examples:
 **Usage**:
 
 ```console
-$ linear roadmaps view [OPTIONS] ROADMAP_ID
+$ linear roadmaps view [OPTIONS] {roadmap_id}
 ```
 
 **Arguments**:
 
-* `ROADMAP_ID`: Roadmap ID or slug  [required]
+* `roadmap_id`: Roadmap ID or slug  [required]
 
 **Options**:
 
-* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `-f, --format <str>`: Output format: detail, json  [default: detail]
 * `--help`: Show this message and exit.
 
 ### `linear roadmaps create`
@@ -3284,16 +3292,16 @@ Create a new Linear roadmap.
 Examples:
 
   # Create roadmap with name
-  linear roadmaps create --name &quot;Q1 2024 Roadmap&quot;
+  linear roadmaps create --name "Q1 2024 Roadmap"
 
   # Create roadmap with description
-  linear roadmaps create --name &quot;Q1 2024&quot; --description &quot;Focus on core features&quot;
+  linear roadmaps create --name "Q1 2024" --description "Focus on core features"
 
   # Create roadmap with editor for description
-  linear roadmaps create --name &quot;Q1 2024&quot; --editor
+  linear roadmaps create --name "Q1 2024" --editor
 
   # Create roadmap with owner
-  linear roadmaps create --name &quot;Q1 2024&quot; --owner-id user-123
+  linear roadmaps create --name "Q1 2024" --owner-id user-123
 
 **Usage**:
 
@@ -3303,9 +3311,9 @@ $ linear roadmaps create [OPTIONS]
 
 **Options**:
 
-* `-n, --name TEXT`: Roadmap name
-* `-d, --description TEXT`: Roadmap description
-* `--owner-id TEXT`: Owner user ID
+* `-n, --name <str>`: Roadmap name
+* `-d, --description <str>`: Roadmap description
+* `--owner-id <str>`: Owner user ID
 * `-e, --editor`: Open editor for description
 * `--help`: Show this message and exit.
 
@@ -3316,10 +3324,10 @@ Update an existing Linear roadmap.
 Examples:
 
   # Update roadmap name
-  linear roadmaps update abc123 --name &quot;Q2 2024 Roadmap&quot;
+  linear roadmaps update abc123 --name "Q2 2024 Roadmap"
 
   # Update description
-  linear roadmaps update abc123 --description &quot;Updated focus areas&quot;
+  linear roadmaps update abc123 --description "Updated focus areas"
 
   # Update with editor
   linear roadmaps update abc123 --editor
@@ -3330,18 +3338,18 @@ Examples:
 **Usage**:
 
 ```console
-$ linear roadmaps update [OPTIONS] ROADMAP_ID
+$ linear roadmaps update [OPTIONS] {roadmap_id}
 ```
 
 **Arguments**:
 
-* `ROADMAP_ID`: Roadmap ID or slug  [required]
+* `roadmap_id`: Roadmap ID or slug  [required]
 
 **Options**:
 
-* `-n, --name TEXT`: New roadmap name
-* `-d, --description TEXT`: New description
-* `--owner-id TEXT`: New owner user ID
+* `-n, --name <str>`: New roadmap name
+* `-d, --description <str>`: New description
+* `--owner-id <str>`: New owner user ID
 * `-e, --editor`: Open editor for description
 * `--help`: Show this message and exit.
 
@@ -3392,12 +3400,12 @@ $ linear r list [OPTIONS]
 
 **Options**:
 
-* `--per-page INTEGER`: Number of roadmaps per page (max 250)  [default: 50]
-* `--page INTEGER`: Page number to fetch (starts at 1)
+* `--per-page <int>`: Number of roadmaps per page (max 250)  [default: 50]
+* `--page <int>`: Page number to fetch (starts at 1)
 * `--all`: Fetch all results automatically
 * `--include-archived`: Include archived roadmaps
-* `-f, --format TEXT`: Output format: table, json  [default: table]
-* `--order-by TEXT`: Sort by: created, updated  [default: updated]
+* `-f, --format <str>`: Output format: table, json  [default: table]
+* `--order-by <str>`: Sort by: created, updated  [default: updated]
 * `--help`: Show this message and exit.
 
 ### `linear r view`
@@ -3415,16 +3423,16 @@ Examples:
 **Usage**:
 
 ```console
-$ linear r view [OPTIONS] ROADMAP_ID
+$ linear r view [OPTIONS] {roadmap_id}
 ```
 
 **Arguments**:
 
-* `ROADMAP_ID`: Roadmap ID or slug  [required]
+* `roadmap_id`: Roadmap ID or slug  [required]
 
 **Options**:
 
-* `-f, --format TEXT`: Output format: detail, json  [default: detail]
+* `-f, --format <str>`: Output format: detail, json  [default: detail]
 * `--help`: Show this message and exit.
 
 ### `linear r create`
@@ -3434,16 +3442,16 @@ Create a new Linear roadmap.
 Examples:
 
   # Create roadmap with name
-  linear roadmaps create --name &quot;Q1 2024 Roadmap&quot;
+  linear roadmaps create --name "Q1 2024 Roadmap"
 
   # Create roadmap with description
-  linear roadmaps create --name &quot;Q1 2024&quot; --description &quot;Focus on core features&quot;
+  linear roadmaps create --name "Q1 2024" --description "Focus on core features"
 
   # Create roadmap with editor for description
-  linear roadmaps create --name &quot;Q1 2024&quot; --editor
+  linear roadmaps create --name "Q1 2024" --editor
 
   # Create roadmap with owner
-  linear roadmaps create --name &quot;Q1 2024&quot; --owner-id user-123
+  linear roadmaps create --name "Q1 2024" --owner-id user-123
 
 **Usage**:
 
@@ -3453,9 +3461,9 @@ $ linear r create [OPTIONS]
 
 **Options**:
 
-* `-n, --name TEXT`: Roadmap name
-* `-d, --description TEXT`: Roadmap description
-* `--owner-id TEXT`: Owner user ID
+* `-n, --name <str>`: Roadmap name
+* `-d, --description <str>`: Roadmap description
+* `--owner-id <str>`: Owner user ID
 * `-e, --editor`: Open editor for description
 * `--help`: Show this message and exit.
 
@@ -3466,10 +3474,10 @@ Update an existing Linear roadmap.
 Examples:
 
   # Update roadmap name
-  linear roadmaps update abc123 --name &quot;Q2 2024 Roadmap&quot;
+  linear roadmaps update abc123 --name "Q2 2024 Roadmap"
 
   # Update description
-  linear roadmaps update abc123 --description &quot;Updated focus areas&quot;
+  linear roadmaps update abc123 --description "Updated focus areas"
 
   # Update with editor
   linear roadmaps update abc123 --editor
@@ -3480,17 +3488,17 @@ Examples:
 **Usage**:
 
 ```console
-$ linear r update [OPTIONS] ROADMAP_ID
+$ linear r update [OPTIONS] {roadmap_id}
 ```
 
 **Arguments**:
 
-* `ROADMAP_ID`: Roadmap ID or slug  [required]
+* `roadmap_id`: Roadmap ID or slug  [required]
 
 **Options**:
 
-* `-n, --name TEXT`: New roadmap name
-* `-d, --description TEXT`: New description
-* `--owner-id TEXT`: New owner user ID
+* `-n, --name <str>`: New roadmap name
+* `-d, --description <str>`: New description
+* `--owner-id <str>`: New owner user ID
 * `-e, --editor`: Open editor for description
 * `--help`: Show this message and exit.

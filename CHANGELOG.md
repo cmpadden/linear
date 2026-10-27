@@ -5,6 +5,23 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.0.18] - 2026-10-27
+
+### Added
+- Offline regression and CLI smoke tests, run with `make test` and in CI, covering command help, version flags, documentation generation, option parsing, confirmation prompts, JSON/table output, model serialization, and filter tokenization.
+
+### Changed
+- Refresh runtime dependencies to Typer 0.27.3, Rich 15.0.0, and Pydantic 2.14.1; raise HTTPX and PyYAML minimums to the already-locked 0.28.1 and 6.0.3 releases.
+- Refresh development dependencies to Ruff 0.17.2, ty 0.0.91, and pre-commit 4.7.0, and upgrade transitive dependencies in `uv.lock`.
+- Upgrade the `uv_build` backend from 0.9.x to 0.13.x, with a 0.13.5 minimum and a minor-version upper bound.
+- Upgrade GitHub Actions for checkout, uv setup, and artifact upload/download; pin CI's uv to 0.13.5 and require an up-to-date lockfile during installation.
+- Regenerate the CLI reference for Typer's new help metavars and Markdown escaping. Typer now vendors Click, so the separate Click dependency is no longer needed ([migration notes](https://typer.tiangolo.com/tutorial/click/)).
+- Apply Ruff's newly enabled Markdown Python code formatting to the contributor guide; preserve the existing explicit lint rule selection.
+
+### Fixed
+- Keep tokenizer character buffers restricted to strings, addressing type errors identified by the upgraded ty checker without changing filter parsing behavior.
+- Remove redundant issue grouping casts now handled by ty's literal narrowing.
+
 ## [0.0.16] Unreleased
 
 ### Added

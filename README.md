@@ -37,3 +37,9 @@ For complete CLI command reference with all available commands, options, and exa
 ## Contributing
 
 See [CONTRIBUTING.md](./CONTRIBUTING.md).
+
+```bash
+uv sync --dev --locked
+make check
+make test  # Offline regression and CLI smoke tests; no API key required
+```

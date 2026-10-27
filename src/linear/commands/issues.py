@@ -174,12 +174,11 @@ def _list_issues_impl(
             format_json(issues)
         else:  # table
             if group_by in ["cycle", "project", "team"]:
-                from typing import cast, Literal
                 from linear.formatters import format_table_grouped
 
                 format_table_grouped(
                     issues,
-                    cast(Literal["cycle", "project", "team"], group_by),
+                    group_by,
                     display_pagination_info,
                 )
             else:
@@ -621,12 +620,11 @@ def search_issues(
         else:  # table
             display_pagination_info: dict[str, str | bool | int] = dict(pagination_info)
             if group_by in ["cycle", "project", "team"]:
-                from typing import cast, Literal
                 from linear.formatters import format_table_grouped
 
                 format_table_grouped(
                     issues,
-                    cast(Literal["cycle", "project", "team"], group_by),
+                    group_by,
                     display_pagination_info,
                 )
             else:
